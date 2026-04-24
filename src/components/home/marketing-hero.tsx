@@ -519,18 +519,20 @@ export function MarketingHero({
       <div
         className={cn(
           "relative z-30 mx-auto mt-10 w-full max-w-[1320px] px-8 lg:absolute lg:bottom-[120px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
-          !isCrb && "max-md:mt-2 max-md:px-4",
+          !isCrb && "max-md:mt-8 max-md:px-4",
         )}
       >
         <div
           className={cn(
             "flex min-h-[132px] items-center rounded-[24px] bg-white px-8 py-5 shadow-2xl transition-all duration-300 motion-reduce:transition-none hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)]",
             !isCrb &&
-              "max-md:min-h-0 max-md:flex-col max-md:items-stretch max-md:gap-1.5 max-md:px-4 max-md:py-2.5",
+              "max-md:min-h-0 max-md:flex-col max-md:items-center max-md:gap-1.5 max-md:px-4 max-md:py-2.5 max-md:text-center",
           )}
         >
           {!isCrb ? (
-            <p className="font-bold text-stone-900 md:hidden">Build your party</p>
+            <p className="w-full text-center font-bold text-stone-900 md:hidden">
+              Build your party
+            </p>
           ) : null}
           <QuickBookBar
             isCrb={isCrb}

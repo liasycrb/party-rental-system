@@ -78,6 +78,9 @@ export function QuickBookBar({
   const router = useRouter();
   const [date, setDate] = useState("");
 
+  /** Lias mobile: centered stack under “Build your party” (compact + not CRB). */
+  const centerStack = compactMobile && !isCrb;
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const iso = parseQuickBookDate(date);
@@ -100,6 +103,7 @@ export function QuickBookBar({
           : "border-white/50 bg-white/95 shadow-[0_30px_80px_rgba(0,0,0,0.25)] backdrop-blur-md",
         compactMobile &&
           "max-md:gap-3 max-md:rounded-2xl max-md:px-4 max-md:py-3 max-md:shadow-lg",
+        centerStack && "max-md:justify-items-center",
         className,
       )}
     >
@@ -107,13 +111,16 @@ export function QuickBookBar({
       <div
         className={cn(
           "min-w-0 max-w-[240px]",
-          compactMobile && "max-md:max-w-none",
+          centerStack
+            ? "max-md:mx-auto max-md:w-full max-md:max-w-[320px]"
+            : compactMobile && "max-md:max-w-none",
         )}
       >
         <div
           className={cn(
             "flex items-center gap-2.5",
             compactMobile && "max-md:gap-2",
+            centerStack && "max-md:justify-center max-md:text-center",
           )}
         >
           <div
@@ -157,7 +164,12 @@ export function QuickBookBar({
       </div>
 
       {/* 2 — date input */}
-      <div className="min-w-0">
+      <div
+        className={cn(
+          "min-w-0",
+          centerStack && "max-md:mx-auto max-md:w-full max-md:max-w-[320px]",
+        )}
+      >
         <input
           id="quick-book-date"
           name="date"
@@ -183,6 +195,7 @@ export function QuickBookBar({
           "flex min-w-0 items-center border-t pt-4 lg:h-[72px] lg:border-l lg:border-t-0 lg:pt-0 lg:pl-5",
           isCrb ? "border-gray-200 lg:border-gray-300/60" : "border-gray-200 lg:border-gray-300/60",
           compactMobile && "max-md:border-t max-md:pt-3",
+          centerStack && "max-md:w-full max-md:justify-center",
         )}
       >
         <button
@@ -193,7 +206,8 @@ export function QuickBookBar({
             isCrb
               ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30 hover:bg-cyan-600"
               : "text-white shadow-[0_12px_30px_rgba(236,72,153,0.35)] ring-1 ring-white/45 hover:shadow-[0_16px_36px_rgba(236,72,153,0.42)]",
-            compactMobile && "max-md:h-[52px] max-md:max-w-none max-md:px-6 max-md:text-[13px]",
+            compactMobile && !centerStack && "max-md:h-[52px] max-md:max-w-none max-md:px-6 max-md:text-[13px]",
+            centerStack && "max-md:mx-auto max-md:h-[52px] max-md:w-full max-md:max-w-[320px] max-md:px-6 max-md:text-[13px]",
           )}
           style={{
             background: isCrb ? undefined : "var(--brand-secondary)",
