@@ -1,82 +1,89 @@
 "use client";
 
-import { HERO_PNG } from "@/components/home/hero-sticker-constants";
-import { HeroStickerPng } from "@/components/home/hero-sticker-png";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import {
+  HERO_DESKTOP_ROTATE_CRB,
+  HERO_DESKTOP_ROTATE_LIAS,
+} from "@/components/home/hero-sticker-constants";
+import { cn } from "@/lib/utils/cn";
 
-const IMG =
-  "max-h-full w-full object-contain select-none";
+const INTERVAL_MS = 3000;
+const FADE_MS = 500;
 
 /**
- * Layered product stickers for md+ hero right column (Lias vs CRB mapping).
- * Borderless stickers so PNG cutout edge is not doubled.
+ * Single centered hero image (md+ right column) with auto-rotation.
+ * Same outer container as before; no stacked/rotated layers.
  */
 export function HeroDesktopStickerComposition({ isCrb }: { isCrb: boolean }) {
+  const heroImages = isCrb ? HERO_DESKTOP_ROTATE_CRB : HERO_DESKTOP_ROTATE_LIAS;
+  const n = heroImages.length;
+
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) setVisible(true);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (n <= 1) return;
+
+    if (reducedMotion) {
+      const intervalId = window.setInterval(() => {
+        setIndex((prev) => (prev + 1) % n);
+      }, INTERVAL_MS);
+      return () => clearInterval(intervalId);
+    }
+
+    const pendingFade: { id: number | null } = { id: null };
+    const intervalId = window.setInterval(() => {
+      setVisible(false);
+      pendingFade.id = window.setTimeout(() => {
+        setIndex((prev) => (prev + 1) % n);
+        setVisible(true);
+        pendingFade.id = null;
+      }, FADE_MS);
+    }, INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+      if (pendingFade.id != null) window.clearTimeout(pendingFade.id);
+    };
+  }, [n, reducedMotion]);
+
+  const current = heroImages[index]!;
+
   return (
     <div
       className="relative mx-auto flex h-[min(520px,72vh)] w-full min-h-[300px] max-w-[580px] items-center justify-center"
       aria-hidden
     >
-      {!isCrb ? (
-        <>
-          <div className="absolute bottom-[8%] left-[2%] z-[1] w-[min(44%,240px)] -rotate-[7deg] motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.combo}
-              alt="Combo slide inflatable"
-              sizes="(max-width:1280px) 38vw, 280px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-          <div className="hero-float-sticker absolute left-1/2 top-1/2 z-[3] w-[min(58%,320px)] -translate-x-1/2 -translate-y-1/2 motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.castle}
-              alt="Castle jumper inflatable"
-              sizes="(max-width:1280px) 48vw, 360px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-          <div className="absolute bottom-[6%] right-[4%] z-[2] w-[min(32%,200px)] rotate-[5deg] motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.theme}
-              alt="Theme jumper inflatable"
-              sizes="(max-width:1280px) 28vw, 200px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="absolute right-[0%] top-[10%] z-[1] w-[min(40%,230px)] -rotate-[5deg] motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.castle}
-              alt="Castle jumper inflatable"
-              sizes="(max-width:1280px) 34vw, 240px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-          <div className="hero-float-sticker absolute left-1/2 top-1/2 z-[3] w-[min(60%,330px)] -translate-x-1/2 -translate-y-1/2 motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.combo}
-              alt="Combo slide inflatable"
-              sizes="(max-width:1280px) 50vw, 360px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-          <div className="absolute bottom-[8%] left-[2%] z-[2] w-[min(30%,190px)] rotate-[4deg] motion-reduce:transform-none">
-            <HeroStickerPng
-              src={HERO_PNG.toddler}
-              alt="Toddler unit inflatable"
-              sizes="(max-width:1280px) 26vw, 180px"
-              className="flex items-center justify-center"
-              imageClassName={IMG}
-            />
-          </div>
-        </>
-      )}
+      <div
+        className={cn(
+          "flex w-full max-w-[420px] items-center justify-center transition-opacity ease-in-out",
+          reducedMotion ? "duration-0" : "duration-500",
+          visible || reducedMotion ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <Image
+          src={current.src}
+          alt={current.alt}
+          width={420}
+          height={420}
+          className="mx-auto h-auto w-full max-w-[420px] object-contain"
+          sizes="(max-width:1280px) 42vw, 420px"
+        />
+      </div>
     </div>
   );
 }

@@ -16,3 +16,16 @@ export const HERO_CAROUSEL_STICKERS: {
   { src: HERO_PNG.theme, label: "Theme Jumper", alt: "Theme jumper inflatable" },
   { src: HERO_PNG.toddler, label: "Toddler Unit", alt: "Toddler unit inflatable" },
 ];
+
+/** Desktop hero (md+ right column): one image at a time, auto-rotates. */
+export const HERO_DESKTOP_ROTATE_LIAS: { src: string; alt: string }[] = [
+  { src: HERO_PNG.castle, alt: "Castle jumper inflatable" },
+  { src: HERO_PNG.combo, alt: "Combo slide inflatable" },
+  { src: HERO_PNG.theme, alt: "Theme jumper inflatable" },
+];
+
+export const HERO_DESKTOP_ROTATE_CRB: { src: string; alt: string }[] = [
+  { src: HERO_PNG.combo, alt: "Combo slide inflatable" },
+  { src: HERO_PNG.castle, alt: "Castle jumper inflatable" },
+  { src: HERO_PNG.toddler, alt: "Toddler unit inflatable" },
+];
