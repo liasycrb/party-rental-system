@@ -10,6 +10,7 @@ import { CtaBanner } from "@/components/conversion/cta-banner";
 import { PopularPackagesSection } from "@/components/conversion/popular-packages";
 import { WhyChooseStrip } from "@/components/conversion/why-choose-strip";
 import { MarketingHero } from "@/components/home/marketing-hero";
+import { MobileProductStrip } from "@/components/home/mobile-product-strip";
 import { Container } from "@/components/marketing/container";
 import { ProductCard } from "@/components/marketing/product-card";
 import { SectionTitle } from "@/components/marketing/section-title";
@@ -22,6 +23,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
       <MarketingHero
         brand={brand}
         isCrb={false}
+        mobileLead={<MobileProductStrip />}
         heroProduct={{
           imageSrc: HERO_BOUNCE_HOUSE.imageSrc,
           imageAlt: HERO_BOUNCE_HOUSE.imageAlt,

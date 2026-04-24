@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { Brand } from "@/lib/brand/config";
 import { QuickBookBar } from "@/components/conversion/quick-book-bar";
 import { CatalogImage } from "@/components/media/catalog-image";
@@ -201,6 +201,35 @@ const headlineClassName =
 const liasHeadlineMobile =
   "max-md:max-w-none max-md:text-[48px] max-md:leading-[0.92] max-md:tracking-[-0.04em]";
 
+function LiasHeadlineBodyMobile({ title }: { title: string }) {
+  const dot = title.indexOf(". ");
+  if (dot === -1) {
+    return <span className="block text-stone-900">{title}</span>;
+  }
+  const line1 = title.slice(0, dot + 1).trim();
+  const rest = title.slice(dot + 2).trim();
+  const everM = /\bever\.\s*$/i.exec(rest);
+  if (everM && everM.index !== undefined) {
+    const before = rest.slice(0, everM.index).trim();
+    return (
+      <>
+        <span className="block text-stone-900">{line1}</span>
+        <span className="mt-0.5 block text-stone-900">
+          {before}
+          {before ? " " : null}
+          <span className="text-rose-600">ever.</span>
+        </span>
+      </>
+    );
+  }
+  return (
+    <>
+      <span className="block text-stone-900">{line1}</span>
+      <span className="mt-0.5 block text-stone-900">{rest}</span>
+    </>
+  );
+}
+
 function HeroHeadline({
   title,
   isCrb,
@@ -215,11 +244,21 @@ function HeroHeadline({
     if (lines) {
       return (
         <h1
-          className={cn(headlineClassName, liasHeadlineMobile, className, "text-stone-900")}
+          className={cn(
+            headlineClassName,
+            liasHeadlineMobile,
+            className,
+            "text-stone-900",
+          )}
         >
-          <span className="block">{lines.line1}</span>
-          <span className="block">{lines.line2}</span>
-          <span className="block text-rose-600">ever.</span>
+          <span className="md:hidden text-[1.7rem] font-black leading-[1.1] tracking-[-0.04em]">
+            <LiasHeadlineBodyMobile title={title} />
+          </span>
+          <span className="hidden md:contents">
+            <span className="block">{lines.line1}</span>
+            <span className="block">{lines.line2}</span>
+            <span className="block text-rose-600">ever.</span>
+          </span>
         </h1>
       );
     }
@@ -228,10 +267,20 @@ function HeroHeadline({
       const before = title.slice(0, m.index);
       return (
         <h1
-          className={cn(headlineClassName, liasHeadlineMobile, className, "text-stone-900")}
+          className={cn(
+            headlineClassName,
+            liasHeadlineMobile,
+            className,
+            "text-stone-900",
+          )}
         >
-          {before}
-          <span className="text-rose-600">ever.</span>
+          <span className="md:hidden text-[1.7rem] font-black leading-[1.1] tracking-[-0.04em]">
+            <LiasHeadlineBodyMobile title={title} />
+          </span>
+          <span className="hidden md:inline">
+            {before}
+            <span className="text-rose-600">ever.</span>
+          </span>
         </h1>
       );
     }
@@ -255,10 +304,13 @@ export function MarketingHero({
   brand,
   isCrb,
   heroProduct,
+  mobileLead,
 }: {
   brand: Brand;
   isCrb: boolean;
   heroProduct: { imageSrc: string; imageAlt: string };
+  /** Lias: mobile-only strip above headline (e.g. `MobileProductStrip`). */
+  mobileLead?: ReactNode;
 }) {
   return (
     <section
@@ -306,10 +358,11 @@ export function MarketingHero({
             !isCrb && "max-md:max-w-full max-md:pt-2",
           )}
         >
+          {!isCrb && mobileLead ? mobileLead : null}
           <div
             className={cn(
               "mb-4 flex flex-wrap gap-3",
-              !isCrb && "max-md:mb-2 max-md:w-full max-md:flex-nowrap max-md:gap-3",
+              !isCrb && "max-md:mb-2.5 max-md:mt-1 max-md:w-full max-md:justify-center max-md:gap-0",
             )}
           >
             <span
@@ -317,7 +370,7 @@ export function MarketingHero({
                 "inline-flex h-[42px] shrink-0 items-center gap-2 rounded-full px-5 text-[13px] font-black uppercase tracking-[0.08em] transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
                 isCrb
                   ? "bg-orange-500 text-slate-950 shadow-lg"
-                  : "min-w-0 max-md:flex-1 max-md:basis-0 max-md:justify-center max-md:h-11 max-md:px-5 max-md:text-[12px] bg-rose-600 text-white shadow-md",
+                  : "min-w-0 max-md:mx-auto max-md:h-9 max-md:w-auto max-md:justify-center max-md:px-4 max-md:text-[11px] bg-rose-600 text-white shadow-md",
               )}
             >
               <IconCalendar
@@ -331,6 +384,7 @@ export function MarketingHero({
                 isCrb
                   ? "border-cyan-400/55 bg-slate-950/70 text-cyan-50 shadow-[0_6px_22px_rgba(2,6,23,0.45)] backdrop-blur-md"
                   : "min-w-0 max-md:flex-1 max-md:basis-0 max-md:justify-center max-md:h-11 max-md:px-5 max-md:text-[12px] border-rose-400 bg-white text-orange-950",
+                !isCrb && "max-md:hidden",
               )}
             >
               <IconMapPin
@@ -347,7 +401,8 @@ export function MarketingHero({
           <div
             className={cn(
               "mb-8 flex flex-wrap gap-4",
-              !isCrb &&
+              !isCrb && "max-md:hidden",
+              isCrb &&
                 "max-md:mb-4 max-md:grid max-md:grid-cols-2 max-md:gap-3 md:mb-8 md:flex md:flex-wrap",
             )}
           >
@@ -382,7 +437,9 @@ export function MarketingHero({
           <p
             className={cn(
               "mb-4 text-[16px] font-bold uppercase tracking-[0.3em]",
-              isCrb ? "text-cyan-200/90" : "text-rose-600 max-md:mb-2 max-md:text-[14px] max-md:tracking-[0.28em]",
+              isCrb
+                ? "text-cyan-200/90"
+                : "text-rose-600 max-md:mb-2 max-md:text-[14px] max-md:tracking-[0.28em] max-md:hidden",
             )}
           >
             {brand.copy.heroKicker}
@@ -391,15 +448,15 @@ export function MarketingHero({
           <HeroHeadline
             title={brand.copy.heroTitle}
             isCrb={isCrb}
-            className={!isCrb ? "max-md:my-0" : undefined}
+            className={!isCrb ? "max-md:my-0 max-md:mt-1 max-md:mb-1.5" : undefined}
           />
 
           <p
             className={cn(
               "mt-5 max-w-[520px] text-[20px] font-semibold leading-[1.35]",
               isCrb
-              ? "text-white/90"
-              : "text-stone-800 max-md:mt-3 max-md:max-w-full max-md:text-[20px]",
+                ? "text-white/90"
+                : "text-stone-800 max-md:mt-0 max-md:max-w-full max-md:hidden",
             )}
           >
             {brand.copy.heroSubtitle}
@@ -409,7 +466,7 @@ export function MarketingHero({
             className={cn(
               "mt-8 flex flex-wrap items-center gap-6 lg:gap-8",
               !isCrb &&
-                "max-md:mt-5 max-md:max-w-full max-md:flex-col max-md:gap-4 md:mt-8 md:flex-row",
+                "max-md:mt-3 max-md:max-w-full max-md:flex-col max-md:gap-0 md:mt-8 md:flex-row",
             )}
           >
             <Link
@@ -418,7 +475,7 @@ export function MarketingHero({
                 "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] px-8 text-[18px] font-black text-white shadow-lg transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 hover:shadow-xl motion-reduce:hover:translate-y-0 hover:brightness-110 active:scale-[0.98] motion-reduce:active:scale-100",
                 isCrb && "text-slate-950 shadow-[0_0_40px_rgba(56,189,248,0.35)]",
                 !isCrb &&
-                  "w-full max-md:h-[58px] max-md:w-full bg-rose-600 hover:bg-rose-700 md:h-[60px] md:w-auto",
+                  "w-full max-md:h-[56px] max-md:w-full max-md:px-6 bg-rose-600 hover:bg-rose-700 md:h-[60px] md:w-auto",
               )}
               style={
                 isCrb
@@ -437,7 +494,7 @@ export function MarketingHero({
                 "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] border-2 border-orange-500/30 bg-white px-8 text-[18px] font-black text-stone-900 shadow-md transition-all duration-300 motion-reduce:transition-none hover:bg-stone-50",
                 isCrb &&
                   "border-white/40 bg-white/10 text-white shadow-none backdrop-blur hover:bg-white/15",
-                !isCrb && "w-full max-md:h-[58px] max-md:w-full md:h-[60px] md:w-auto",
+                !isCrb && "w-full max-md:h-[58px] max-md:w-full max-md:hidden md:h-[60px] md:w-auto",
               )}
             >
               Book your date
@@ -517,18 +574,19 @@ export function MarketingHero({
       <div
         className={cn(
           "relative z-30 mx-auto mt-10 w-full max-w-[1320px] px-8 lg:absolute lg:bottom-[120px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
-          !isCrb && "max-md:mt-5 max-md:px-4",
+          !isCrb && "max-md:mt-4 max-md:px-4",
         )}
       >
         <div
           className={cn(
             "flex min-h-[132px] items-center rounded-[24px] bg-white px-8 py-5 shadow-2xl transition-all duration-300 motion-reduce:transition-none hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)]",
-            !isCrb && "max-md:min-h-0 max-md:px-4 max-md:py-4",
+            !isCrb && "max-md:min-h-0 max-md:px-4 max-md:py-3",
           )}
         >
           <QuickBookBar
             isCrb={isCrb}
             id="quick-book"
+            compactMobile={!isCrb}
             className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
           />
         </div>
@@ -537,7 +595,9 @@ export function MarketingHero({
       <div
         className={cn(
           "relative z-20 mx-auto mt-6 flex w-full max-w-[1320px] flex-wrap items-center justify-center gap-6 px-8 sm:gap-8 lg:absolute lg:bottom-[28px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:gap-10 lg:px-0",
-          isCrb ? "text-orange-200" : "text-orange-950/90 max-md:mt-4 max-md:gap-4 max-md:px-4",
+          isCrb
+            ? "text-orange-200"
+            : "text-orange-950/90 max-md:mt-4 max-md:gap-4 max-md:px-4 max-md:hidden",
         )}
         role="list"
         aria-label="Trust and guarantees"

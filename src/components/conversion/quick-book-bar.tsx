@@ -66,11 +66,14 @@ export function QuickBookBar({
   isCrb,
   className,
   id,
+  /** Tighter, stacked field + CTA; only applied at `max-md` so desktop is unchanged. */
+  compactMobile = false,
 }: {
   isCrb: boolean;
   className?: string;
   /** Anchor target for hero CTAs (e.g. `quick-book`) */
   id?: string;
+  compactMobile?: boolean;
 }) {
   const router = useRouter();
   const [date, setDate] = useState("");
@@ -95,18 +98,31 @@ export function QuickBookBar({
         isCrb
           ? "border-gray-200/90 bg-white shadow-[0_30px_80px_rgba(0,0,0,0.25)] backdrop-blur-md"
           : "border-white/50 bg-white/95 shadow-[0_30px_80px_rgba(0,0,0,0.25)] backdrop-blur-md",
+        compactMobile &&
+          "max-md:gap-3 max-md:rounded-2xl max-md:px-4 max-md:py-3 max-md:shadow-lg",
         className,
       )}
     >
       {/* 1 — date label */}
-      <div className="min-w-0 max-w-[240px]">
-        <div className="flex items-center gap-2.5">
+      <div
+        className={cn(
+          "min-w-0 max-w-[240px]",
+          compactMobile && "max-md:max-w-none",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center gap-2.5",
+            compactMobile && "max-md:gap-2",
+          )}
+        >
           <div
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
               isCrb
                 ? "bg-cyan-50 ring-1 ring-cyan-200/40"
                 : "bg-pink-100",
+              compactMobile && "max-md:h-9 max-md:w-9",
             )}
           >
             <CalendarGlyph
@@ -121,13 +137,19 @@ export function QuickBookBar({
               className={cn(
                 "text-sm font-semibold leading-tight tracking-tight",
                 isCrb ? "text-gray-800" : "text-stone-900",
+                compactMobile && "max-md:text-[13px]",
               )}
             >
               <label htmlFor="quick-book-date" className="block">
                 Choose your date
               </label>
             </p>
-            <p className="mt-0.5 text-xs leading-snug text-gray-500">
+            <p
+              className={cn(
+                "mt-0.5 text-xs leading-snug text-gray-500",
+                compactMobile && "max-md:hidden",
+              )}
+            >
               See real-time availability
             </p>
           </div>
@@ -150,6 +172,7 @@ export function QuickBookBar({
             isCrb
               ? "border-gray-200 bg-gray-100 text-gray-800 placeholder:text-gray-400 focus-visible:border-cyan-400/55 focus-visible:ring-[3px] focus-visible:ring-cyan-300/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               : "border-gray-200 bg-gray-100 text-stone-900 placeholder:text-stone-400 focus-visible:border-pink-400/55 focus-visible:ring-[3px] focus-visible:ring-pink-300/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+            compactMobile && "max-md:h-[52px] max-md:text-[13px]",
           )}
         />
       </div>
@@ -159,6 +182,7 @@ export function QuickBookBar({
         className={cn(
           "flex min-w-0 items-center border-t pt-4 lg:h-[72px] lg:border-l lg:border-t-0 lg:pt-0 lg:pl-5",
           isCrb ? "border-gray-200 lg:border-gray-300/60" : "border-gray-200 lg:border-gray-300/60",
+          compactMobile && "max-md:border-t max-md:pt-3",
         )}
       >
         <button
@@ -169,6 +193,7 @@ export function QuickBookBar({
             isCrb
               ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30 hover:bg-cyan-600"
               : "text-white shadow-[0_12px_30px_rgba(236,72,153,0.35)] ring-1 ring-white/45 hover:shadow-[0_16px_36px_rgba(236,72,153,0.42)]",
+            compactMobile && "max-md:h-[52px] max-md:max-w-none max-md:px-6 max-md:text-[13px]",
           )}
           style={{
             background: isCrb ? undefined : "var(--brand-secondary)",
@@ -180,7 +205,12 @@ export function QuickBookBar({
       </div>
 
       {/* 4 — skip (tight to CTA) */}
-      <div className="flex min-w-0 flex-col justify-center gap-0.5 lg:pl-2">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col justify-center gap-0.5 lg:pl-2",
+          compactMobile && "max-md:hidden",
+        )}
+      >
         <button
           type="button"
           onClick={() => router.push("/build")}
