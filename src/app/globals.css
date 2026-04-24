@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes party-step-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.45);
+  }
+  55% {
+    box-shadow: 0 0 0 14px rgba(251, 146, 60, 0);
+  }
+}
+
+.party-step-active {
+  animation: party-step-glow 1.35s ease-out infinite;
+}
+
+@keyframes party-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.party-select-pop {
+  animation: party-pop 0.45s ease-out;
+}
+
+@keyframes floatSticker {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-float-sticker {
+    animation: floatSticker 4s ease-in-out infinite;
+  }
+}
