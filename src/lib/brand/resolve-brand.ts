@@ -38,3 +38,16 @@ export function resolveBrandFromHost(hostHeader: string | null): Brand {
 
   return BRANDS[DEFAULT_BRAND_SLUG];
 }
+
+/**
+ * Home `?brand=` (lias | crb), else `NEXT_PUBLIC_DEFAULT_BRAND_SLUG` or `DEFAULT_BRAND_SLUG`.
+ * Safe to import from client components.
+ */
+export function resolveHomeBrandSlug(brandQuery: string | null | undefined): BrandSlug {
+  if (brandQuery === "lias" || brandQuery === "crb") {
+    return brandQuery;
+  }
+  return (
+    slugFromEnv(process.env.NEXT_PUBLIC_DEFAULT_BRAND_SLUG) ?? DEFAULT_BRAND_SLUG
+  );
+}

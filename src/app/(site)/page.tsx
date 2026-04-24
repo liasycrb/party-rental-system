@@ -1,5 +1,7 @@
-import { getBrandForHomePage } from "@/lib/brand/get-brand";
-import { HomeView } from "@/components/home/home-view";
+import { BRANDS } from "@/lib/brand/config";
+import { resolveHomeBrandSlug } from "@/lib/brand/resolve-brand";
+import { CrbHome } from "@/components/home/crb-home";
+import { LiasHome } from "@/components/home/lias-home";
 
 type HomePageProps = {
   searchParams: Promise<{ brand?: string | string[] }>;
@@ -8,8 +10,12 @@ type HomePageProps = {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const sp = await searchParams;
   const raw = sp.brand;
-  const brandParam =
+  const brandFromQuery =
     typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : undefined;
-  const brand = getBrandForHomePage(brandParam);
-  return <HomeView brand={brand} />;
+  const slug = resolveHomeBrandSlug(brandFromQuery);
+
+  if (slug === "crb") {
+    return <CrbHome brand={BRANDS[slug]} />;
+  }
+  return <LiasHome brand={BRANDS[slug]} />;
 }

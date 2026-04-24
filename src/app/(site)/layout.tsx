@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getBrand } from "@/lib/brand/get-brand";
-import { SiteShell } from "@/components/layouts/site-shell";
+import { SiteLayoutBrand } from "@/components/layouts/site-layout-brand";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
@@ -23,6 +23,8 @@ export default async function SiteLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const brand = await getBrand();
-  return <SiteShell brand={brand}>{children}</SiteShell>;
+  const serverBrand = await getBrand();
+  return (
+    <SiteLayoutBrand serverBrand={serverBrand}>{children}</SiteLayoutBrand>
+  );
 }
