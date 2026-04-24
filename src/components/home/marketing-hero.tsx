@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { Brand } from "@/lib/brand/config";
 import { QuickBookBar } from "@/components/conversion/quick-book-bar";
-import { CatalogImage } from "@/components/media/catalog-image";
+import { HeroDesktopStickerComposition } from "@/components/home/hero-desktop-sticker-composition";
 import { cn } from "@/lib/utils/cn";
 
 function IconCalendar({ className }: { className?: string }) {
@@ -198,38 +198,6 @@ function parseLiasHeadlineLines(title: string): {
 const headlineClassName =
   "max-w-[640px] font-black leading-[0.95] tracking-[-0.04em] text-4xl sm:text-5xl lg:text-[64px] xl:text-[68px]";
 
-const liasHeadlineMobile =
-  "max-md:max-w-none max-md:text-[48px] max-md:leading-[0.92] max-md:tracking-[-0.04em]";
-
-function LiasHeadlineBodyMobile({ title }: { title: string }) {
-  const dot = title.indexOf(". ");
-  if (dot === -1) {
-    return <span className="block text-stone-900">{title}</span>;
-  }
-  const line1 = title.slice(0, dot + 1).trim();
-  const rest = title.slice(dot + 2).trim();
-  const everM = /\bever\.\s*$/i.exec(rest);
-  if (everM && everM.index !== undefined) {
-    const before = rest.slice(0, everM.index).trim();
-    return (
-      <>
-        <span className="block text-stone-900">{line1}</span>
-        <span className="mt-0.5 block text-stone-900">
-          {before}
-          {before ? " " : null}
-          <span className="text-rose-600">ever.</span>
-        </span>
-      </>
-    );
-  }
-  return (
-    <>
-      <span className="block text-stone-900">{line1}</span>
-      <span className="mt-0.5 block text-stone-900">{rest}</span>
-    </>
-  );
-}
-
 function HeroHeadline({
   title,
   isCrb,
@@ -244,21 +212,11 @@ function HeroHeadline({
     if (lines) {
       return (
         <h1
-          className={cn(
-            headlineClassName,
-            liasHeadlineMobile,
-            className,
-            "text-stone-900",
-          )}
+          className={cn(headlineClassName, className, "text-stone-900")}
         >
-          <span className="md:hidden text-[1.7rem] font-black leading-[1.1] tracking-[-0.04em]">
-            <LiasHeadlineBodyMobile title={title} />
-          </span>
-          <span className="hidden md:contents">
-            <span className="block">{lines.line1}</span>
-            <span className="block">{lines.line2}</span>
-            <span className="block text-rose-600">ever.</span>
-          </span>
+          <span className="block">{lines.line1}</span>
+          <span className="block">{lines.line2}</span>
+          <span className="block text-rose-600">ever.</span>
         </h1>
       );
     }
@@ -267,20 +225,10 @@ function HeroHeadline({
       const before = title.slice(0, m.index);
       return (
         <h1
-          className={cn(
-            headlineClassName,
-            liasHeadlineMobile,
-            className,
-            "text-stone-900",
-          )}
+          className={cn(headlineClassName, className, "text-stone-900")}
         >
-          <span className="md:hidden text-[1.7rem] font-black leading-[1.1] tracking-[-0.04em]">
-            <LiasHeadlineBodyMobile title={title} />
-          </span>
-          <span className="hidden md:inline">
-            {before}
-            <span className="text-rose-600">ever.</span>
-          </span>
+          {before}
+          <span className="text-rose-600">ever.</span>
         </h1>
       );
     }
@@ -289,7 +237,6 @@ function HeroHeadline({
     <h1
       className={cn(
         headlineClassName,
-        !isCrb && liasHeadlineMobile,
         className,
         isCrb ? "text-white" : "text-stone-900",
       )}
@@ -303,13 +250,14 @@ function HeroHeadline({
 export function MarketingHero({
   brand,
   isCrb,
-  heroProduct,
+  heroProduct: _heroProduct,
   mobileLead,
 }: {
   brand: Brand;
   isCrb: boolean;
+  /** Reserved for non-hero catalog stills; home heroes use PNG sticker compositions. */
   heroProduct: { imageSrc: string; imageAlt: string };
-  /** Lias: mobile-only strip above headline (e.g. `MobileProductStrip`). */
+  /** Mobile-only block (badges, headline, sticker carousel) before the md+ marketing stack. */
   mobileLead?: ReactNode;
 }) {
   return (
@@ -318,7 +266,8 @@ export function MarketingHero({
         "relative overflow-hidden",
         isCrb
           ? "pt-16 pb-40 text-white dark-hero lg:min-h-[980px]"
-          : "pt-16 pb-40 text-stone-900 max-md:min-h-0 max-md:pt-8 max-md:pb-28 lg:min-h-[980px]",
+          : "pt-16 pb-40 text-stone-900 max-md:min-h-0 max-md:pt-5 max-md:pb-28 lg:min-h-[980px]",
+        isCrb && Boolean(mobileLead) && "max-md:min-h-0 max-md:pt-5 max-md:pb-28",
       )}
     >
       <div
@@ -355,22 +304,48 @@ export function MarketingHero({
         <div
           className={cn(
             "order-1 min-w-0 max-w-[640px] pt-12",
-            !isCrb && "max-md:max-w-full max-md:pt-2",
+            !isCrb && "max-md:max-w-full max-md:pt-0",
+            isCrb && Boolean(mobileLead) && "max-md:pt-0",
           )}
         >
-          {!isCrb && mobileLead ? mobileLead : null}
+          {mobileLead}
+
+          {!isCrb && Boolean(mobileLead) ? (
+            <div className="md:hidden mx-6 mt-2.5">
+              <Link
+                href="#quick-book"
+                className="group flex h-[58px] w-full items-center justify-center gap-2 rounded-[18px] bg-rose-600 px-4 text-[18px] font-black text-white shadow-[0_10px_25px_rgba(255,0,80,0.25)] transition-all duration-200 motion-reduce:transition-none hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+              >
+                Check availability this weekend
+                <ArrowRight className="h-5 w-5 transition-transform duration-200 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
+              </Link>
+            </div>
+          ) : null}
+          {isCrb && Boolean(mobileLead) ? (
+            <div className="md:hidden mx-6 mt-2.5">
+              <Link
+                href="#quick-book"
+                className="group flex h-[58px] w-full items-center justify-center gap-2 rounded-[18px] px-4 text-[18px] font-black text-slate-950 shadow-[0_0_32px_rgba(34,211,238,0.35)] transition-all duration-200 motion-reduce:transition-none hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+                style={{
+                  background: "linear-gradient(90deg, var(--brand-primary), #a5f3fc)",
+                }}
+              >
+                Check availability this weekend
+                <ArrowRight className="h-5 w-5 transition-transform duration-200 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
+              </Link>
+            </div>
+          ) : null}
+
           <div
-            className={cn(
-              "mb-4 flex flex-wrap gap-3",
-              !isCrb && "max-md:mb-2.5 max-md:mt-1 max-md:w-full max-md:justify-center max-md:gap-0",
-            )}
+            className={cn((!isCrb || Boolean(mobileLead)) && "max-md:hidden")}
           >
+            <div className="mb-4 flex flex-wrap gap-3">
             <span
               className={cn(
                 "inline-flex h-[42px] shrink-0 items-center gap-2 rounded-full px-5 text-[13px] font-black uppercase tracking-[0.08em] transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
                 isCrb
                   ? "bg-orange-500 text-slate-950 shadow-lg"
-                  : "min-w-0 max-md:mx-auto max-md:h-9 max-md:w-auto max-md:justify-center max-md:px-4 max-md:text-[11px] bg-rose-600 text-white shadow-md",
+                  : "min-w-0 bg-rose-600 text-white shadow-md",
               )}
             >
               <IconCalendar
@@ -383,8 +358,7 @@ export function MarketingHero({
                 "inline-flex h-[42px] shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-black uppercase tracking-[0.08em] transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
                 isCrb
                   ? "border-cyan-400/55 bg-slate-950/70 text-cyan-50 shadow-[0_6px_22px_rgba(2,6,23,0.45)] backdrop-blur-md"
-                  : "min-w-0 max-md:flex-1 max-md:basis-0 max-md:justify-center max-md:h-11 max-md:px-5 max-md:text-[12px] border-rose-400 bg-white text-orange-950",
-                !isCrb && "max-md:hidden",
+                  : "min-w-0 border-rose-400 bg-white text-orange-950",
               )}
             >
               <IconMapPin
@@ -401,7 +375,6 @@ export function MarketingHero({
           <div
             className={cn(
               "mb-8 flex flex-wrap gap-4",
-              !isCrb && "max-md:hidden",
               isCrb &&
                 "max-md:mb-4 max-md:grid max-md:grid-cols-2 max-md:gap-3 md:mb-8 md:flex md:flex-wrap",
             )}
@@ -425,7 +398,7 @@ export function MarketingHero({
                   "inline-flex h-[40px] shrink-0 items-center gap-2 rounded-full border px-5 text-[14px] font-bold shadow-sm transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
                   isCrb
                     ? "border-cyan-400/40 bg-slate-950/70 text-white backdrop-blur-md"
-                    : "max-md:h-10 max-md:px-4 max-md:text-[13px] border-orange-200/90 bg-white text-stone-800",
+                    : "border-orange-200/90 bg-white text-stone-800",
                 )}
               >
                 <Icon className={cn("h-4 w-4 shrink-0", isCrb ? "text-cyan-300" : "text-rose-600")} />
@@ -437,45 +410,30 @@ export function MarketingHero({
           <p
             className={cn(
               "mb-4 text-[16px] font-bold uppercase tracking-[0.3em]",
-              isCrb
-                ? "text-cyan-200/90"
-                : "text-rose-600 max-md:mb-2 max-md:text-[14px] max-md:tracking-[0.28em] max-md:hidden",
+              isCrb ? "text-cyan-200/90" : "text-rose-600",
             )}
           >
             {brand.copy.heroKicker}
           </p>
 
-          <HeroHeadline
-            title={brand.copy.heroTitle}
-            isCrb={isCrb}
-            className={!isCrb ? "max-md:my-0 max-md:mt-1 max-md:mb-1.5" : undefined}
-          />
+          <HeroHeadline title={brand.copy.heroTitle} isCrb={isCrb} />
 
           <p
             className={cn(
               "mt-5 max-w-[520px] text-[20px] font-semibold leading-[1.35]",
-              isCrb
-                ? "text-white/90"
-                : "text-stone-800 max-md:mt-0 max-md:max-w-full max-md:hidden",
+              isCrb ? "text-white/90" : "text-stone-800",
             )}
           >
             {brand.copy.heroSubtitle}
           </p>
 
-          <div
-            className={cn(
-              "mt-8 flex flex-wrap items-center gap-6 lg:gap-8",
-              !isCrb &&
-                "max-md:mt-3 max-md:max-w-full max-md:flex-col max-md:gap-0 md:mt-8 md:flex-row",
-            )}
-          >
+          <div className="mt-8 flex flex-wrap items-center gap-6 lg:gap-8">
             <Link
               href="#quick-book"
               className={cn(
                 "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] px-8 text-[18px] font-black text-white shadow-lg transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 hover:shadow-xl motion-reduce:hover:translate-y-0 hover:brightness-110 active:scale-[0.98] motion-reduce:active:scale-100",
                 isCrb && "text-slate-950 shadow-[0_0_40px_rgba(56,189,248,0.35)]",
-                !isCrb &&
-                  "w-full max-md:h-[56px] max-md:w-full max-md:px-6 bg-rose-600 hover:bg-rose-700 md:h-[60px] md:w-auto",
+                !isCrb && "w-auto bg-rose-600 hover:bg-rose-700",
               )}
               style={
                 isCrb
@@ -494,7 +452,7 @@ export function MarketingHero({
                 "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] border-2 border-orange-500/30 bg-white px-8 text-[18px] font-black text-stone-900 shadow-md transition-all duration-300 motion-reduce:transition-none hover:bg-stone-50",
                 isCrb &&
                   "border-white/40 bg-white/10 text-white shadow-none backdrop-blur hover:bg-white/15",
-                !isCrb && "w-full max-md:h-[58px] max-md:w-full max-md:hidden md:h-[60px] md:w-auto",
+                !isCrb && "w-auto",
               )}
             >
               Book your date
@@ -506,10 +464,14 @@ export function MarketingHero({
               />
             </Link>
           </div>
+          </div>
         </div>
 
         <div
-          className={cn("relative order-2 min-w-0", !isCrb && "max-md:hidden md:block")}
+          className={cn(
+            "relative order-2 min-w-0",
+            (Boolean(mobileLead) || !isCrb) && "max-md:hidden md:block",
+          )}
         >
           <div className="relative mt-4 w-full max-w-[600px] sm:mt-6 lg:ml-auto lg:mt-8">
             <div
@@ -524,7 +486,7 @@ export function MarketingHero({
             />
             {isCrb ? (
               <div
-                className="hero-float-sticker absolute right-[-24px] top-[100px] z-20 hidden lg:block"
+                className="hero-float-sticker pointer-events-none absolute right-[-24px] top-[100px] z-20 hidden lg:block"
                 aria-hidden
               >
                 <div className="max-w-[240px] rotate-6 rounded-2xl border border-cyan-400/35 bg-slate-950/80 px-4 py-2 text-xs font-black uppercase tracking-widest text-orange-300 shadow-xl backdrop-blur-md">
@@ -533,7 +495,7 @@ export function MarketingHero({
               </div>
             ) : (
               <div
-                className="hero-float-sticker absolute left-[-42px] top-[90px] z-20 hidden lg:block"
+                className="hero-float-sticker pointer-events-none absolute left-[-42px] top-[90px] z-20 hidden lg:block"
                 aria-hidden
               >
                 <div className="flex items-center gap-3 rotate-[-6deg] rounded-[22px] border-2 border-white bg-white px-5 py-3 shadow-xl">
@@ -547,25 +509,8 @@ export function MarketingHero({
                 </div>
               </div>
             )}
-            <div
-              className="relative aspect-[4/5] w-full overflow-hidden rounded-[36px] border-[6px] border-white shadow-2xl transition-transform duration-500 motion-reduce:transition-none hover:scale-[1.015] motion-reduce:hover:scale-100"
-            >
-              <CatalogImage
-                src={heroProduct.imageSrc}
-                alt={heroProduct.imageAlt}
-                fill
-                className="h-full w-full object-cover object-center"
-                sizes="(max-width: 1024px) 100vw, 600px"
-                priority
-              />
-              <div
-                className={cn(
-                  "pointer-events-none absolute inset-0",
-                  isCrb
-                    ? "bg-gradient-to-t from-slate-950/65 via-transparent to-cyan-400/12"
-                    : "bg-gradient-to-t from-stone-900/25 via-transparent to-amber-100/10",
-                )}
-              />
+            <div className="relative z-10 w-full">
+              <HeroDesktopStickerComposition isCrb={isCrb} />
             </div>
           </div>
         </div>
@@ -574,19 +519,23 @@ export function MarketingHero({
       <div
         className={cn(
           "relative z-30 mx-auto mt-10 w-full max-w-[1320px] px-8 lg:absolute lg:bottom-[120px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
-          !isCrb && "max-md:mt-4 max-md:px-4",
+          !isCrb && "max-md:mt-2 max-md:px-4",
         )}
       >
         <div
           className={cn(
             "flex min-h-[132px] items-center rounded-[24px] bg-white px-8 py-5 shadow-2xl transition-all duration-300 motion-reduce:transition-none hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)]",
-            !isCrb && "max-md:min-h-0 max-md:px-4 max-md:py-3",
+            !isCrb &&
+              "max-md:min-h-0 max-md:flex-col max-md:items-stretch max-md:gap-1.5 max-md:px-4 max-md:py-2.5",
           )}
         >
+          {!isCrb ? (
+            <p className="font-bold text-stone-900 md:hidden">Build your party</p>
+          ) : null}
           <QuickBookBar
             isCrb={isCrb}
             id="quick-book"
-            compactMobile={!isCrb}
+            compactMobile={!isCrb || Boolean(mobileLead)}
             className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
           />
         </div>

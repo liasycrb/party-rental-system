@@ -1,3 +1,5 @@
+import type { Brand } from "@/lib/brand/config";
+import { cn } from "@/lib/utils/cn";
 import { HeroMobileStickerCarousel } from "@/components/home/hero-mobile-sticker-carousel";
 
 const VALUE_BADGES: {
@@ -5,8 +7,8 @@ const VALUE_BADGES: {
   label: string;
   type: "calendar" | "pin";
 }[] = [
-  { id: "slots", label: "Limited weekend slots", type: "calendar" },
-  { id: "ie", label: "Moreno Valley & the I.E.", type: "pin" },
+  { id: "slots", label: "Weekend slots tight", type: "calendar" },
+  { id: "ie", label: "I.E. delivery routes", type: "pin" },
 ];
 
 function SmallIcon({ type }: { type: "calendar" | "pin" }) {
@@ -43,11 +45,13 @@ function SmallIcon({ type }: { type: "calendar" | "pin" }) {
   );
 }
 
-/**
- * Lias mobile-only (max-md) hero: value badges, centered headline, sticker carousel.
- * Desktop is driven by `MarketingHero`; this component is `md:hidden` at the site of use.
- */
-export function MobileProductStrip() {
+/** CRB-only `md:hidden` mobile hero: badges, copy, social proof, sticker carousel, urgency. CTA is in `MarketingHero` (match Lias). */
+export function CrbMobileHeroStrip({ brand }: { brand: Brand }) {
+  const title = brand.copy.heroTitle.trim();
+  const dot = title.indexOf(". ");
+  const line1 = dot === -1 ? title : title.slice(0, dot + 1).trim();
+  const line2 = dot === -1 ? "" : title.slice(dot + 2).trim();
+
   return (
     <div className="md:hidden w-full min-w-0">
       <div
@@ -59,9 +63,9 @@ export function MobileProductStrip() {
           <span
             key={b.id}
             role="listitem"
-            className="inline-flex h-10 min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-rose-200/80 bg-white/80 pl-2.5 pr-2 text-[11px] font-bold text-stone-800 shadow-sm backdrop-blur-md"
+            className="inline-flex h-10 min-w-0 items-center gap-1.5 overflow-hidden rounded-full border border-cyan-400/35 bg-slate-950/60 pl-2.5 pr-2 text-[11px] font-bold text-cyan-50 shadow-[0_6px_20px_rgba(2,6,23,0.45)] backdrop-blur-md"
           >
-            <span className="shrink-0 text-rose-600">
+            <span className="shrink-0 text-cyan-300">
               <SmallIcon type={b.type} />
             </span>
             <span className="min-w-0 flex-1 truncate text-left leading-tight">
@@ -72,22 +76,27 @@ export function MobileProductStrip() {
       </div>
 
       <div className="mx-auto mt-5 max-w-[390px] text-center">
-        <h1 className="text-[44px] font-black leading-[0.9] tracking-[-0.02em] text-stone-900 drop-shadow-[0_2px_0_rgba(255,255,255,0.35)]">
-          <span className="block">Your backyard.</span>
-          <span className="mt-0.5 block">
-            Their best day <span className="text-rose-600">ever.</span>
-          </span>
+        <h1
+          className={cn(
+            "text-[44px] font-black leading-[0.9] tracking-[-0.02em] text-white",
+            "drop-shadow-[0_2px_12px_rgba(2,6,23,0.75)]",
+          )}
+        >
+          <span className="block">{line1}</span>
+          {line2 ? (
+            <span className="mt-0.5 block text-cyan-200">{line2}</span>
+          ) : null}
         </h1>
-        <p className="mx-auto mt-2 max-w-[320px] text-[18px] font-medium leading-[1.3] text-black/80">
-          Book in minutes. We deliver, set up, and pick up.
+        <p className="mx-auto mt-2 max-w-[320px] text-[18px] font-medium leading-[1.3] text-cyan-100/90">
+          {brand.copy.heroSubtitle}
         </p>
-        <p className="mx-auto mt-3 mb-3 max-w-[280px] text-center text-sm font-medium text-black/70">
+        <p className="mx-auto mt-3 mb-3 max-w-[280px] text-center text-sm font-medium text-cyan-50/90">
           ⭐ Rated 4.9 by 100+ local families
         </p>
       </div>
 
-      <HeroMobileStickerCarousel variant="lias" />
-      <p className="mt-2 mb-2 text-center text-[12px] font-semibold text-black/70">
+      <HeroMobileStickerCarousel variant="crb" />
+      <p className="mt-2 mb-2 text-center text-[12px] font-semibold text-orange-200/90">
         🔥 Only a few spots left this weekend
       </p>
     </div>
