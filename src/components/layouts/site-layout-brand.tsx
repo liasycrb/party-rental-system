@@ -17,11 +17,14 @@ function SiteShellWithUrlSearchParams({
   const searchParams = useSearchParams();
 
   const brand = useMemo((): Brand => {
-    if (pathname !== "/") {
-      return serverBrand;
+    const q = searchParams.get("brand");
+    if (pathname === "/") {
+      return BRANDS[resolveHomeBrandSlug(q)];
     }
-    const slug = resolveHomeBrandSlug(searchParams.get("brand"));
-    return BRANDS[slug];
+    if (pathname.startsWith("/categories/")) {
+      return BRANDS[resolveHomeBrandSlug(q)];
+    }
+    return serverBrand;
   }, [pathname, searchParams, serverBrand]);
 
   return <SiteShell brand={brand}>{children}</SiteShell>;

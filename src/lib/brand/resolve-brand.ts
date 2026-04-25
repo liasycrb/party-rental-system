@@ -51,3 +51,14 @@ export function resolveHomeBrandSlug(brandQuery: string | null | undefined): Bra
     slugFromEnv(process.env.NEXT_PUBLIC_DEFAULT_BRAND_SLUG) ?? DEFAULT_BRAND_SLUG
   );
 }
+
+/**
+ * `?brand=` on server `page.tsx` searchParams: field may be `string | string[] | undefined`.
+ * Validates `lias` | `crb`, else `NEXT_PUBLIC_DEFAULT_BRAND_SLUG` or default.
+ */
+export function resolveBrandSlugFromPageSearchParam(
+  brand: string | string[] | undefined,
+): BrandSlug {
+  const raw = typeof brand === "string" ? brand : Array.isArray(brand) ? brand[0] : undefined;
+  return resolveHomeBrandSlug(raw);
+}

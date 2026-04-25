@@ -49,7 +49,7 @@ export function HeroStickerPng({
               LIAS_MOBILE_GLASS,
             )}
           >
-            <p className="text-sm font-medium leading-snug">Product image coming soon</p>
+            <p className="text-sm font-medium leading-snug">Image coming soon</p>
           </div>
         </div>
       );
@@ -61,9 +61,7 @@ export function HeroStickerPng({
           className,
         )}
       >
-        <p className="text-center text-sm font-medium leading-snug">
-          Product image coming soon
-        </p>
+        <p className="text-center text-sm font-medium leading-snug">Image coming soon</p>
       </div>
     );
   }

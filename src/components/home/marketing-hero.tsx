@@ -263,11 +263,11 @@ export function MarketingHero({
   return (
     <section
       className={cn(
-        "relative overflow-hidden",
+        "relative max-md:overflow-hidden lg:overflow-visible",
         isCrb
-          ? "pt-16 pb-40 text-white dark-hero lg:min-h-[980px]"
-          : "pt-16 pb-40 text-stone-900 max-md:min-h-0 max-md:pt-5 max-md:pb-28 lg:min-h-[980px]",
-        isCrb && Boolean(mobileLead) && "max-md:min-h-0 max-md:pt-5 max-md:pb-28",
+          ? "pt-16 pb-4 text-white dark-hero max-md:pb-3 md:pb-4 lg:pb-5 lg:min-h-[980px]"
+          : "pt-16 pb-4 text-stone-900 max-md:min-h-0 max-md:pt-5 max-md:pb-3 md:pb-4 lg:min-h-[980px] lg:pb-5",
+        isCrb && Boolean(mobileLead) && "max-md:min-h-0 max-md:pt-5 max-md:pb-3 md:pb-4 lg:pb-5",
       )}
     >
       <div
@@ -473,7 +473,7 @@ export function MarketingHero({
             (Boolean(mobileLead) || !isCrb) && "max-md:hidden md:block",
           )}
         >
-          <div className="relative mt-4 w-full max-w-[600px] sm:mt-6 lg:ml-auto lg:mt-8">
+          <div className="relative mt-4 w-full max-w-[680px] sm:mt-6 lg:ml-auto lg:mt-8">
             <div
               className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[min(100%,28rem)] -translate-x-1/2 -translate-y-1/2 rounded-[3rem] blur-2xl"
               style={{
@@ -518,7 +518,7 @@ export function MarketingHero({
 
       <div
         className={cn(
-          "relative z-30 mx-auto mt-10 w-full max-w-[1320px] px-8 lg:absolute lg:bottom-[120px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
+          "relative z-30 mx-auto mt-10 mb-4 w-full max-w-[1320px] px-8 max-md:mb-3 md:mb-5 lg:absolute lg:bottom-[120px] lg:mb-0 lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
           !isCrb && "max-md:mt-8 max-md:px-4",
         )}
       >
@@ -545,10 +545,10 @@ export function MarketingHero({
 
       <div
         className={cn(
-          "relative z-20 mx-auto mt-6 flex w-full max-w-[1320px] flex-wrap items-center justify-center gap-6 px-8 sm:gap-8 lg:absolute lg:bottom-[28px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:gap-10 lg:px-0",
+          "relative z-20 mx-auto mt-3 flex w-full max-w-[1320px] flex-wrap items-center justify-center gap-6 px-8 sm:mt-4 sm:gap-8 lg:absolute lg:bottom-[28px] lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:gap-10 lg:px-0",
           isCrb
             ? "text-orange-200"
-            : "text-orange-950/90 max-md:mt-4 max-md:gap-4 max-md:px-4 max-md:hidden",
+            : "text-orange-950/90 max-md:mt-2 max-md:gap-4 max-md:px-4 max-md:hidden",
         )}
         role="list"
         aria-label="Trust and guarantees"

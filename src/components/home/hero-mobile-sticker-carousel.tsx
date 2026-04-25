@@ -1,17 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { CategoryHeroCtaPill } from "@/components/home/category-hero-cta-pill";
+import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
 import { cn } from "@/lib/utils/cn";
-import { HERO_CAROUSEL_STICKERS } from "@/components/home/hero-sticker-constants";
 import { HeroStickerPng } from "@/components/home/hero-sticker-png";
 
 const AUTOPLAY_MS = 2700;
-const N = HERO_CAROUSEL_STICKERS.length;
+const N = CATEGORY_CAROUSEL_ITEMS.length;
 
 export type HeroStickerCarouselVariant = "lias" | "crb";
 
@@ -33,10 +35,6 @@ export function HeroMobileStickerCarousel({
       ? "h-2.5 w-2.5 bg-pink-600"
       : "h-2.5 w-2.5 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.55)]";
   const inactiveDot = "h-2 w-2 bg-black/20";
-  const labelClass =
-    variant === "lias"
-      ? "text-stone-800"
-      : "text-cyan-50/95";
 
   const setSlideIndex = useCallback(
     (i: number, opts?: { behavior?: ScrollBehavior }) => {
@@ -126,31 +124,38 @@ export function HeroMobileStickerCarousel({
           variant === "lias" ? "pb-0" : "pb-0.5",
         )}
         role="list"
-        aria-label="Product stickers"
+        aria-label="Product categories"
         onScroll={onScroll}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        {HERO_CAROUSEL_STICKERS.map((s) => {
+        {CATEGORY_CAROUSEL_ITEMS.map((item) => {
           const isLias = variant === "lias";
           return (
-            <div
-              key={s.src}
+            <Link
+              key={item.slug}
+              href={item.href}
               role="listitem"
-              className="min-w-[86%] shrink-0 snap-center"
+              aria-label={`${item.title} — view category`}
+              className={cn(
+                "group block min-w-[86%] shrink-0 snap-center rounded-lg outline-offset-2 focus-visible:ring-2 focus-visible:ring-offset-2",
+                isLias
+                  ? "focus-visible:ring-pink-500/60 focus-visible:ring-offset-amber-50"
+                  : "focus-visible:ring-cyan-400/50 focus-visible:ring-offset-slate-900",
+              )}
             >
               <div
                 className={cn(
-                  "flex min-h-0 w-full items-center justify-center",
+                  "relative flex min-h-0 w-full items-center justify-center overflow-visible",
                   isLias
                     ? "h-[300px] max-[380px]:h-[270px]"
                     : "h-[320px] max-[380px]:h-[290px]",
                 )}
               >
                 <HeroStickerPng
-                  src={s.src}
-                  alt={s.alt}
+                  src={item.imageSrc}
+                  alt=""
                   heroVariant={isLias ? "lias-mobile" : "default"}
                   className="flex h-full w-full max-w-[min(100%,420px)] min-w-0 items-center justify-center"
                   imageClassName={
@@ -159,17 +164,12 @@ export function HeroMobileStickerCarousel({
                       : "max-h-[310px] max-w-full object-contain max-[380px]:max-h-[280px]"
                   }
                 />
+                <CategoryHeroCtaPill
+                  title={item.title}
+                  className="max-w-[min(calc(100%-1.5rem),18rem)]"
+                />
               </div>
-              <p
-                className={cn(
-                  "text-center text-[13px] font-bold",
-                  isLias ? "mt-1" : "mt-1.5",
-                  labelClass,
-                )}
-              >
-                {s.label}
-              </p>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -179,15 +179,15 @@ export function HeroMobileStickerCarousel({
           variant === "lias" ? "mt-0.5" : "mt-1",
         )}
         role="tablist"
-        aria-label="Slide indicators"
+        aria-label="Category slide indicators"
       >
-        {HERO_CAROUSEL_STICKERS.map((s, i) => (
+        {CATEGORY_CAROUSEL_ITEMS.map((item, i) => (
           <button
-            key={s.src}
+            key={item.slug}
             type="button"
             role="tab"
             aria-selected={i === index}
-            aria-label={`${s.label}, slide ${i + 1} of ${N}`}
+            aria-label={`${item.title}, slide ${i + 1} of ${N}`}
             className={cn(
               "rounded-full transition-colors",
               i === index ? activeDot : inactiveDot,

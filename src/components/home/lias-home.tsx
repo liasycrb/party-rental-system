@@ -13,6 +13,7 @@ import { MarketingHero } from "@/components/home/marketing-hero";
 import { MobileProductStrip } from "@/components/home/mobile-product-strip";
 import { Container } from "@/components/marketing/container";
 import { ProductCard } from "@/components/marketing/product-card";
+import { CategoryShowcase } from "@/components/marketing/category-showcase";
 import { SectionTitle } from "@/components/marketing/section-title";
 
 export function LiasHome({ brand }: { brand: Brand }) {
@@ -31,7 +32,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
       />
 
       <section
-        className="relative border-y py-5"
+        className="relative mt-2 max-md:mt-1 border-y py-5 md:mt-2"
         style={{
           background: "var(--brand-stripe-ticker)",
           borderColor: "rgba(161, 98, 7, 0.35)",
@@ -43,6 +44,8 @@ export function LiasHome({ brand }: { brand: Brand }) {
           </p>
         </Container>
       </section>
+
+      <CategoryShowcase isCrb={false} />
 
       <PopularPackagesSection brand={brand} />
       <WhyChooseStrip brand={brand} />
