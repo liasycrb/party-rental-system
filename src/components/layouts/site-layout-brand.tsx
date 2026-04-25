@@ -24,6 +24,9 @@ function SiteShellWithUrlSearchParams({
     if (pathname.startsWith("/categories/")) {
       return BRANDS[resolveHomeBrandSlug(q)];
     }
+    if (pathname === "/build") {
+      return BRANDS[resolveHomeBrandSlug(q)];
+    }
     return serverBrand;
   }, [pathname, searchParams, serverBrand]);
 
