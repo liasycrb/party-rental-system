@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { QuickBookBar } from "@/components/conversion/quick-book-bar";
 import { HeroDesktopStickerComposition } from "@/components/home/hero-desktop-sticker-composition";
 import { cn } from "@/lib/utils/cn";
@@ -447,7 +448,7 @@ export function MarketingHero({
               <ArrowRight className="h-5 w-5 transition-transform duration-300 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
             </Link>
             <Link
-              href="/build"
+              href={withBrand("/build", brand.slug)}
               className={cn(
                 "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] border-2 border-orange-500/30 bg-white px-8 text-[18px] font-black text-stone-900 shadow-md transition-all duration-300 motion-reduce:transition-none hover:bg-stone-50",
                 isCrb &&
@@ -510,7 +511,10 @@ export function MarketingHero({
               </div>
             )}
             <div className="relative z-10 w-full">
-              <HeroDesktopStickerComposition isCrb={isCrb} />
+              <HeroDesktopStickerComposition
+                isCrb={isCrb}
+                brandSlug={brand.slug}
+              />
             </div>
           </div>
         </div>
@@ -536,6 +540,7 @@ export function MarketingHero({
           ) : null}
           <QuickBookBar
             isCrb={isCrb}
+            brandSlug={brand.slug}
             id="quick-book"
             compactMobile={!isCrb || Boolean(mobileLead)}
             className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-none"

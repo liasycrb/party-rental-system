@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import type { DemoProduct } from "@/lib/catalog/demo-products";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { cn } from "@/lib/utils/cn";
@@ -17,6 +18,7 @@ export function ProductCard({
   className?: string;
 }) {
   const isCrb = brand.slug === "crb";
+  const b = brand.slug;
   const objectPosition = product.imagePosition ?? "center center";
 
   if (visual === "showcase") {
@@ -38,7 +40,7 @@ export function ProductCard({
             sizes="(max-width: 1024px) 100vw, 60vw"
           />
           <Link
-            href={`/products/${product.slug}`}
+            href={withBrand(`/products/${product.slug}`, b)}
             className="absolute inset-0 z-[1]"
             aria-label={`View ${product.title}`}
           >
@@ -73,7 +75,7 @@ export function ProductCard({
           </span>
           <h3 className="mt-4 font-black leading-[1.05] text-white drop-shadow-md sm:text-3xl sm:leading-tight">
             <Link
-              href={`/products/${product.slug}`}
+              href={withBrand(`/products/${product.slug}`, b)}
               className={cn(
                 "hover:underline hover:decoration-2",
                 isCrb
@@ -101,7 +103,7 @@ export function ProductCard({
               {product.priceFrom}
             </p>
             <Link
-              href={`/build?product=${product.slug}`}
+              href={withBrand(`/build?product=${product.slug}`, b)}
               className="relative inline-flex items-center justify-center px-6 py-3 text-center text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: isCrb
@@ -139,7 +141,7 @@ export function ProductCard({
           : undefined,
       }}
     >
-      <Link href={`/products/${product.slug}`} className="relative block">
+      <Link href={withBrand(`/products/${product.slug}`, b)} className="relative block">
         <div
           className="relative aspect-[3/4] overflow-hidden sm:aspect-[5/6]"
           style={{
@@ -206,7 +208,7 @@ export function ProductCard({
           )}
         >
           <Link
-            href={`/products/${product.slug}`}
+            href={withBrand(`/products/${product.slug}`, b)}
             className={cn(
               "hover:underline hover:decoration-2",
               isCrb
@@ -267,7 +269,7 @@ export function ProductCard({
 
         <div className="mt-4 flex flex-1 flex-col justify-end gap-3 pt-2 sm:flex-row sm:items-end sm:justify-between">
           <Link
-            href={`/build?product=${product.slug}`}
+            href={withBrand(`/build?product=${product.slug}`, b)}
             className="inline-flex items-center justify-center px-4 py-2.5 text-center text-sm font-bold transition-[transform,filter] active:scale-[0.98]"
             style={{
               background: isCrb

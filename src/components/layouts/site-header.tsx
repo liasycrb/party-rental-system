@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 
 export function SiteHeader({ brand }: { brand: Brand }) {
@@ -25,7 +26,7 @@ export function SiteHeader({ brand }: { brand: Brand }) {
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <Link
-          href="/"
+          href={withBrand("/", brand.slug)}
           className={cn(
             "group min-w-0 text-sm font-bold tracking-tight sm:text-base",
               isCrb &&
@@ -51,18 +52,18 @@ export function SiteHeader({ brand }: { brand: Brand }) {
             className="flex items-center gap-2 sm:gap-3"
             aria-label="Primary"
           >
-            <Link href="/products" className={cn(navLinkClass, "hidden sm:inline")}>
+            <Link href={withBrand("/products", brand.slug)} className={cn(navLinkClass, "hidden sm:inline")}>
               Catalog
             </Link>
             <Link
-              href="/products"
+              href={withBrand("/products", brand.slug)}
               className={cn(navLinkClass, "sm:hidden")}
               aria-label="Catalog"
             >
               Shop
             </Link>
             <Link
-              href="/build"
+              href={withBrand("/build", brand.slug)}
               className="inline-flex items-center justify-center px-4 py-2 text-sm font-bold shadow-lg transition-[transform,box-shadow,filter] hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: isCrb

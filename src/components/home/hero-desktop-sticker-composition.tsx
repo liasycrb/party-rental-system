@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import type { BrandSlug } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { CategoryHeroCtaPill } from "@/components/home/category-hero-cta-pill";
 import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
 import { cn } from "@/lib/utils/cn";
@@ -14,7 +16,13 @@ const FADE_MS = 500;
  * Single rotating category (md+ right column), same data for Lias and CRB.
  * Badge overlaps bottom of image; single Link for image + label.
  */
-export function HeroDesktopStickerComposition({ isCrb }: { isCrb: boolean }) {
+export function HeroDesktopStickerComposition({
+  isCrb,
+  brandSlug,
+}: {
+  isCrb: boolean;
+  brandSlug: BrandSlug;
+}) {
   const n = CATEGORY_CAROUSEL_ITEMS.length;
 
   const [index, setIndex] = useState(0);
@@ -78,7 +86,7 @@ export function HeroDesktopStickerComposition({ isCrb }: { isCrb: boolean }) {
         )}
       >
         <Link
-          href={current.href}
+          href={withBrand(current.href, brandSlug)}
           aria-label={`${current.title} — view category`}
           className={cn(
             "group flex w-full max-w-[560px] flex-col items-stretch focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",

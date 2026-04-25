@@ -1,14 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { BrandSlug } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
 import { cn } from "@/lib/utils/cn";
 import { Container } from "./container";
 
 type CategoryShowcaseProps = {
   isCrb: boolean;
+  brandSlug: BrandSlug;
 };
 
-export function CategoryShowcase({ isCrb }: CategoryShowcaseProps) {
+export function CategoryShowcase({ isCrb, brandSlug }: CategoryShowcaseProps) {
   return (
     <section
       aria-labelledby="category-showcase-heading"
@@ -64,7 +67,7 @@ export function CategoryShowcase({ isCrb }: CategoryShowcaseProps) {
           {CATEGORY_CAROUSEL_ITEMS.map((item) => (
             <li key={item.slug} className="min-w-0">
               <Link
-                href={item.href}
+                href={withBrand(item.href, brandSlug)}
                 className={cn(
                   "group relative z-0 block cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:hover:z-20",
                   isCrb

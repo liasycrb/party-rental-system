@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
   EXPERIENCE_MOMENTS,
@@ -18,6 +19,7 @@ import { SectionTitle } from "@/components/marketing/section-title";
 
 export function LiasHome({ brand }: { brand: Brand }) {
   const [p1, p2, p3] = DEMO_PRODUCTS;
+  const b = brand.slug;
 
   return (
     <>
@@ -45,7 +47,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
         </Container>
       </section>
 
-      <CategoryShowcase isCrb={false} />
+      <CategoryShowcase isCrb={false} brandSlug={b} />
 
       <PopularPackagesSection brand={brand} />
       <WhyChooseStrip brand={brand} />
@@ -130,6 +132,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
       <Container className="relative py-10 sm:py-12">
         <CtaBanner
           isCrb={false}
+          brandSlug={b}
           title="Your date. Your yard. Their best day."
           subtitle="Build your party now — we’ll confirm availability, walk safety, and lock delivery windows for Moreno Valley and nearby."
         />
@@ -187,7 +190,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
           </div>
           <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
-              href="/build"
+              href={withBrand("/build", b)}
               className="inline-flex w-full items-center justify-center px-10 py-4 text-sm font-black text-white shadow-xl transition hover:brightness-110 sm:w-auto"
               style={{
                 background:
@@ -198,7 +201,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
               Build your party now
             </Link>
             <Link
-              href="/products"
+              href={withBrand("/products", b)}
               className="inline-flex w-full items-center justify-center border-2 border-orange-500/35 bg-white/95 px-10 py-4 text-sm font-black text-orange-950 shadow-lg backdrop-blur transition hover:bg-white sm:w-auto"
               style={{ borderRadius: "var(--brand-radius-lg)" }}
             >
@@ -270,7 +273,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
           </div>
           <div className="mt-12 flex justify-center">
             <Link
-              href="/build"
+              href={withBrand("/build", b)}
               className="inline-flex items-center justify-center px-10 py-4 text-sm font-black text-orange-950 shadow-xl transition hover:brightness-110"
               style={{
                 background:
@@ -320,7 +323,7 @@ export function LiasHome({ brand }: { brand: Brand }) {
                 <li>· One calendar — no double booking between brands</li>
               </ul>
               <Link
-                href="/build"
+                href={withBrand("/build", b)}
                 className="mt-8 inline-flex w-fit items-center justify-center px-6 py-3 text-sm font-black text-amber-950 shadow-lg"
                 style={{
                   background:

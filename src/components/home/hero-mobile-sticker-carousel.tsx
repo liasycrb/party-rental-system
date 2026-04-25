@@ -7,6 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
+import type { BrandSlug } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { CategoryHeroCtaPill } from "@/components/home/category-hero-cta-pill";
 import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
 import { cn } from "@/lib/utils/cn";
@@ -22,6 +24,7 @@ export function HeroMobileStickerCarousel({
 }: {
   variant: HeroStickerCarouselVariant;
 }) {
+  const brandSlug: BrandSlug = variant === "lias" ? "lias" : "crb";
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const indexRef = useRef(0);
   const pauseAutoplayRef = useRef(false);
@@ -135,7 +138,7 @@ export function HeroMobileStickerCarousel({
           return (
             <Link
               key={item.slug}
-              href={item.href}
+              href={withBrand(item.href, brandSlug)}
               role="listitem"
               aria-label={`${item.title} — view category`}
               className={cn(

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { POPULAR_PACKAGES } from "@/lib/marketing/popular-packages";
 import { Container } from "@/components/marketing/container";
 import { SectionTitle } from "@/components/marketing/section-title";
@@ -13,6 +14,7 @@ export function PopularPackagesSection({
   id?: string;
 }) {
   const isCrb = brand.slug === "crb";
+  const b = brand.slug;
 
   return (
     <section
@@ -111,7 +113,7 @@ export function PopularPackagesSection({
                 </ul>
                 <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
                   <Link
-                    href={`/build?package=${pkg.id}`}
+                    href={withBrand(`/build?package=${pkg.id}`, b)}
                     className="inline-flex flex-1 items-center justify-center px-5 py-3 text-center text-sm font-black text-white shadow-lg transition hover:brightness-110"
                     style={{
                       background: isCrb
@@ -123,7 +125,7 @@ export function PopularPackagesSection({
                     Book this setup
                   </Link>
                   <Link
-                    href={`/build?package=${pkg.id}`}
+                    href={withBrand(`/build?package=${pkg.id}`, b)}
                     className={cn(
                       "inline-flex items-center justify-center px-3 py-3 text-center text-xs font-black uppercase tracking-wider underline-offset-4 hover:underline",
                       isCrb ? "text-cyan-200" : "text-orange-900",

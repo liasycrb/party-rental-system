@@ -8,6 +8,7 @@ import {
   CATEGORY_PAGE_BENEFITS,
   CATEGORY_PAGE_SERVICE_AREA,
 } from "@/lib/catalog/category-page-data";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 
 type CategoryBrand = "crb" | "lias";
@@ -92,9 +93,11 @@ const benefitOrder = [
 function CategoryProductGridCard({
   product,
   t,
+  brand,
 }: {
   product: CategoryPageProduct;
   t: ReturnType<typeof getCategoryPageBrandTokens>;
+  brand: CategoryBrand;
 }) {
   return (
     <article
@@ -147,7 +150,7 @@ function CategoryProductGridCard({
         </p>
         <div className="mt-3 flex-1" />
         <Link
-          href={product.bookHref}
+          href={withBrand(product.bookHref, brand)}
           className={cn(
             "inline-flex h-10 w-full items-center justify-center rounded-xl text-center text-sm font-bold transition active:scale-[0.99]",
             t.ctaButton,
@@ -171,14 +174,17 @@ export function CategoryPageTemplate({
 }) {
   const t = getCategoryPageBrandTokens(brand);
   const { item, pageTitle, pageSubtitle, heroImageSrc, products } = data;
-  const primaryCta = `/build?category=${encodeURIComponent(item.slug)}`;
+  const primaryCta = withBrand(
+    `/build?category=${encodeURIComponent(item.slug)}`,
+    brand,
+  );
 
   return (
     <div className={cn(t.pageRoot)}>
       <div className={cn("py-6 sm:py-8", t.sectionBg)}>
         <Container>
           <Link
-            href="/products"
+            href={withBrand("/products", brand)}
             className={cn(
               "mb-4 inline-block text-sm font-semibold underline-offset-4 transition hover:underline",
               t.linkNav,
@@ -259,7 +265,11 @@ export function CategoryPageTemplate({
           <ul className="mt-6 grid list-none grid-cols-2 gap-3 p-0 sm:gap-4 md:grid-cols-3 md:gap-6">
             {products.map((product) => (
               <li key={product.name} className="min-w-0">
-                <CategoryProductGridCard product={product} t={t} />
+                <CategoryProductGridCard
+                  product={product}
+                  t={t}
+                  brand={brand}
+                />
               </li>
             ))}
           </ul>

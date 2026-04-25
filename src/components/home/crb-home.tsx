@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
   EXPERIENCE_MOMENTS,
@@ -18,6 +19,7 @@ import { SectionTitle } from "@/components/marketing/section-title";
 
 export function CrbHome({ brand }: { brand: Brand }) {
   const [p1, p2, p3] = DEMO_PRODUCTS;
+  const b = brand.slug;
 
   return (
     <>
@@ -45,7 +47,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
         </Container>
       </section>
 
-      <CategoryShowcase isCrb />
+      <CategoryShowcase isCrb brandSlug={b} />
 
       <PopularPackagesSection brand={brand} />
       <WhyChooseStrip brand={brand} />
@@ -130,6 +132,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
       <Container className="relative py-10 sm:py-12">
         <CtaBanner
           isCrb
+          brandSlug={b}
           title="Don’t lose your weekend to “we’ll call you back.”"
           subtitle="Reserve the unit, lock the date, and let us handle delivery and setup across the I.E. — most hosts finish in a few minutes."
         />
@@ -187,7 +190,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
           </div>
           <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
-              href="/build"
+              href={withBrand("/build", b)}
               className="inline-flex w-full items-center justify-center px-10 py-4 text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110 sm:w-auto"
               style={{
                 background:
@@ -198,7 +201,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
               Build your party now
             </Link>
             <Link
-              href="/products"
+              href={withBrand("/products", b)}
               className="inline-flex w-full items-center justify-center border-2 border-cyan-400/40 bg-slate-950/55 px-10 py-4 text-sm font-black text-white backdrop-blur transition hover:bg-slate-900/75 sm:w-auto"
               style={{ borderRadius: "var(--brand-radius-md)" }}
             >
@@ -249,7 +252,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
           </div>
           <div className="mt-10 flex justify-center">
             <Link
-              href="/build"
+              href={withBrand("/build", b)}
               className="inline-flex items-center justify-center px-10 py-4 text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110"
               style={{
                 background:
@@ -300,7 +303,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
                 for now it’s pure adrenaline + trust.
               </p>
               <Link
-                href="/build"
+                href={withBrand("/build", b)}
                 className="mt-8 inline-flex w-fit items-center justify-center px-6 py-3 text-sm font-black text-slate-950 shadow-xl"
                 style={{
                   background:

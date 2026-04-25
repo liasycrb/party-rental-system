@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 
 export function SiteFooter({ brand }: { brand: Brand }) {
@@ -37,7 +38,7 @@ export function SiteFooter({ brand }: { brand: Brand }) {
             <ul className="mt-4 space-y-3 text-sm font-semibold">
               <li>
                 <Link
-                  href="/products"
+                  href={withBrand("/products", brand.slug)}
                   className="text-white hover:underline hover:decoration-2 hover:decoration-amber-300"
                 >
                   Browse inflatables
@@ -45,7 +46,7 @@ export function SiteFooter({ brand }: { brand: Brand }) {
               </li>
               <li>
                 <Link
-                  href="/build"
+                  href={withBrand("/build", brand.slug)}
                   className="text-white hover:underline hover:decoration-2 hover:decoration-amber-300"
                 >
                   Build your event

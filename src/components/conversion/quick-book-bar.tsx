@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { BrandSlug } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 
 function CalendarGlyph({ className }: { className?: string }) {
@@ -64,12 +66,14 @@ function parseQuickBookDate(raw: string): string | null {
 
 export function QuickBookBar({
   isCrb,
+  brandSlug,
   className,
   id,
   /** Tighter, stacked field + CTA; only applied at `max-md` so desktop is unchanged. */
   compactMobile = false,
 }: {
   isCrb: boolean;
+  brandSlug: BrandSlug;
   className?: string;
   /** Anchor target for hero CTAs (e.g. `quick-book`) */
   id?: string;
@@ -85,10 +89,12 @@ export function QuickBookBar({
     e.preventDefault();
     const iso = parseQuickBookDate(date);
     if (iso) {
-      router.push(`/build?date=${encodeURIComponent(iso)}`);
+      router.push(
+        withBrand(`/build?date=${encodeURIComponent(iso)}`, brandSlug),
+      );
       return;
     }
-    router.push("/build");
+    router.push(withBrand("/build", brandSlug));
   }
 
   return (
@@ -227,7 +233,7 @@ export function QuickBookBar({
       >
         <button
           type="button"
-          onClick={() => router.push("/build")}
+          onClick={() => router.push(withBrand("/build", brandSlug))}
           className={cn(
             "w-fit text-left text-xs font-bold underline-offset-4 transition hover:underline",
             isCrb

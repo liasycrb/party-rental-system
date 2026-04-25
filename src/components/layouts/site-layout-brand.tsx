@@ -18,13 +18,13 @@ function SiteShellWithUrlSearchParams({
 
   const brand = useMemo((): Brand => {
     const q = searchParams.get("brand");
+    if (q === "lias" || q === "crb") {
+      return BRANDS[q];
+    }
     if (pathname === "/") {
       return BRANDS[resolveHomeBrandSlug(q)];
     }
-    if (pathname.startsWith("/categories/")) {
-      return BRANDS[resolveHomeBrandSlug(q)];
-    }
-    if (pathname === "/build") {
+    if (pathname.startsWith("/categories/") || pathname === "/build") {
       return BRANDS[resolveHomeBrandSlug(q)];
     }
     return serverBrand;

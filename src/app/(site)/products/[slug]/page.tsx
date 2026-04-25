@@ -1,17 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getBrand } from "@/lib/brand/get-brand";
+import { BRANDS } from "@/lib/brand/config";
+import {
+  resolveBrandSlugFromPageSearchParam,
+  resolveHomeBrandSlug,
+} from "@/lib/brand/resolve-brand";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { getDemoProductBySlug } from "@/lib/catalog/demo-products";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ brand?: string | string[] }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const brand = await getBrand();
+  const brand = BRANDS[resolveHomeBrandSlug(null)];
   const product = getDemoProductBySlug(slug);
   if (!product) {
     return { title: "Product" };
@@ -22,13 +30,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProductDetailPage({ params }: Props) {
+export default async function ProductDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sp = await searchParams;
   const product = getDemoProductBySlug(slug);
   if (!product) notFound();
 
-  const brand = await getBrand();
-  const isCrb = brand.slug === "crb";
+  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brand = BRANDS[brandSlug];
+  const isCrb = brandSlug === "crb";
 
   return (
     <div className={cn("pb-16 sm:pb-24", isCrb && "text-slate-100")}>
@@ -46,7 +56,7 @@ export default async function ProductDetailPage({ params }: Props) {
             )}
           >
             <Link
-              href="/products"
+              href={withBrand("/products", brandSlug)}
               className={cn(
                 "hover:underline",
                 isCrb ? "hover:text-white" : "hover:text-pink-700",
@@ -310,7 +320,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 </p>
               </div>
               <Link
-                href={`/build?product=${product.slug}`}
+                href={withBrand(`/build?product=${product.slug}`, brandSlug)}
                 className="inline-flex items-center justify-center px-8 py-4 text-center text-base font-black text-white shadow-2xl transition-[transform,box-shadow] hover:shadow-[0_0_40px_rgba(34,211,238,0.35)] active:scale-[0.98]"
                 style={{
                   background: isCrb

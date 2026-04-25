@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getBrand } from "@/lib/brand/get-brand";
+import { BRANDS } from "@/lib/brand/config";
+import {
+  resolveBrandSlugFromPageSearchParam,
+  resolveHomeBrandSlug,
+} from "@/lib/brand/resolve-brand";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { DEMO_PRODUCTS } from "@/lib/catalog/demo-products";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
@@ -9,7 +14,7 @@ import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getBrand();
+  const brand = BRANDS[resolveHomeBrandSlug(null)];
   return {
     title: "Jumpers & party rentals",
     description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Moreno Valley area — shared live availability across brands.`,
@@ -18,9 +23,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const CATEGORIES = ["All", "Classic jumpers", "Combo units", "Themed jumpers"];
 
-export default async function ProductsPage() {
-  const brand = await getBrand();
-  const isCrb = brand.slug === "crb";
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ brand?: string | string[] }>;
+}) {
+  const sp = await searchParams;
+  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brand = BRANDS[brandSlug];
+  const isCrb = brandSlug === "crb";
   const bannerSrc = DEMO_PRODUCTS[0]!.imageSrc;
   const [headliner, ...rest] = DEMO_PRODUCTS;
 
@@ -189,7 +200,7 @@ export default async function ProductsPage() {
             </p>
           </div>
           <Link
-            href="/build"
+            href={withBrand("/build", brandSlug)}
             className="relative mt-6 inline-flex w-full items-center justify-center px-6 py-3.5 text-sm font-black text-white shadow-xl sm:mt-0 sm:w-auto"
             style={{
               background: isCrb

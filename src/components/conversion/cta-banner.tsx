@@ -1,12 +1,16 @@
 import Link from "next/link";
+import type { BrandSlug } from "@/lib/brand/config";
+import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 
 export function CtaBanner({
   isCrb,
+  brandSlug,
   title,
   subtitle,
 }: {
   isCrb: boolean;
+  brandSlug: BrandSlug;
   title: string;
   subtitle: string;
 }) {
@@ -34,7 +38,7 @@ export function CtaBanner({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Link
-            href="/build"
+            href={withBrand("/build", brandSlug)}
             className="inline-flex items-center justify-center px-8 py-4 text-center text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110"
             style={{
               background: isCrb
@@ -47,7 +51,7 @@ export function CtaBanner({
             Build your party now
           </Link>
           <Link
-            href="/products"
+            href={withBrand("/products", brandSlug)}
             className="inline-flex items-center justify-center px-6 py-4 text-center text-xs font-black uppercase tracking-widest text-white/90 underline-offset-4 hover:underline"
           >
             Browse catalog
