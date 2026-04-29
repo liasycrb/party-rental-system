@@ -3,6 +3,7 @@ import { BuildBookingStart } from "@/components/build/build-booking-start";
 import { BRANDS } from "@/lib/brand/config";
 import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
 import { getCategoryBySlug } from "@/lib/catalog/category-carousel";
+import { getBuildInventoryOptions } from "@/lib/inventory/get-build-inventory-options";
 
 type BuildPageProps = {
   searchParams: Promise<{
@@ -37,9 +38,21 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
   const isCrb = brandSlug === "crb";
 
-  const categorySlug = firstParam(sp.category);
+  const categorySlug = firstParam(sp.category) ?? null;
+  const productSlug = firstParam(sp.product) ?? null;
   const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
   const categoryLine = category ? `You're booking: ${category.title}` : null;
 
-  return <BuildBookingStart isCrb={isCrb} categoryLine={categoryLine} />;
+  const inventoryOptions = await getBuildInventoryOptions(brandSlug);
+
+  return (
+    <BuildBookingStart
+      isCrb={isCrb}
+      brandSlug={brandSlug}
+      categorySlug={categorySlug}
+      productSlug={productSlug}
+      categoryLine={categoryLine}
+      inventoryOptions={inventoryOptions}
+    />
+  );
 }
