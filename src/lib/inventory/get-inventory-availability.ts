@@ -51,24 +51,30 @@ export async function getInventoryAvailability(params: {
 
   const { data: bookingRows, error: bookingsError } = await supabase
     .from("bookings")
-    .select("id")
+    .select("quantity, status")
     .eq("brand_slug", brandSlug)
     .eq("product_slug", productSlug)
-    .eq("event_date", eventDate)
-    .neq("status", "cancelled");
+    .eq("event_date", eventDate);
 
   if (bookingsError) {
     console.error("[getInventoryAvailability] bookings", bookingsError.message);
   }
 
-  const bookedCount = bookingRows?.length ?? 0;
-  const availableQuantity = quantityActive - bookedCount;
+  const countableStatuses = new Set(["pending_confirmation", "confirmed"]);
+  const bookedQty = (bookingRows ?? []).reduce((sum, b) => {
+    if (!countableStatuses.has(String(b.status))) {
+      return sum;
+    }
+    return sum + (Number(b.quantity) || 0);
+  }, 0);
+
+  const availableQuantity = Math.max(0, quantityActive - bookedQty);
   const available = availableQuantity > 0;
 
   return {
     available,
     quantityActive,
-    bookedCount,
+    bookedCount: bookedQty,
     availableQuantity,
   };
 }

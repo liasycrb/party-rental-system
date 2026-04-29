@@ -1,6 +1,13 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import type { BrandSlug } from "@/lib/brand/config";
 import { BRANDS } from "@/lib/brand/config";
 import {
@@ -10,9 +17,11 @@ import {
 } from "@/lib/build/build-guided-categories";
 import { checkBuildAvailability } from "@/lib/booking/check-build-availability";
 import { submitBookingLead } from "@/lib/booking/submit-booking-lead";
+import { createOnlineBooking } from "@/lib/booking/create-online-booking";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type BuildBookingStartProps = {
   isCrb: boolean;
@@ -94,15 +103,15 @@ function buildLeadNotesBlock(input: {
   return lines.length ? lines.join("\n") : null;
 }
 
-function buildAddonsNotesSection(a: SelectedAddonsState): string {
-  return [
-    "Add-ons:",
-    `Tables: ${a.tables}`,
-    `Chairs: ${a.chairs}`,
-    `Canopy: ${a.canopy}`,
-    `Generator: ${a.generator}`,
-    `Extra jumper: ${a.extraJumper}`,
-  ].join("\n");
+function buildAddonsNotesSection(a: SelectedAddonsState): string | null {
+  const lines: string[] = [];
+  if (a.tables > 0) lines.push(`Tables: ${a.tables}`);
+  if (a.chairs > 0) lines.push(`Chairs: ${a.chairs}`);
+  if (a.canopy > 0) lines.push(`Canopy: ${a.canopy}`);
+  if (a.generator > 0) lines.push(`Generator: ${a.generator}`);
+  if (a.extraJumper > 0) lines.push(`Extra jumper: ${a.extraJumper}`);
+  if (!lines.length) return null;
+  return ["Add-ons:", ...lines].join("\n");
 }
 
 function combineLeadNotes(
@@ -111,6 +120,31 @@ function combineLeadNotes(
 ): string | null {
   const parts = [base, section].filter((p): p is string => Boolean(p && p.trim()));
   return parts.length ? parts.join("\n\n") : null;
+}
+
+const PAYMENT_PROOF_BUCKET = "payment-proofs";
+const PAYMENT_PROOF_MAX_BYTES = 5 * 1024 * 1024;
+const PAYMENT_PROOF_ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
+
+function safePaymentProofFileBase(original: string): string {
+  const base = original.replace(/^.*[/\\]/, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+  return (base.slice(0, 120) || "proof") as string;
+}
+
+function paymentProofDateFolder(eventDate: string | null): string {
+  if (eventDate && /^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+    return eventDate;
+  }
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 const INITIAL_ADDONS: SelectedAddonsState = {
@@ -347,6 +381,46 @@ export function BuildBookingStart({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentProofPreviewUrl, setPaymentProofPreviewUrl] = useState<string | null>(null);
+  const paymentProofPreviewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (paymentProofPreviewUrlRef.current) {
+        URL.revokeObjectURL(paymentProofPreviewUrlRef.current);
+        paymentProofPreviewUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  function handlePaymentProofChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    if (paymentProofPreviewUrlRef.current) {
+      URL.revokeObjectURL(paymentProofPreviewUrlRef.current);
+      paymentProofPreviewUrlRef.current = null;
+    }
+    if (!file) {
+      setPaymentFile(null);
+      setPaymentProofPreviewUrl(null);
+      return;
+    }
+    setPaymentFile(file);
+    const mime = (file.type || "").toLowerCase();
+    const isImage =
+      mime === "image/png" ||
+      mime === "image/jpeg" ||
+      mime === "image/jpg" ||
+      mime === "image/webp";
+    if (isImage) {
+      const url = URL.createObjectURL(file);
+      paymentProofPreviewUrlRef.current = url;
+      setPaymentProofPreviewUrl(url);
+    } else {
+      setPaymentProofPreviewUrl(null);
+    }
+  }
+
   const formId = useId();
   const idDate = `${formId}-date`;
   const idCity = `${formId}-city`;
@@ -366,6 +440,7 @@ export function BuildBookingStart({
   const idAgreementSignature = `${formId}-agreement-signature`;
   const idPetsYes = `${formId}-pets-yes`;
   const idPetsNo = `${formId}-pets-no`;
+  const idPaymentProof = `${formId}-payment-proof`;
 
   const productForFlow = selectedItem?.product_slug ?? productSlugTrimmed;
 
@@ -414,6 +489,12 @@ export function BuildBookingStart({
       return;
     }
 
+    if (!paymentFile) {
+      setErrorMessage("Please upload your Zelle payment confirmation.");
+      setStep(8);
+      return;
+    }
+
     const eventDate = formDate.trim() ? formDate.trim() : null;
     const customerName = formName;
     const phone = formPhone;
@@ -454,6 +535,38 @@ export function BuildBookingStart({
 
     setIsSubmitting(true);
     try {
+      const file = paymentFile;
+      const mime = (file.type || "").toLowerCase();
+      if (file.size === 0) {
+        setErrorMessage("Please choose a payment confirmation file.");
+        return;
+      }
+      if (file.size > PAYMENT_PROOF_MAX_BYTES) {
+        setErrorMessage("File is too large. Maximum size is 5MB.");
+        return;
+      }
+      if (!PAYMENT_PROOF_ALLOWED_TYPES.has(mime)) {
+        setErrorMessage("Please upload a PNG, JPG, WebP, or PDF file.");
+        return;
+      }
+
+      const objectPath = `${brandSlug}/${paymentProofDateFolder(eventDate)}/${Date.now()}-${safePaymentProofFileBase(file.name || "proof")}`;
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadError } = await supabase.storage
+        .from(PAYMENT_PROOF_BUCKET)
+        .upload(objectPath, file, { upsert: false, contentType: mime });
+
+      if (uploadError) {
+        setErrorMessage(uploadError.message);
+        return;
+      }
+
+      const notesWithProof = combineLeadNotes(
+        notes,
+        `Payment proof path: ${PAYMENT_PROOF_BUCKET}/${objectPath}`,
+      );
+      const paymentProofFullPath = `${PAYMENT_PROOF_BUCKET}/${objectPath}`;
+
       const result = await submitBookingLead({
         brandSlug,
         categorySlug: submitCategorySlug,
@@ -462,16 +575,43 @@ export function BuildBookingStart({
         customerName,
         phone,
         eventCity,
-        notes,
+        notes: notesWithProof,
         agreementSignature: agreementSignature.trim(),
       });
-      if (result.ok) {
-        setSuccess(true);
+      if (!result.ok) {
+        setErrorMessage(result.error);
         return;
       }
-      setErrorMessage(result.error);
-    } catch {
-      setErrorMessage("Something went wrong. Please try again or call us.");
+
+      const bookingResult = await createOnlineBooking({
+        brandSlug,
+        categorySlug: submitCategorySlug,
+        productSlug: submitProductSlug,
+        eventDate,
+        eventCity,
+        customerName,
+        phone,
+        notes: notesWithProof,
+        quantity: selectedItemQuantity,
+        addons: selectedAddons,
+        eventTimeWindow: eventTime,
+        deliveryWindow: preferredDeliveryTime,
+        pickupWindow: preferredPickupTime,
+        subtotal: reservationPricing.subtotal,
+        depositAmount: reservationPricing.depositAmount,
+        balanceDue: reservationPricing.balanceDue,
+        paymentProofPath: paymentProofFullPath,
+      });
+      if (!bookingResult.ok) {
+        setErrorMessage(bookingResult.error);
+        return;
+      }
+
+      setSuccess(true);
+    } catch (e) {
+      setErrorMessage(
+        e instanceof Error ? e.message : "Something went wrong. Please try again or call us.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -1495,16 +1635,18 @@ export function BuildBookingStart({
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Preferred pickup</dt>
                 <dd>{windowOptionLabel(preferredPickupTime, PREFERRED_TIME_WINDOW_OPTIONS)}</dd>
               </div>
-              <div>
-                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Add-ons</dt>
-                <dd className="mt-1 space-y-0.5">
-                  <p>Tables: {selectedAddons.tables}</p>
-                  <p>Chairs: {selectedAddons.chairs}</p>
-                  <p>Canopy: {selectedAddons.canopy}</p>
-                  <p>Generator: {selectedAddons.generator}</p>
-                  <p>Extra jumper: {selectedAddons.extraJumper}</p>
-                </dd>
-              </div>
+              {ADDON_CARD_CONFIG.some((def) => selectedAddons[def.key] > 0) ? (
+                <div>
+                  <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Add-ons</dt>
+                  <dd className="mt-1 space-y-0.5">
+                    {ADDON_CARD_CONFIG.filter((def) => selectedAddons[def.key] > 0).map((def) => (
+                      <p key={def.key}>
+                        {def.name}: {selectedAddons[def.key]}
+                      </p>
+                    ))}
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Your name</dt>
                 <dd>{formName.trim() || "—"}</dd>
@@ -1717,8 +1859,52 @@ export function BuildBookingStart({
             >
               <li>Send Zelle for the deposit amount above.</li>
               <li>Use your name and event date in the memo.</li>
-              <li>Finish your reservation so we can confirm.</li>
+              <li>Upload your confirmation below, then finish your reservation.</li>
             </ol>
+            <div>
+              <label htmlFor={idPaymentProof} className={labelClass(isCrb)}>
+                Upload your Zelle payment confirmation
+              </label>
+              <input
+                id={idPaymentProof}
+                name="payment_proof"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                required
+                className={cn(
+                  "block w-full cursor-pointer rounded-xl border px-4 py-3 text-sm outline-none file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:px-4 file:py-2 file:text-sm file:font-bold",
+                  isCrb
+                    ? "border-slate-600/80 bg-slate-800/60 text-slate-200 file:bg-cyan-500 file:text-black"
+                    : "border-stone-200 bg-white/90 text-stone-900 file:bg-rose-600 file:text-white",
+                )}
+                disabled={isSubmitting}
+                onChange={handlePaymentProofChange}
+              />
+              {paymentProofPreviewUrl ? (
+                <div className="mt-3">
+                  <img
+                    src={paymentProofPreviewUrl}
+                    alt="Payment confirmation preview"
+                    className={cn(
+                      "max-h-48 w-auto max-w-full rounded-lg border object-contain",
+                      isCrb ? "border-slate-600" : "border-stone-200",
+                    )}
+                  />
+                </div>
+              ) : null}
+              {paymentFile &&
+              !paymentProofPreviewUrl &&
+              paymentFile.type.toLowerCase() === "application/pdf" ? (
+                <p
+                  className={cn(
+                    "mt-2 break-all text-sm font-medium",
+                    isCrb ? "text-slate-300" : "text-stone-700",
+                  )}
+                >
+                  {paymentFile.name}
+                </p>
+              ) : null}
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <button
                 type="button"
@@ -1733,7 +1919,7 @@ export function BuildBookingStart({
               </button>
               <button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !paymentFile}
                 className={cn(
                   "h-12 rounded-xl px-6 text-base font-black transition active:scale-[0.99] sm:px-8",
                   "disabled:pointer-events-none disabled:opacity-70",
