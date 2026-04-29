@@ -8,6 +8,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { BookingStaffActions } from "../booking-staff-actions";
 import { PaymentProofButton } from "../payment-proof-button";
 import { InternalNotesForm } from "./_internal-notes-form";
+import { OperationalStatusForm } from "./_operational-status-form";
+import { updateOperationalStatus } from "@/lib/booking/dashboard-booking-actions";
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>;
@@ -210,6 +212,14 @@ export default async function DashboardBookingDetailPage(props: {
   const rentalAgreement = extractRentalAgreement(row.notes);
   const hasReceipt = Boolean(row.payment_proof_path?.trim());
 
+  async function handleOperationalStatus(id: string, formData: FormData) {
+    "use server";
+    const value = (formData.get("operational_status") as string | null) ?? "";
+    const result = await updateOperationalStatus(id, value);
+    if (!result.ok) throw new Error(result.error);
+    revalidatePath(`/dashboard/bookings/${id}`);
+  }
+
   async function saveInternalNotes(id: string, currentNotes: string | null, formData: FormData) {
     "use server";
     const newNote = (formData.get("internal_notes") as string | null)?.trim() ?? "";
@@ -295,6 +305,13 @@ export default async function DashboardBookingDetailPage(props: {
             <Field label="Event City" value={row.event_city?.trim() || "—"} />
             <Field label="Event Date" value={formatEventDate(row.event_date)} />
           </div>
+        </Section>
+
+        <Section title="Operational Status">
+          <OperationalStatusForm
+            currentValue={row.operational_status ?? null}
+            action={handleOperationalStatus.bind(null, bookingId)}
+          />
         </Section>
 
         <Section title="Rental">
