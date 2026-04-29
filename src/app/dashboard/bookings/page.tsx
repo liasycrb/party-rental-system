@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { RowActions } from "./_row-actions";
 
 export const metadata: Metadata = {
   title: "Reservations",
@@ -181,7 +182,7 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
       </nav>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03]">
-        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[960px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
               <th className="px-4 py-3">When</th>
@@ -192,12 +193,13 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3 text-right">Open</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="text-zinc-200">
             {list.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
                   No reservations found for this status.
                 </td>
               </tr>
@@ -241,6 +243,9 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
                       >
                         View
                       </Link>
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
+                      <RowActions id={r.id} status={r.status} />
                     </td>
                   </tr>
                 );
