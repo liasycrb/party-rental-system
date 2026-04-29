@@ -79,8 +79,8 @@ export async function cancelBooking(id: string): Promise<DashboardBookingActionR
   if (row.source !== "online_reservation") {
     return { ok: false, error: "This action only applies to online reservations." };
   }
-  if (row.status !== "pending_confirmation") {
-    return { ok: false, error: "Only pending reservations can be cancelled." };
+  if (row.status !== "pending_confirmation" && row.status !== "confirmed") {
+    return { ok: false, error: "Only pending or confirmed reservations can be cancelled." };
   }
 
   const { error: updateError } = await supabase
