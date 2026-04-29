@@ -109,6 +109,35 @@ function getPositiveAddonLines(addons: Record<string, unknown> | null): string[]
   return out;
 }
 
+type RentalAgreement = {
+  accepted: boolean | null;
+  petsAtLocation: boolean | null;
+  itemRulesShown: boolean | null;
+};
+
+function extractRentalAgreement(fullNotes: string | null | undefined): RentalAgreement | null {
+  if (!fullNotes?.trim()) return null;
+  const marker = "Rental agreement:";
+  const idx = fullNotes.indexOf(marker);
+  if (idx === -1) return null;
+  const block = fullNotes.slice(idx + marker.length);
+  const section = (block.split("\n\n")[0] ?? "").trim();
+  if (!section) return null;
+
+  function parseBoolLine(key: string): boolean | null {
+    const re = new RegExp(`^${key}:\\s*(Yes|No)`, "im");
+    const m = section.match(re);
+    if (!m) return null;
+    return m[1].toLowerCase() === "yes";
+  }
+
+  return {
+    accepted: parseBoolLine("Accepted"),
+    petsAtLocation: parseBoolLine("Pets at location"),
+    itemRulesShown: parseBoolLine("Item rules shown"),
+  };
+}
+
 function extractCustomerNotesOnly(fullNotes: string | null | undefined): string | null {
   if (!fullNotes?.trim()) return null;
   const marker = "Customer notes:";
@@ -175,10 +204,11 @@ export default async function DashboardBookingDetailPage(props: {
 
   const addonLines = getPositiveAddonLines(addons);
   const customerNotesOnly = extractCustomerNotesOnly(row.notes);
+  const rentalAgreement = extractRentalAgreement(row.notes);
   const hasReceipt = Boolean(row.payment_proof_path?.trim());
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto max-w-3xl">
       <Link
         href="/dashboard/bookings"
         className="text-sm font-medium text-violet-300 underline-offset-2 hover:underline"
@@ -273,6 +303,25 @@ export default async function DashboardBookingDetailPage(props: {
             <p className="text-zinc-500">No receipt on file.</p>
           )}
         </Section>
+
+        {rentalAgreement ? (
+          <Section title="Agreement">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field
+                label="Rules accepted"
+                value={rentalAgreement.accepted === null ? "—" : rentalAgreement.accepted ? "Yes" : "No"}
+              />
+              <Field
+                label="Pets at location"
+                value={rentalAgreement.petsAtLocation === null ? "—" : rentalAgreement.petsAtLocation ? "Yes" : "No"}
+              />
+              <Field
+                label="Item rules shown"
+                value={rentalAgreement.itemRulesShown === null ? "—" : rentalAgreement.itemRulesShown ? "Yes" : "No"}
+              />
+            </div>
+          </Section>
+        ) : null}
 
         {customerNotesOnly ? (
           <Section title="Notes">
