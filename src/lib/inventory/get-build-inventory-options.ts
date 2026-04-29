@@ -8,7 +8,7 @@ export type BuildInventoryOption = {
   quantity_active: number;
 };
 
-/** Active inventory rows for /build (requires `product_slug`). */
+/** Active inventory rows for /build — sourced from rental_products. */
 export async function getBuildInventoryOptions(
   brandSlug: string,
 ): Promise<BuildInventoryOption[]> {
@@ -18,13 +18,7 @@ export async function getBuildInventoryOptions(
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
-    .from("inventory_items")
-    .select("id, name, category_slug, product_slug, quantity_active")
-    .eq("brand_slug", brandSlug)
-    .eq("status", "active")
-    .not("product_slug", "is", null)
-    .order("category_slug", { ascending: true, nullsFirst: false })
-    .order("name", { ascending: true });
+    .rpc("get_active_rental_products_for_brand", { p_brand_slug: brandSlug });
 
   if (error) {
     console.error("[getBuildInventoryOptions]", error.message);
@@ -35,18 +29,18 @@ export async function getBuildInventoryOptions(
     id: string;
     name: string;
     category_slug: string | null;
-    product_slug: string | null;
-    quantity_active: number | null;
+    slug: string | null;
+    quantity_available: number | null;
   }>;
 
   return rows
-    .filter((r) => r.product_slug != null && String(r.product_slug).trim() !== "")
+    .filter((r) => r.slug != null && String(r.slug).trim() !== "")
     .map((r) => ({
       id: r.id,
       name: r.name,
       category_slug: r.category_slug,
-      product_slug: String(r.product_slug).trim(),
+      product_slug: String(r.slug).trim(),
       quantity_active:
-        typeof r.quantity_active === "number" ? r.quantity_active : 0,
+        typeof r.quantity_available === "number" ? r.quantity_available : 0,
     }));
 }

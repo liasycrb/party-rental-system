@@ -12,17 +12,33 @@ export const BUILD_GUIDED_CATEGORIES = [
   {
     label: "Bounce houses & inflatables",
     image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80",
-    categorySlugs: ["bounce-houses", "inflatables", "jumpers", "bounce", "inflatable"],
+    categorySlugs: [
+      // legacy slugs
+      "bounce-houses", "inflatables", "bounce", "inflatable",
+      // rental_products slugs
+      "jumpers", "disney-jumpers", "five-in-one-jumpers", "combos",
+      "mini-combo", "obstacle-course", "inflatable-games", "xtreme-disco-dome",
+    ],
   },
   {
     label: "Tables, chairs & tents",
     image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
-    categorySlugs: ["tables-chairs", "tables", "chairs", "canopy", "tents", "seating"],
+    categorySlugs: [
+      // legacy slugs
+      "tables", "chairs", "canopy", "tents", "seating",
+      // rental_products slugs
+      "tables-chairs", "canopies-tent", "throne-chairs",
+    ],
   },
   {
-    label: "Concessions & games",
+    label: "Waterslides & games",
     image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",
-    categorySlugs: ["concessions", "games", "party-extras"],
+    categorySlugs: [
+      // legacy slugs
+      "concessions", "games", "party-extras",
+      // rental_products slugs
+      "slides-dry-wet",
+    ],
   },
   {
     label: "Browse all inventory",

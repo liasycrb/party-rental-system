@@ -33,21 +33,31 @@ export async function getInventoryAvailability(params: {
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: items, error: itemsError } = await supabase
-    .from("inventory_items")
-    .select("quantity_active")
-    .eq("brand_slug", brandSlug)
-    .eq("product_slug", productSlug)
-    .eq("status", "active");
+  const { data: product, error: productError } = await supabase
+    .from("rental_products")
+    .select("quantity_available, inventory_tracked")
+    .eq("slug", productSlug)
+    .contains("brand_slugs", [brandSlug])
+    .eq("is_active", true)
+    .maybeSingle();
 
-  if (itemsError) {
-    console.error("[getInventoryAvailability] inventory_items", itemsError.message);
+  if (productError) {
+    console.error("[getInventoryAvailability] rental_products", productError.message);
   }
 
-  const quantityActive = (items ?? []).reduce(
-    (sum, row) => sum + (Number(row.quantity_active) || 0),
-    0,
-  );
+  // If inventory is not tracked for this product, always report available.
+  if (product && product.inventory_tracked === false) {
+    return {
+      available: true,
+      quantityActive: 0,
+      bookedCount: 0,
+      availableQuantity: 0,
+    };
+  }
+
+  const quantityActive = typeof product?.quantity_available === "number"
+    ? product.quantity_available
+    : 0;
 
   const { data: bookingRows, error: bookingsError } = await supabase
     .from("bookings")
