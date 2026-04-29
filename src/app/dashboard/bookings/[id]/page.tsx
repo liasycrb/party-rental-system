@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { BookingStaffActions } from "../booking-staff-actions";
 import { PaymentProofButton } from "../payment-proof-button";
+import { InternalNotesForm } from "./_internal-notes-form";
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>;
@@ -207,6 +210,49 @@ export default async function DashboardBookingDetailPage(props: {
   const rentalAgreement = extractRentalAgreement(row.notes);
   const hasReceipt = Boolean(row.payment_proof_path?.trim());
 
+  async function saveInternalNotes(id: string, currentNotes: string | null, formData: FormData) {
+    "use server";
+    const newNote = (formData.get("internal_notes") as string | null)?.trim() ?? "";
+    if (!newNote) return;
+
+    const now = new Date();
+    const datePart = now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timePart = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const entry = `[${datePart} - ${timePart}]\n${newNote}`;
+
+    const existing = currentNotes?.trim() ?? "";
+    const combined = existing ? `${entry}\n\n${existing}` : entry;
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) {
+      throw new Error("[saveInternalNotes] Missing Supabase service configuration");
+    }
+    const admin = createClient(url, serviceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const { error: rpcError } = await admin.rpc("update_booking_internal_notes", {
+      p_booking_id: id,
+      p_internal_notes: combined,
+    });
+
+    if (rpcError) throw new Error(`[saveInternalNotes] rpc: ${rpcError.message}`);
+
+    revalidatePath(`/dashboard/bookings/${id}`);
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
       <Link
@@ -330,6 +376,18 @@ export default async function DashboardBookingDetailPage(props: {
             </p>
           </Section>
         ) : null}
+
+        <Section title="Internal Notes">
+          {row.internal_notes?.trim() ? (
+            <div className="mb-4 whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-relaxed text-zinc-300">
+              {row.internal_notes.trim()}
+            </div>
+          ) : null}
+          <InternalNotesForm
+            initialValue=""
+            action={saveInternalNotes.bind(null, bookingId, row.internal_notes ?? null)}
+          />
+        </Section>
       </div>
 
       {canStaffAct ? (
