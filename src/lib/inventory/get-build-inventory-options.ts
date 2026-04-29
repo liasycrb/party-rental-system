@@ -6,6 +6,7 @@ export type BuildInventoryOption = {
   category_slug: string | null;
   product_slug: string;
   quantity_active: number;
+  image_src: string | null;
 };
 
 /** Active inventory rows for /build — sourced from rental_products. */
@@ -31,6 +32,7 @@ export async function getBuildInventoryOptions(
     category_slug: string | null;
     slug: string | null;
     quantity_available: number | null;
+    image_src: string | null;
   }>;
 
   return rows
@@ -42,5 +44,6 @@ export async function getBuildInventoryOptions(
       product_slug: String(r.slug).trim(),
       quantity_active:
         typeof r.quantity_available === "number" ? r.quantity_available : 0,
+      image_src: r.image_src ?? null,
     }));
 }

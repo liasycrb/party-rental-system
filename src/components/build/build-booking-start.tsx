@@ -69,6 +69,19 @@ function countInGuidedCategory(
   return items.filter((o) => inventoryMatchesGuidedCategory(o.category_slug, def)).length;
 }
 
+function categoryTileImageSrc(
+  def: (typeof BUILD_GUIDED_CATEGORIES)[number],
+  items: BuildInventoryOption[],
+): string {
+  const match = items.find(
+    (o) =>
+      inventoryMatchesGuidedCategory(o.category_slug, def) &&
+      o.image_src != null &&
+      o.image_src.trim() !== "",
+  );
+  return match?.image_src ?? def.image;
+}
+
 function whatsappHrefFromPhone(supportPhone: string): string {
   return `https://wa.me/${supportPhone.replace(/\D/g, "")}`;
 }
@@ -856,7 +869,7 @@ export function BuildBookingStart({
                         disabled={n === 0}
                         style={{ borderRadius: "var(--brand-radius-lg)" }}
                       >
-                        <img src={def.image} alt="" className="h-32 w-full shrink-0 object-cover" />
+                        <img src={categoryTileImageSrc(def, inventoryOptions)} alt="" className="h-32 w-full shrink-0 object-cover" />
                         <div className="px-5 pb-5 pt-3 text-left">
                           <span className="block text-base font-black leading-snug">{def.label}</span>
                           <span
