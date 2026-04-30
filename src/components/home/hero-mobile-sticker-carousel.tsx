@@ -16,6 +16,26 @@ import { HeroStickerPng } from "@/components/home/hero-sticker-png";
 
 const AUTOPLAY_MS = 2700;
 
+/**
+ * Center a slide in the horizontal strip using only the scroller's scrollLeft.
+ * Avoids `scrollIntoView`, which can scroll the document and yank the viewport
+ * back to the hero when the user has scrolled down the page.
+ */
+function scrollChildIntoCenterHorizontally(
+  scroller: HTMLDivElement,
+  child: HTMLElement,
+  behavior: ScrollBehavior,
+): void {
+  const cr = child.getBoundingClientRect();
+  const sr = scroller.getBoundingClientRect();
+  const childLeftRelative = cr.left - sr.left + scroller.scrollLeft;
+  const desired =
+    childLeftRelative - scroller.clientWidth / 2 + cr.width / 2;
+  const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+  const next = Math.max(0, Math.min(desired, maxScroll));
+  scroller.scrollTo({ left: next, behavior });
+}
+
 export type HeroStickerCarouselVariant = "lias" | "crb";
 
 export function HeroMobileStickerCarousel({
@@ -52,11 +72,11 @@ export function HeroMobileStickerCarousel({
       if (!el) return;
       const child = el.children[iClamped] as HTMLElement | undefined;
       if (!child) return;
-      child.scrollIntoView({
-        behavior: opts?.behavior ?? (reducedMotion ? "auto" : "smooth"),
-        block: "nearest",
-        inline: "center",
-      });
+      scrollChildIntoCenterHorizontally(
+        el,
+        child,
+        opts?.behavior ?? (reducedMotion ? "auto" : "smooth"),
+      );
     },
     [N, reducedMotion],
   );
