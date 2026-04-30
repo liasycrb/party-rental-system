@@ -205,26 +205,6 @@ export function LiasHome({
               </div>
             ) : null}
           </div>
-          <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <Link
-              href={withBrand("/build", b)}
-              className="inline-flex w-full items-center justify-center px-10 py-4 text-sm font-black text-white shadow-xl transition hover:brightness-110 sm:w-auto"
-              style={{
-                background:
-                  "linear-gradient(90deg, var(--brand-primary), var(--brand-secondary))",
-                borderRadius: "var(--brand-radius-lg)",
-              }}
-            >
-              Build your party now
-            </Link>
-            <Link
-              href={withBrand("/products", b)}
-              className="inline-flex w-full items-center justify-center border-2 border-orange-500/35 bg-white/95 px-10 py-4 text-sm font-black text-orange-950 shadow-lg backdrop-blur transition hover:bg-white sm:w-auto"
-              style={{ borderRadius: "var(--brand-radius-lg)" }}
-            >
-              See everything we inflate
-            </Link>
-          </div>
         </Container>
       </section>
 

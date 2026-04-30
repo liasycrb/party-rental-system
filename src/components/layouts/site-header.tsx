@@ -1,8 +1,9 @@
-import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
+import { HeaderBrandLogo } from "@/components/layouts/header-brand-logo";
+import Link from "next/link";
 
 export function SiteHeader({
   brand,
@@ -38,19 +39,12 @@ export function SiteHeader({
       }}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
-        <Link
+        <HeaderBrandLogo
           href={withBrand("/", brand.slug)}
-          className={cn(
-            "group min-w-0 text-sm font-bold tracking-tight sm:text-base",
-              isCrb &&
-              "bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent",
-          )}
-          style={!isCrb ? { color: "var(--brand-primary)" } : undefined}
-        >
-          <span className="truncate sm:group-hover:underline sm:group-hover:decoration-[var(--brand-secondary)] sm:group-hover:decoration-2">
-            {brand.displayName}
-          </span>
-        </Link>
+          brandSlug={brand.slug}
+          displayName={brand.displayName}
+          isCrb={isCrb}
+        />
         <div className="flex items-center gap-2 sm:gap-4">
           <a
             href={`tel:${phoneTel}`}
@@ -65,15 +59,15 @@ export function SiteHeader({
             className="flex items-center gap-2 sm:gap-3"
             aria-label="Primary"
           >
-            <Link href={withBrand("/products", brand.slug)} className={cn(navLinkClass, "hidden sm:inline")}>
-              Catalog
+            <Link href={withBrand("/build", brand.slug)} className={cn(navLinkClass, "hidden sm:inline")}>
+              Browse rentals
             </Link>
             <Link
-              href={withBrand("/products", brand.slug)}
+              href={withBrand("/build", brand.slug)}
               className={cn(navLinkClass, "sm:hidden")}
-              aria-label="Catalog"
+              aria-label="Browse rentals"
             >
-              Shop
+              Browse
             </Link>
             <Link
               href={withBrand("/build", brand.slug)}

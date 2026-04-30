@@ -3,22 +3,47 @@ import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
+import { FooterBrandTrigger } from "@/components/layouts/footer-brand-trigger";
+
+export type FooterOverride = {
+  headline: string | null;
+  phone: string | null;
+  email: string | null;
+  serviceArea: string | null;
+  copyright: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+};
 
 export function SiteFooter({
   brand,
   phoneOverride,
+  footerOverride,
 }: {
   brand: Brand;
   phoneOverride?: string | null;
+  footerOverride?: FooterOverride | null;
 }) {
   const year = new Date().getFullYear();
   const isCrb = brand.slug === "crb";
-  const phoneTel = phoneOverride
-    ? formatPhoneTel(phoneOverride)
-    : brand.supportPhone;
-  const phoneDisplay = phoneOverride
-    ? formatPhoneDisplay(phoneOverride)
+
+  // Phone: footer-specific phone > header phone override > brand default
+  const activePhone = footerOverride?.phone || phoneOverride;
+  const phoneTel = activePhone ? formatPhoneTel(activePhone) : brand.supportPhone;
+  const phoneDisplay = activePhone
+    ? formatPhoneDisplay(activePhone)
     : brand.supportPhoneDisplay;
+
+  const headline =
+    footerOverride?.headline ||
+    `${brand.copy.trustLine}. Serving Moreno Valley, Riverside, and neighbors with one shared, real-time inventory calendar.`;
+
+  const copyrightLine =
+    footerOverride?.copyright || `© ${year} ${brand.displayName}. All rights reserved.`;
+
+  const serviceAreaLine =
+    footerOverride?.serviceArea ||
+    "Deposits non-refundable except qualifying weather — shown at booking.";
 
   return (
     <footer
@@ -37,13 +62,16 @@ export function SiteFooter({
       />
       <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
         <div className="grid gap-10 md:grid-cols-3">
+          {/* Column 1 – brand description */}
           <div>
-            <p className="text-lg font-bold tracking-tight">{brand.displayName}</p>
-            <p className="mt-3 text-sm leading-relaxed text-white/85">
-              {brand.copy.trustLine}. Serving Moreno Valley, Riverside, and
-              neighbors with one shared, real-time inventory calendar.
-            </p>
+            <FooterBrandTrigger
+              brandSlug={brand.slug}
+              displayName={brand.displayName}
+            />
+            <p className="mt-3 text-sm leading-relaxed text-white/85">{headline}</p>
           </div>
+
+          {/* Column 2 – navigation */}
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
               Get started
@@ -67,29 +95,71 @@ export function SiteFooter({
               </li>
             </ul>
           </div>
+
+          {/* Column 3 – contact */}
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
               Call the crew
             </p>
             <p className="mt-4 text-sm">
-              <a
-                href={`tel:${phoneTel}`}
-                className="text-lg font-bold hover:underline"
-              >
+              <a href={`tel:${phoneTel}`} className="text-lg font-bold hover:underline">
                 {phoneDisplay}
               </a>
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-white/75">
-              Footer blocks stay link-rich for local SEO: service cities,
-              FAQs, and reviews plug in here without changing layout.
-            </p>
+            {footerOverride?.email && (
+              <p className="mt-2 text-sm">
+                <a
+                  href={`mailto:${footerOverride.email}`}
+                  className="text-white/80 hover:text-white hover:underline"
+                >
+                  {footerOverride.email}
+                </a>
+              </p>
+            )}
+            {(footerOverride?.facebookUrl || footerOverride?.instagramUrl) && (
+              <div className="mt-4 flex gap-4 text-sm font-semibold text-white/70">
+                {footerOverride.facebookUrl && (
+                  <a
+                    href={footerOverride.facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white hover:underline"
+                  >
+                    Facebook
+                  </a>
+                )}
+                {footerOverride.instagramUrl && (
+                  <a
+                    href={footerOverride.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white hover:underline"
+                  >
+                    Instagram
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        <div className="mt-10 flex flex-col gap-2 border-t border-white/15 pt-8 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {year} {brand.displayName}. All rights reserved.
+
+        {/* Bottom bar */}
+        <div className="mt-10 border-t border-white/15 pt-8 text-xs text-white/70">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p>{copyrightLine}</p>
+            <p>{serviceAreaLine}</p>
+          </div>
+          <p className="mt-3 text-[11px] text-white/40">
+            Built by{" "}
+            <a
+              href="https://growthosystems.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-opacity duration-200 hover:text-white/90 hover:underline"
+            >
+              GrowthOS Systems
+            </a>
           </p>
-          <p>Deposits non-refundable except qualifying weather — shown at booking.</p>
         </div>
       </div>
     </footer>

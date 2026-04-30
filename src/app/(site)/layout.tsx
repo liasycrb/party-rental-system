@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getBrand } from "@/lib/brand/get-brand";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
 import { SiteLayoutBrand } from "@/components/layouts/site-layout-brand";
+import type { FooterOverride } from "@/components/layouts/site-footer";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
@@ -35,8 +36,31 @@ export default async function SiteLayout({
     lias: liasSettings?.support_phone || null,
     crb: crbSettings?.support_phone || null,
   };
+
+  const toFooterOverride = (s: typeof liasSettings): FooterOverride | null =>
+    s
+      ? {
+          headline: s.footer_headline || null,
+          phone: s.footer_phone || null,
+          email: s.footer_email || null,
+          serviceArea: s.footer_service_area || null,
+          copyright: s.footer_copyright || null,
+          facebookUrl: s.footer_facebook_url || null,
+          instagramUrl: s.footer_instagram_url || null,
+        }
+      : null;
+
+  const footerOverrides: Record<string, FooterOverride | null> = {
+    lias: toFooterOverride(liasSettings),
+    crb: toFooterOverride(crbSettings),
+  };
+
   return (
-    <SiteLayoutBrand serverBrand={serverBrand} phoneOverrides={phoneOverrides}>
+    <SiteLayoutBrand
+      serverBrand={serverBrand}
+      phoneOverrides={phoneOverrides}
+      footerOverrides={footerOverrides}
+    >
       {children}
     </SiteLayoutBrand>
   );

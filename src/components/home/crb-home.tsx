@@ -1,6 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+
+function ArrowRight({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
 import type { SiteSettings } from "@/lib/site/get-site-settings";
 import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
 import { withBrand } from "@/lib/brand/with-brand-href";
@@ -205,29 +223,118 @@ export function CrbHome({
               </div>
             ) : null}
           </div>
-          <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+        </Container>
+      </section>
+
+      {/* ── Process — how it works ──────────────────────────────── */}
+      <section
+        className="relative overflow-hidden py-16 sm:py-24"
+        aria-labelledby="crb-how"
+      >
+        <div
+          className="absolute inset-0"
+          style={{ background: "var(--brand-stripe-feature)" }}
+          aria-hidden
+        />
+        {/* Diamond pattern — CRB brand texture */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M36 18L54 36 36 54 18 36z' fill='%2322d3ee'/%3E%3C/svg%3E\")",
+          }}
+          aria-hidden
+        />
+        {/* Cyan glow — top-left */}
+        <div
+          className="pointer-events-none absolute -left-32 -top-24 h-80 w-80 rounded-full blur-3xl"
+          style={{ background: "rgba(34,211,238,0.10)" }}
+          aria-hidden
+        />
+        {/* Orange glow — bottom-right */}
+        <div
+          className="pointer-events-none absolute -bottom-20 right-0 h-64 w-64 rounded-full blur-3xl"
+          style={{ background: "rgba(251,146,60,0.08)" }}
+          aria-hidden
+        />
+
+        <Container className="relative">
+          <SectionTitle
+            id="crb-how"
+            tone="onDark"
+            eyebrow="How it works"
+            title={"Three beats. Zero \u201cwe\u2019ll call you back\u201d energy."}
+            description="From first click to setup crew — designed to be stupid fast."
+          />
+
+          <div className="mt-12 flex gap-5 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
+            {[
+              {
+                step: "01",
+                title: "Choose your inflatable",
+                body: "Browse the full lineup and pick the star of the show — classic jumpers to wild waterslides.",
+              },
+              {
+                step: "02",
+                title: "Add the essentials",
+                body: "Layer on shade, seating, or extra time. Stack the scene so everything's handled before guests arrive.",
+              },
+              {
+                step: "03",
+                title: "We deliver the party",
+                body: "Setup, safety walkthrough, smiles included. You get to actually host — not babysit equipment.",
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="group relative min-w-[260px] flex-1 overflow-hidden border border-cyan-400/25 bg-slate-950/70 p-7 shadow-[0_8px_32px_rgba(2,6,23,0.55),inset_0_1px_0_rgba(34,211,238,0.10)] backdrop-blur-md transition-all duration-300 hover:border-cyan-400/50 hover:shadow-[0_12px_48px_rgba(2,6,23,0.65),0_0_36px_rgba(34,211,238,0.10),inset_0_1px_0_rgba(34,211,238,0.18)] md:min-w-0"
+                style={{ borderRadius: "var(--brand-radius-lg)" }}
+              >
+                <span
+                  className="block text-[80px] font-black leading-none tracking-tight text-cyan-400/18 transition-colors duration-300 group-hover:text-cyan-400/30"
+                  aria-hidden
+                >
+                  {item.step}
+                </span>
+                <h3 className="mt-1 text-xl font-black text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-[14px] font-medium leading-relaxed text-slate-300">
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 flex justify-center">
             <Link
               href={withBrand("/build", b)}
-              className="inline-flex w-full items-center justify-center px-10 py-4 text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110 sm:w-auto"
+              className="group relative flex w-full max-w-[520px] flex-col items-center justify-center overflow-hidden rounded-2xl px-10 py-5 text-slate-950 shadow-[0_12px_40px_rgba(6,182,212,0.45)] transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_22px_58px_rgba(6,182,212,0.65)] active:scale-[0.98]"
               style={{
                 background:
-                  "linear-gradient(90deg, var(--brand-secondary), #f472b6)",
-                borderRadius: "var(--brand-radius-md)",
+                  "linear-gradient(110deg, var(--brand-primary) 0%, #a5f3fc 55%, var(--brand-accent) 100%)",
               }}
             >
-              Build your party now
-            </Link>
-            <Link
-              href={withBrand("/products", b)}
-              className="inline-flex w-full items-center justify-center border-2 border-cyan-400/40 bg-slate-950/55 px-10 py-4 text-sm font-black text-white backdrop-blur transition hover:bg-slate-900/75 sm:w-auto"
-              style={{ borderRadius: "var(--brand-radius-md)" }}
-            >
-              Browse catalog
+              <span
+                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[150%]"
+                aria-hidden
+              />
+              <span className="relative flex w-full items-center justify-between gap-4">
+                <span className="text-[17px] font-black leading-tight tracking-[-0.02em] sm:text-[19px]">
+                  Check availability &amp; book your jumper
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+              <span className="relative mt-1.5 text-[12px] font-medium text-slate-800/70">
+                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment
+                required today
+              </span>
             </Link>
           </div>
         </Container>
       </section>
 
+      {/* ── Upgrades ─────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden py-16 sm:py-24"
         style={{ background: "var(--brand-stripe-upgrades)" }}
@@ -257,27 +364,40 @@ export function CrbHome({
               ].map((x) => (
                 <div
                   key={x.t}
-                  className="border border-cyan-400/28 bg-slate-950/75 p-4 shadow-xl backdrop-blur-md"
+                  className="group border border-cyan-400/28 bg-slate-950/75 p-5 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-cyan-400/55 hover:shadow-[0_8px_28px_rgba(34,211,238,0.12)]"
                   style={{ borderRadius: "var(--brand-radius-md)" }}
                 >
                   <p className="text-sm font-black text-white">{x.t}</p>
-                  <p className="mt-1 text-xs font-medium text-slate-400">{x.d}</p>
-                  <p className="mt-3 text-sm font-black text-orange-300">{x.p}</p>
+                  <p className="mt-1.5 text-xs font-medium leading-relaxed text-slate-400">{x.d}</p>
+                  <p className="mt-4 text-base font-black text-orange-300">{x.p}</p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="mt-10 flex justify-center">
+
+          <div className="mt-12 flex justify-center">
             <Link
               href={withBrand("/build", b)}
-              className="inline-flex items-center justify-center px-10 py-4 text-sm font-black text-slate-950 shadow-xl transition hover:brightness-110"
+              className="group relative flex w-full max-w-[520px] flex-col items-center justify-center overflow-hidden rounded-2xl px-10 py-5 text-slate-950 shadow-[0_12px_40px_rgba(6,182,212,0.45)] transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_22px_58px_rgba(6,182,212,0.65)] active:scale-[0.98]"
               style={{
                 background:
-                  "linear-gradient(90deg, var(--brand-primary), #a5f3fc)",
-                borderRadius: "var(--brand-radius-md)",
+                  "linear-gradient(110deg, var(--brand-primary) 0%, #a5f3fc 55%, var(--brand-accent) 100%)",
               }}
             >
-              Check availability — start now
+              <span
+                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[150%]"
+                aria-hidden
+              />
+              <span className="relative flex w-full items-center justify-between gap-4">
+                <span className="text-[17px] font-black leading-tight tracking-[-0.02em] sm:text-[19px]">
+                  Check availability &amp; book your party
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+              <span className="relative mt-1.5 text-[12px] font-medium text-slate-800/70">
+                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment
+                required today
+              </span>
             </Link>
           </div>
         </Container>
@@ -321,14 +441,25 @@ export function CrbHome({
               </p>
               <Link
                 href={withBrand("/build", b)}
-                className="mt-8 inline-flex w-fit items-center justify-center px-6 py-3 text-sm font-black text-slate-950 shadow-xl"
+                className="group relative mt-8 flex w-full flex-col items-center justify-center overflow-hidden rounded-2xl px-8 py-4 text-slate-950 shadow-[0_10px_32px_rgba(6,182,212,0.4)] transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-[0_18px_48px_rgba(6,182,212,0.6)] active:scale-[0.98]"
                 style={{
                   background:
-                    "linear-gradient(90deg, var(--brand-secondary), #f472b6)",
-                  borderRadius: "var(--brand-radius-md)",
+                    "linear-gradient(110deg, var(--brand-primary) 0%, #a5f3fc 55%, var(--brand-accent) 100%)",
                 }}
               >
-                Book your date
+                <span
+                  className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[150%]"
+                  aria-hidden
+                />
+                <span className="relative flex w-full items-center justify-between gap-3">
+                  <span className="text-[15px] font-black leading-tight tracking-[-0.01em]">
+                    Check availability &amp; book your party
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+                <span className="relative mt-1 text-[11px] font-medium text-slate-800/65">
+                  No payment required today
+                </span>
               </Link>
             </div>
           </div>

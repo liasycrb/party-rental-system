@@ -1,15 +1,17 @@
 import type { Brand } from "@/lib/brand/config";
 import { cn } from "@/lib/utils/cn";
-import { SiteFooter } from "./site-footer";
+import { SiteFooter, type FooterOverride } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
 export function SiteShell({
   brand,
   phoneOverride,
+  footerOverride,
   children,
 }: {
   brand: Brand;
   phoneOverride?: string | null;
+  footerOverride?: FooterOverride | null;
   children: React.ReactNode;
 }) {
   const t = brand.theme;
@@ -71,7 +73,7 @@ export function SiteShell({
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
         <SiteHeader brand={brand} phoneOverride={phoneOverride} />
         <div className="flex-1">{children}</div>
-        <SiteFooter brand={brand} phoneOverride={phoneOverride} />
+        <SiteFooter brand={brand} phoneOverride={phoneOverride} footerOverride={footerOverride} />
       </div>
     </div>
   );

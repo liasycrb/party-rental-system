@@ -4,6 +4,8 @@ import { BRANDS } from "@/lib/brand/config";
 import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
 import { getCategoryBySlug } from "@/lib/catalog/category-carousel";
 import { getBuildInventoryOptions } from "@/lib/inventory/get-build-inventory-options";
+import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
+import type { GuidedCategoryDef } from "@/lib/build/build-guided-categories";
 
 type BuildPageProps = {
   searchParams: Promise<{
@@ -33,6 +35,13 @@ export async function generateMetadata({ searchParams }: BuildPageProps): Promis
   };
 }
 
+const BROWSE_ALL: GuidedCategoryDef = {
+  slug: "*",
+  label: "Browse all inventory",
+  image: "/party-rentals/categories/regular-jumper-13x13.png",
+  categorySlugs: ["*"],
+};
+
 export default async function BuildPage({ searchParams }: BuildPageProps) {
   const sp = await searchParams;
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
@@ -43,7 +52,12 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
   const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
   const categoryLine = category ? `You're booking: ${category.title}` : null;
 
-  const inventoryOptions = await getBuildInventoryOptions(brandSlug);
+  const [inventoryOptions, canonicalCategories] = await Promise.all([
+    getBuildInventoryOptions(brandSlug),
+    getRentalCategories(),
+  ]);
+
+  const guidedCategories: GuidedCategoryDef[] = [...canonicalCategories, BROWSE_ALL];
 
   return (
     <BuildBookingStart
@@ -53,6 +67,7 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
       productSlug={productSlug}
       categoryLine={categoryLine}
       inventoryOptions={inventoryOptions}
+      guidedCategories={guidedCategories}
     />
   );
 }

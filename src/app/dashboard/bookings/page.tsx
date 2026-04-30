@@ -152,7 +152,7 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
     .select(
       "id, product_slug, event_date, customer_name, phone, status, payment_status, operational_status",
     )
-    .eq("source", "online_reservation")
+    .in("source", ["online_reservation", "staff_created"])
     .order("event_date", { ascending: true });
 
   if (statusFilter === "all") {

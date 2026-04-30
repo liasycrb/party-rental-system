@@ -10,6 +10,13 @@ export type SiteSettings = {
   hero_cta_primary: string | null;
   announcement_text: string | null;
   service_areas_text: string | null;
+  footer_headline: string | null;
+  footer_phone: string | null;
+  footer_email: string | null;
+  footer_service_area: string | null;
+  footer_copyright: string | null;
+  footer_facebook_url: string | null;
+  footer_instagram_url: string | null;
   updated_at: string | null;
 };
 

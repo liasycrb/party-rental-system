@@ -2,7 +2,10 @@ import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import type { DemoProduct } from "@/lib/catalog/demo-products";
-import { CatalogImage } from "@/components/media/catalog-image";
+import {
+  ProductShelfImagePanel,
+  ProductShowcaseImagePanel,
+} from "@/components/marketing/product-image-preview";
 import { cn } from "@/lib/utils/cn";
 
 export function ProductCard({
@@ -25,43 +28,19 @@ export function ProductCard({
     return (
       <article
         className={cn(
-          "group relative flex min-h-[340px] flex-col overflow-hidden shadow-2xl transition-[transform,box-shadow] duration-500 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(0,0,0,0.35)] lg:min-h-[400px]",
+          "relative flex flex-col overflow-hidden rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
           className,
         )}
-        style={{ borderRadius: "var(--brand-radius-lg)" }}
       >
-        <div className="absolute inset-0 z-0">
-          <CatalogImage
-            src={product.imageSrc}
-            alt={product.imageAlt}
-            fill
-            className="object-cover transition duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
-            style={{ objectPosition }}
-            sizes="(max-width: 1024px) 100vw, 60vw"
-          />
-          <Link
-            href={withBrand(`/products/${product.slug}`, b)}
-            className="absolute inset-0 z-[1]"
-            aria-label={`View ${product.title}`}
-          >
-            <span className="sr-only">{product.title}</span>
-          </Link>
-        </div>
-        <div
-          className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black/75 via-black/35 to-black/5"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 z-[2] opacity-25 mix-blend-screen"
-          style={{
-            backgroundImage: isCrb
-              ? "radial-gradient(circle at 25% 20%, rgba(34,211,238,0.32), transparent 50%)"
-              : "radial-gradient(circle at 22% 24%, rgba(251,113,133,0.35), transparent 50%)",
-          }}
-          aria-hidden
+        <ProductShowcaseImagePanel
+          imageSrc={product.imageSrc}
+          imageAlt={product.imageAlt}
+          imagePosition={objectPosition}
+          title={product.title}
+          isCrb={isCrb}
         />
 
-        <div className="relative z-[3] mt-auto flex flex-1 flex-col justify-end p-6 sm:p-8">
+        <div className="relative flex flex-1 flex-col bg-gradient-to-b from-slate-900 to-slate-950 p-6 sm:p-8">
           <span
             className="w-fit px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg"
             style={{
@@ -124,7 +103,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden transition-[transform,box-shadow] duration-300 hover:-translate-y-1",
+        "relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl",
         isCrb
           ? "shadow-[0_20px_50px_rgba(2,6,23,0.65)]"
           : "shadow-[0_18px_40px_rgba(120,53,15,0.12)]",
@@ -141,64 +120,15 @@ export function ProductCard({
           : undefined,
       }}
     >
-      <Link href={withBrand(`/products/${product.slug}`, b)} className="relative block">
-        <div
-          className="relative aspect-[3/4] overflow-hidden sm:aspect-[5/6]"
-          style={{
-            borderTopLeftRadius: "var(--brand-radius-lg)",
-            borderTopRightRadius: "var(--brand-radius-lg)",
-          }}
-        >
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-0 z-0 scale-105",
-              isCrb
-                ? "bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.3),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(251,146,60,0.22),transparent_45%)]"
-                : "bg-[radial-gradient(circle_at_25%_30%,rgba(253,186,116,0.5),transparent_50%),radial-gradient(circle_at_85%_60%,rgba(251,113,133,0.28),transparent_45%)]",
-            )}
-            aria-hidden
-          />
-          <CatalogImage
-            src={product.imageSrc}
-            alt={product.imageAlt}
-            fill
-            className={cn(
-              "relative z-[1] object-cover transition duration-500 ease-out motion-reduce:transition-none",
-              "group-hover:scale-[1.03]",
-              isCrb && "brightness-[1.05] contrast-[1.05]",
-            )}
-            style={{ objectPosition }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-          <div
-            className="absolute inset-0 z-[2] bg-gradient-to-t from-black/65 via-black/25 to-transparent"
-            aria-hidden
-          />
-          <span
-            className="absolute left-3 top-3 z-[3] inline-flex px-3 py-1 text-[11px] font-bold uppercase tracking-wider shadow-md"
-            style={{
-              background: isCrb
-                ? "linear-gradient(90deg, var(--brand-accent), var(--brand-primary))"
-                : "linear-gradient(90deg, var(--brand-accent), #fb7185)",
-              color: isCrb ? "var(--brand-on-primary)" : "var(--brand-on-accent)",
-              borderRadius: "var(--brand-radius-md)",
-            }}
-          >
-            {product.category}
-          </span>
-          <div className="absolute bottom-3 left-3 right-3 z-[3] flex items-end justify-between gap-2">
-            <p
-              className={cn(
-                "text-2xl font-black tabular-nums drop-shadow-md",
-                isCrb ? "text-white" : "text-amber-100",
-              )}
-            >
-              <span className="text-sm font-bold opacity-90">from </span>$
-              {product.priceFrom}
-            </p>
-          </div>
-        </div>
-      </Link>
+      <ProductShelfImagePanel
+        imageSrc={product.imageSrc}
+        imageAlt={product.imageAlt}
+        imagePosition={objectPosition}
+        title={product.title}
+        isCrb={isCrb}
+        category={product.category}
+        priceFrom={product.priceFrom}
+      />
 
       <div className="relative flex flex-1 flex-col p-4 sm:p-5">
         <h3

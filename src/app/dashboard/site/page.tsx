@@ -8,12 +8,9 @@ import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
 
 export const metadata: Metadata = { title: "Website — Dashboard" };
 
-const FIELDS: {
-  name: string;
-  label: string;
-  placeholder: string;
-  multiline?: boolean;
-}[] = [
+type Field = { name: string; label: string; placeholder: string; multiline?: boolean };
+
+const FIELDS: Field[] = [
   {
     name: "business_name",
     label: "Business name",
@@ -53,6 +50,46 @@ const FIELDS: {
   },
 ];
 
+const FOOTER_FIELDS: Field[] = [
+  {
+    name: "footer_headline",
+    label: "Brand description",
+    placeholder: "e.g. Premium party rentals delivered to your door.",
+    multiline: true,
+  },
+  {
+    name: "footer_phone",
+    label: "Footer phone",
+    placeholder: "E.164 format, e.g. +19515550000",
+  },
+  {
+    name: "footer_email",
+    label: "Email address",
+    placeholder: "e.g. info@liaspartyrentals.com",
+  },
+  {
+    name: "footer_service_area",
+    label: "Service area / bottom note",
+    placeholder: "e.g. Serving Moreno Valley, Riverside & surrounding areas.",
+    multiline: true,
+  },
+  {
+    name: "footer_copyright",
+    label: "Copyright line",
+    placeholder: "e.g. © 2025 Lias Party Rentals. All rights reserved.",
+  },
+  {
+    name: "footer_facebook_url",
+    label: "Facebook URL (optional)",
+    placeholder: "https://facebook.com/yourpage",
+  },
+  {
+    name: "footer_instagram_url",
+    label: "Instagram URL (optional)",
+    placeholder: "https://instagram.com/yourhandle",
+  },
+];
+
 async function updateSiteSettings(formData: FormData) {
   "use server";
   const brandSlug = (formData.get("brand_slug") as string | null)?.trim();
@@ -71,6 +108,13 @@ async function updateSiteSettings(formData: FormData) {
     p_hero_cta_primary: get("hero_cta_primary"),
     p_announcement_text: get("announcement_text"),
     p_service_areas_text: get("service_areas_text"),
+    p_footer_headline: get("footer_headline"),
+    p_footer_phone: get("footer_phone"),
+    p_footer_email: get("footer_email"),
+    p_footer_service_area: get("footer_service_area"),
+    p_footer_copyright: get("footer_copyright"),
+    p_footer_facebook_url: get("footer_facebook_url"),
+    p_footer_instagram_url: get("footer_instagram_url"),
   });
 
   if (error) throw new Error(`[updateSiteSettings] ${error.message}`);
@@ -158,6 +202,44 @@ export default async function SiteDashboardPage({
             </div>
           ),
         )}
+
+        {/* Footer section */}
+        <div className="space-y-6 border-t border-white/10 pt-6">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+            Footer
+          </h2>
+          {FOOTER_FIELDS.map((field) =>
+            field.multiline ? (
+              <div key={field.name}>
+                <label htmlFor={field.name} className={labelClass}>
+                  {field.label}
+                </label>
+                <textarea
+                  id={field.name}
+                  name={field.name}
+                  rows={3}
+                  defaultValue={val(field.name)}
+                  placeholder={field.placeholder}
+                  className={inputClass}
+                />
+              </div>
+            ) : (
+              <div key={field.name}>
+                <label htmlFor={field.name} className={labelClass}>
+                  {field.label}
+                </label>
+                <input
+                  id={field.name}
+                  name={field.name}
+                  type="text"
+                  defaultValue={val(field.name)}
+                  placeholder={field.placeholder}
+                  className={inputClass}
+                />
+              </div>
+            ),
+          )}
+        </div>
 
         <div className="flex items-center gap-4 border-t border-white/10 pt-4">
           <button

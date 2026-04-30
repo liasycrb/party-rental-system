@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 
 export const metadata: Metadata = { title: "Products — Dashboard" };
 
@@ -39,7 +40,7 @@ async function addProduct(formData: FormData) {
   const { error } = await supabase.rpc("insert_rental_product_dashboard", {
     p_name: name,
     p_slug: slug,
-    p_category_slug: ((formData.get("category_slug") as string) ?? "").trim() || "jumpers",
+    p_category_slug: ((formData.get("category_slug") as string) ?? "").trim() || "regular-jumper-13x13",
     p_brand_slugs: brandSlugs,
     p_price: Number(formData.get("price") ?? 0),
     p_is_active: isActive,
@@ -89,10 +90,10 @@ export default async function ProductsDashboardPage({
   const categoryFilter = sp.category?.trim() ?? "";
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc(
-    "get_all_rental_products_for_dashboard",
-    { p_brand_slug: "lias" },
-  );
+  const [{ data, error }, canonicalCategories] = await Promise.all([
+    supabase.rpc("get_all_rental_products_for_dashboard", { p_brand_slug: "lias" }),
+    getRentalCategories(),
+  ]);
 
   if (error) {
     return (
@@ -198,10 +199,9 @@ export default async function ProductsDashboardPage({
               name="category_slug"
               className="rounded border border-white/15 bg-[#0c0c0f] px-2 py-1.5 text-sm text-zinc-200 outline-none focus:border-violet-400"
             >
-              {categories.map((c) => (
-                <option key={c} value={c}>{formatCategory(c)}</option>
+              {canonicalCategories.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.label}</option>
               ))}
-              <option value="jumpers">Jumpers</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
-import { QuickBookBar } from "@/components/conversion/quick-book-bar";
 import { HeroDesktopStickerComposition } from "@/components/home/hero-desktop-sticker-composition";
 import { cn } from "@/lib/utils/cn";
 
@@ -273,8 +272,8 @@ export function MarketingHero({
       className={cn(
         "relative max-md:overflow-hidden lg:overflow-visible",
         isCrb
-          ? "pt-16 pb-4 text-white dark-hero max-md:pb-3 md:pb-4 lg:pb-5 lg:min-h-[980px]"
-          : "pt-16 pb-4 text-stone-900 max-md:min-h-0 max-md:pt-5 max-md:pb-3 md:pb-4 lg:min-h-[980px] lg:pb-5",
+          ? "pt-16 pb-4 text-white dark-hero max-md:pb-3 md:pb-4 lg:pb-5 lg:min-h-[820px]"
+          : "pt-16 pb-4 text-stone-900 max-md:min-h-0 max-md:pt-5 max-md:pb-3 md:pb-4 lg:min-h-[820px] lg:pb-5",
         isCrb && Boolean(mobileLead) && "max-md:min-h-0 max-md:pt-5 max-md:pb-3 md:pb-4 lg:pb-5",
       )}
     >
@@ -311,7 +310,7 @@ export function MarketingHero({
       >
         <div
           className={cn(
-            "order-1 min-w-0 max-w-[640px] pt-12",
+            "order-1 min-w-0 max-w-[640px] pt-5",
             !isCrb && "max-md:max-w-full max-md:pt-0",
             isCrb && Boolean(mobileLead) && "max-md:pt-0",
           )}
@@ -321,7 +320,7 @@ export function MarketingHero({
           {!isCrb && Boolean(mobileLead) ? (
             <div className="md:hidden mx-6 mt-2.5">
               <Link
-                href="#quick-book"
+                href={withBrand("/build", brand.slug)}
                 className="group flex h-[58px] w-full items-center justify-center gap-2 rounded-[18px] bg-rose-600 px-4 text-[18px] font-black text-white shadow-[0_10px_25px_rgba(255,0,80,0.25)] transition-all duration-200 motion-reduce:transition-none hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
               >
                 Check availability this weekend
@@ -332,7 +331,7 @@ export function MarketingHero({
           {isCrb && Boolean(mobileLead) ? (
             <div className="md:hidden mx-6 mt-2.5">
               <Link
-                href="#quick-book"
+                href={withBrand("/build", brand.slug)}
                 className="group flex h-[58px] w-full items-center justify-center gap-2 rounded-[18px] px-4 text-[18px] font-black text-slate-950 shadow-[0_0_32px_rgba(34,211,238,0.35)] transition-all duration-200 motion-reduce:transition-none hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
                 style={{
                   background: "linear-gradient(90deg, var(--brand-primary), #a5f3fc)",
@@ -435,43 +434,63 @@ export function MarketingHero({
             {heroSubtitleOverride || brand.copy.heroSubtitle}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-6 lg:gap-8">
-            <Link
-              href="#quick-book"
+          {/* ── Inline CTA block ───────────────────────────────────── */}
+          <div className="mt-8 max-w-[520px]">
+            <p
               className={cn(
-                "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] px-8 text-[18px] font-black text-white shadow-lg transition-all duration-300 motion-reduce:transition-none hover:-translate-y-1 hover:shadow-xl motion-reduce:hover:translate-y-0 hover:brightness-110 active:scale-[0.98] motion-reduce:active:scale-100",
-                isCrb && "text-slate-950 shadow-[0_0_40px_rgba(56,189,248,0.35)]",
-                !isCrb && "w-auto bg-rose-600 hover:bg-rose-700",
+                "mb-4 text-[11px] font-bold uppercase tracking-[0.22em]",
+                isCrb ? "text-white/40" : "text-stone-400",
+              )}
+            >
+              Check availability in seconds
+            </p>
+
+            <Link
+              href={withBrand("/build", brand.slug)}
+              className={cn(
+                "hero-cta-btn group relative flex w-full max-w-[480px] flex-col items-start justify-center overflow-hidden rounded-2xl px-8 py-5 transition-all duration-300 ease-out",
+                "hover:scale-[1.025] active:scale-[0.98]",
+                isCrb
+                  ? "text-slate-950 shadow-[0_12px_40px_rgba(6,182,212,0.45),0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_56px_rgba(6,182,212,0.6),0_4px_16px_rgba(0,0,0,0.18)]"
+                  : "text-white shadow-[0_12px_40px_rgba(220,38,38,0.4),0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_20px_56px_rgba(220,38,38,0.55),0_4px_16px_rgba(0,0,0,0.15)]",
               )}
               style={
                 isCrb
                   ? {
-                      background: "linear-gradient(90deg, var(--brand-primary), #a5f3fc)",
+                      background:
+                        "linear-gradient(110deg, var(--brand-primary) 0%, #a5f3fc 55%, var(--brand-accent) 100%)",
                     }
-                  : undefined
+                  : {
+                      background:
+                        "linear-gradient(110deg, #be123c 0%, var(--brand-secondary) 50%, #fb923c 100%)",
+                    }
               }
             >
-              {ctaPrimaryOverride || "Check availability"}
-              <ArrowRight className="h-5 w-5 transition-transform duration-300 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
-            </Link>
-            <Link
-              href={withBrand("/build", brand.slug)}
-              className={cn(
-                "group inline-flex h-[60px] shrink-0 items-center justify-center gap-2 rounded-[18px] border-2 border-orange-500/30 bg-white px-8 text-[18px] font-black text-stone-900 shadow-md transition-all duration-300 motion-reduce:transition-none hover:bg-stone-50",
-                isCrb &&
-                  "border-white/40 bg-white/10 text-white shadow-none backdrop-blur hover:bg-white/15",
-                !isCrb && "w-auto",
-              )}
-            >
-              Book your date
-              <ArrowRight
-                className={cn(
-                  "h-5 w-5 transition-transform duration-300 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0",
-                  isCrb && "text-cyan-100",
-                )}
+              {/* shine sweep on hover */}
+              <span
+                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-20deg] bg-white/20 transition-transform duration-700 ease-out group-hover:translate-x-[150%]"
+                aria-hidden
               />
+
+              <span className="relative flex w-full items-center justify-between gap-4">
+                <span className="text-[17px] font-black leading-tight tracking-[-0.02em] sm:text-[19px]">
+                  Check availability &amp; book your jumper
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+
+              <span
+                className={cn(
+                  "relative mt-1.5 text-[12px] font-medium leading-none",
+                  isCrb ? "text-slate-800/70" : "text-white/70",
+                )}
+              >
+                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment required today
+              </span>
             </Link>
           </div>
+          {/* ────────────────────────────────────────────────────────── */}
+
           </div>
         </div>
 
@@ -524,34 +543,6 @@ export function MarketingHero({
               />
             </div>
           </div>
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "relative z-30 mx-auto mt-10 mb-4 w-full max-w-[1320px] px-8 max-md:mb-3 md:mb-5 lg:absolute lg:bottom-[120px] lg:mb-0 lg:left-1/2 lg:mt-0 lg:w-[min(1080px,calc(100%-4rem))] lg:max-w-none lg:-translate-x-1/2 lg:px-0",
-          !isCrb && "max-md:mt-8 max-md:px-4",
-        )}
-      >
-        <div
-          className={cn(
-            "flex min-h-[132px] items-center rounded-[24px] bg-white px-8 py-5 shadow-2xl transition-all duration-300 motion-reduce:transition-none hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)]",
-            !isCrb &&
-              "max-md:min-h-0 max-md:flex-col max-md:items-center max-md:gap-1.5 max-md:px-4 max-md:py-2.5 max-md:text-center",
-          )}
-        >
-          {!isCrb ? (
-            <p className="w-full text-center font-bold text-stone-900 md:hidden">
-              Build your party
-            </p>
-          ) : null}
-          <QuickBookBar
-            isCrb={isCrb}
-            brandSlug={brand.slug}
-            id="quick-book"
-            compactMobile={!isCrb || Boolean(mobileLead)}
-            className="rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
-          />
         </div>
       </div>
 

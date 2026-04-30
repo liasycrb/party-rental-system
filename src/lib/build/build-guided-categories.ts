@@ -1,48 +1,129 @@
 /**
- * Guided “What type of rental?” tiles on /build. Each tile matches inventory via `category_slug`.
+ * Individual rental-category tiles on /build — one per canonical category.
+ * Images are shared with the public catalog (CATEGORY_CAROUSEL_ITEMS).
+ *
+ * `categorySlugs` includes the canonical slug plus any legacy DB values so
+ * existing products still appear after a category rename.
  */
 export type GuidedCategoryDef = {
+  slug: string;
   label: string;
   image: string;
-  /** If set, item `category_slug` must equal one of these (case-insensitive). */
-  categorySlugs: string[];
+  /** readonly to satisfy `as const` — includes canonical + legacy aliases. */
+  categorySlugs: readonly string[];
+};
+
+/**
+ * Legacy DB slug → canonical category slug.
+ * Reference only; the actual matching lives in `inventoryMatchesGuidedCategory`.
+ */
+export const LEGACY_CATEGORY_SLUG_MAP: Record<string, string> = {
+  jumpers:          "regular-jumper-13x13",
+  "bounce-houses":  "regular-jumper-13x13",
+  bounce:           "regular-jumper-13x13",
+  "mini-combo":     "minicombo",
+  "slides-dry-wet": "waterslide",
+  inflatables:      "inflatable-games",
+  inflatable:       "inflatable-games",
+  games:            "inflatable-games",
+  concessions:      "inflatable-games",
+  "party-extras":   "inflatable-games",
+  "tables-chairs":  "throne-chairs",
+  "canopies-tent":  "throne-chairs",
+  tables:           "throne-chairs",
+  chairs:           "throne-chairs",
+  canopy:           "throne-chairs",
+  tents:            "throne-chairs",
+  seating:          "throne-chairs",
 };
 
 export const BUILD_GUIDED_CATEGORIES = [
   {
-    label: "Bounce houses & inflatables",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=80",
+    slug: "regular-jumper-13x13",
+    label: "Regular Jumper 13x13",
+    image: "/party-rentals/categories/regular-jumper-13x13.png",
+    categorySlugs: ["regular-jumper-13x13", "jumpers", "bounce-houses", "bounce"],
+  },
+  {
+    slug: "five-in-one-jumpers",
+    label: "5 en 1 Jumpers",
+    image: "/party-rentals/categories/five-in-one-jumpers.png",
+    categorySlugs: ["five-in-one-jumpers"],
+  },
+  {
+    slug: "eleven-by-eleven-jumpers",
+    label: "11x11 Jumpers",
+    image: "/party-rentals/categories/eleven-by-eleven-jumpers.png",
+    categorySlugs: ["eleven-by-eleven-jumpers"],
+  },
+  {
+    slug: "waterslide",
+    label: "Waterslide",
+    image: "/party-rentals/categories/waterslide.png",
+    categorySlugs: ["waterslide", "slides-dry-wet"],
+  },
+  {
+    slug: "disney-jumpers",
+    label: "Disney Jumpers",
+    image: "/party-rentals/categories/disney-jumpers.png",
+    categorySlugs: ["disney-jumpers"],
+  },
+  {
+    slug: "xtreme-disco-dome",
+    label: "XTreme Disco Dome",
+    image: "/party-rentals/categories/xtreme-disco-dome.png",
+    categorySlugs: ["xtreme-disco-dome"],
+  },
+  {
+    slug: "throne-chairs",
+    label: "Throne Chairs",
+    image: "/party-rentals/categories/throne-chairs.png",
     categorySlugs: [
-      // legacy slugs
-      "bounce-houses", "inflatables", "bounce", "inflatable",
-      // rental_products slugs
-      "jumpers", "disney-jumpers", "five-in-one-jumpers", "combos",
-      "mini-combo", "obstacle-course", "inflatable-games", "xtreme-disco-dome",
+      "throne-chairs",
+      "tables-chairs",
+      "canopies-tent",
+      "tables",
+      "chairs",
+      "canopy",
+      "tents",
+      "seating",
     ],
   },
   {
-    label: "Tables, chairs & tents",
-    image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80",
+    slug: "inflatable-games",
+    label: "Inflatable Games",
+    image: "/party-rentals/categories/inflatable-games.png",
     categorySlugs: [
-      // legacy slugs
-      "tables", "chairs", "canopy", "tents", "seating",
-      // rental_products slugs
-      "tables-chairs", "canopies-tent", "throne-chairs",
+      "inflatable-games",
+      "inflatables",
+      "inflatable",
+      "games",
+      "concessions",
+      "party-extras",
     ],
   },
   {
-    label: "Waterslides & games",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=80",
-    categorySlugs: [
-      // legacy slugs
-      "concessions", "games", "party-extras",
-      // rental_products slugs
-      "slides-dry-wet",
-    ],
+    slug: "obstacle-course",
+    label: "Obstacle Course",
+    image: "/party-rentals/categories/obstacle-course.png",
+    categorySlugs: ["obstacle-course"],
   },
   {
+    slug: "minicombo",
+    label: "Minicombo",
+    image: "/party-rentals/categories/minicombo.png",
+    categorySlugs: ["minicombo", "mini-combo"],
+  },
+  {
+    slug: "combos",
+    label: "Combos",
+    image: "/party-rentals/categories/combos.png",
+    categorySlugs: ["combos"],
+  },
+  {
+    slug: "*",
     label: "Browse all inventory",
-    image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80",
+    image: "/party-rentals/categories/regular-jumper-13x13.png",
     categorySlugs: ["*"],
   },
 ] as const satisfies readonly GuidedCategoryDef[];

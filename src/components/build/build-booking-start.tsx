@@ -14,11 +14,13 @@ import {
   BUILD_GUIDED_CATEGORIES,
   guidedCategoryLabelForSlug,
   inventoryMatchesGuidedCategory,
+  type GuidedCategoryDef,
 } from "@/lib/build/build-guided-categories";
 import { checkBuildAvailability } from "@/lib/booking/check-build-availability";
 import { getBookedDates } from "@/lib/booking/get-booked-dates";
 import { submitBookingLead } from "@/lib/booking/submit-booking-lead";
 import { createOnlineBooking } from "@/lib/booking/create-online-booking";
+import { BuildInventoryCardImage } from "@/components/build/build-inventory-card-image";
 import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import { Container } from "@/components/marketing/container";
@@ -32,6 +34,8 @@ type BuildBookingStartProps = {
   productSlug: string | null;
   categoryLine: string | null;
   inventoryOptions: BuildInventoryOption[];
+  /** Categories from Supabase (with hardcoded fallback); includes "Browse all" sentinel. */
+  guidedCategories: GuidedCategoryDef[];
 };
 
 function inputClass(isCrb: boolean) {
@@ -51,22 +55,9 @@ const labelClass = (isCrb: boolean) =>
 
 function countInGuidedCategory(
   items: BuildInventoryOption[],
-  def: (typeof BUILD_GUIDED_CATEGORIES)[number],
+  def: GuidedCategoryDef,
 ): number {
   return items.filter((o) => inventoryMatchesGuidedCategory(o.category_slug, def)).length;
-}
-
-function categoryTileImageSrc(
-  def: (typeof BUILD_GUIDED_CATEGORIES)[number],
-  items: BuildInventoryOption[],
-): string {
-  const match = items.find(
-    (o) =>
-      inventoryMatchesGuidedCategory(o.category_slug, def) &&
-      o.image_src != null &&
-      o.image_src.trim() !== "",
-  );
-  return match?.image_src ?? def.image;
 }
 
 function whatsappHrefFromPhone(supportPhone: string): string {
@@ -75,6 +66,115 @@ function whatsappHrefFromPhone(supportPhone: string): string {
 
 function whatsappHrefPrefilled(supportPhone: string, message: string): string {
   return `${whatsappHrefFromPhone(supportPhone)}?text=${encodeURIComponent(message)}`;
+}
+
+function CategoryTile({
+  def,
+  n,
+  isCrb,
+  onClick,
+}: {
+  def: GuidedCategoryDef;
+  n: number;
+  isCrb: boolean;
+  onClick: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const isEmpty = n === 0;
+  const initials = def.label
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+  const hasImage = !imgError && !!def.image;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isEmpty}
+      className={cn(
+        "group relative flex flex-col overflow-hidden text-left",
+        "rounded-2xl transition-all duration-200 active:scale-[0.98]",
+        isCrb
+          ? cn(
+              "bg-slate-800/90 ring-1 ring-white/[0.08]",
+              isEmpty
+                ? "cursor-default opacity-40"
+                : "hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(0,0,0,0.45)] hover:ring-cyan-400/40",
+            )
+          : cn(
+              "bg-white/95 shadow-sm ring-1 ring-stone-200",
+              isEmpty
+                ? "cursor-default opacity-40"
+                : "hover:-translate-y-0.5 hover:shadow-md hover:ring-rose-300",
+            ),
+      )}
+    >
+      {/* Image area — fixed height, centered, never stretched */}
+      <div
+        className={cn(
+          "relative flex h-[130px] w-full shrink-0 items-center justify-center overflow-hidden",
+          isCrb ? "bg-slate-700/50" : "bg-stone-100",
+        )}
+      >
+        {hasImage ? (
+          <img
+            src={def.image}
+            alt={def.label}
+            onError={() => setImgError(true)}
+            className="h-full w-full object-contain p-4 drop-shadow-md transition-transform duration-300 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-1.5 px-3 text-center">
+            <span
+              className={cn(
+                "text-2xl font-black",
+                isCrb ? "text-slate-500" : "text-stone-300",
+              )}
+            >
+              {initials}
+            </span>
+            <span
+              className={cn(
+                "text-[9px] font-semibold uppercase tracking-widest",
+                isCrb ? "text-slate-600" : "text-stone-400",
+              )}
+            >
+              Image coming soon
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Text area */}
+      <div className="px-4 py-3">
+        <span
+          className={cn(
+            "block text-sm font-bold leading-tight",
+            isCrb ? "text-white" : "text-stone-900",
+          )}
+        >
+          {def.label}
+        </span>
+        <span
+          className={cn(
+            "mt-1.5 block text-xs font-medium",
+            isEmpty
+              ? isCrb
+                ? "text-slate-600"
+                : "text-stone-400"
+              : isCrb
+                ? "text-slate-400"
+                : "text-stone-500",
+          )}
+        >
+          {isEmpty ? "Coming soon" : `${n} ${n === 1 ? "item" : "items"} available`}
+        </span>
+      </div>
+    </button>
+  );
 }
 
 type SelectedAddonsState = {
@@ -338,6 +438,7 @@ export function BuildBookingStart({
   productSlug,
   categoryLine,
   inventoryOptions,
+  guidedCategories,
 }: BuildBookingStartProps) {
   const brandContact = BRANDS[brandSlug];
   const inventoryEmpty = inventoryOptions.length === 0;
@@ -459,7 +560,7 @@ export function BuildBookingStart({
   const productForFlow = selectedItem?.product_slug ?? productSlugTrimmed;
 
   const guidedDef =
-    guidedCategoryIndex !== null ? BUILD_GUIDED_CATEGORIES[guidedCategoryIndex] : null;
+    guidedCategoryIndex !== null ? guidedCategories[guidedCategoryIndex] : null;
   const itemsInGuidedCategory = useMemo(() => {
     if (!guidedDef) return [];
     return inventoryOptions.filter((o) =>
@@ -717,13 +818,6 @@ export function BuildBookingStart({
   const cardShell = isCrb
     ? "bg-slate-800/80 ring-1 ring-slate-600/50"
     : "bg-white ring-1 ring-stone-200/80";
-  const categoryTileShell = cn(
-    "rounded-2xl p-5 text-left shadow-md transition active:scale-[0.99]",
-    isCrb
-      ? "bg-slate-800/90 ring-1 ring-cyan-500/25 hover:ring-cyan-400/50"
-      : "bg-white/95 ring-1 ring-stone-200 hover:ring-rose-200",
-  );
-
   const waHref = whatsappHrefFromPhone(brandContact.supportPhone);
 
   if (success) {
@@ -959,34 +1053,17 @@ export function BuildBookingStart({
                 <h2 className={cn("text-lg font-bold", isCrb ? "text-white" : "text-stone-900")}>
                   What type of rental do you need?
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {BUILD_GUIDED_CATEGORIES.map((def, idx) => {
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {guidedCategories.map((def, idx) => {
                     const n = countInGuidedCategory(inventoryOptions, def);
                     return (
-                      <button
-                        key={def.label}
-                        type="button"
-                        className={cn(
-                          categoryTileShell,
-                          "flex flex-col overflow-hidden p-0 text-left",
-                        )}
+                      <CategoryTile
+                        key={def.slug}
+                        def={def}
+                        n={n}
+                        isCrb={isCrb}
                         onClick={() => setGuidedCategoryIndex(idx)}
-                        disabled={n === 0}
-                        style={{ borderRadius: "var(--brand-radius-lg)" }}
-                      >
-                        <img src={categoryTileImageSrc(def, inventoryOptions)} alt="" className="h-32 w-full shrink-0 object-cover" />
-                        <div className="px-5 pb-5 pt-3 text-left">
-                          <span className="block text-base font-black leading-snug">{def.label}</span>
-                          <span
-                            className={cn(
-                              "mt-2 block text-sm font-medium",
-                              isCrb ? "text-slate-400" : "text-stone-500",
-                            )}
-                          >
-                            {n === 0 ? "No items right now" : `${n} ${n === 1 ? "item" : "items"}`}
-                          </span>
-                        </div>
-                      </button>
+                      />
                     );
                   })}
                 </div>
@@ -1037,41 +1114,12 @@ export function BuildBookingStart({
                             )}
                             style={{ borderRadius: "var(--brand-radius-lg)" }}
                           >
-                            {/* Fixed-height image area — placeholder always rendered beneath so broken/missing images degrade cleanly */}
-                            <div className="relative h-[155px] w-full shrink-0 overflow-hidden">
-                              <div
-                                className={cn(
-                                  "absolute inset-0 flex flex-col items-center justify-center gap-1.5",
-                                  isCrb ? "bg-slate-800 text-slate-600" : "bg-stone-100 text-stone-400",
-                                )}
-                              >
-                                <svg
-                                  className="h-7 w-7 opacity-40"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={1.5}
-                                  viewBox="0 0 24 24"
-                                  aria-hidden
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 20.25h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12.75c0 .828.672 1.5 1.5 1.5z"
-                                  />
-                                </svg>
-                                <span className="text-[11px] font-medium">Photo coming soon</span>
-                              </div>
-                              {item.image_src ? (
-                                <img
-                                  src={item.image_src}
-                                  alt=""
-                                  className="absolute inset-0 h-full w-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                  }}
-                                />
-                              ) : null}
-                            </div>
+                            <BuildInventoryCardImage
+                              imageSrc={item.image_src}
+                              imageAlt={item.name}
+                              productName={item.name}
+                              isCrb={isCrb}
+                            />
 
                             <div className="flex flex-1 flex-col gap-2 p-3">
                               {item.category_slug && (

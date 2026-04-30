@@ -314,15 +314,35 @@ export default async function DashboardBookingDetailPage(props: {
           />
         </Section>
 
-        <Section title="Rental">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Product"
-              value={slugToReadableName(row.product_slug)}
-            />
-            <Field label="Quantity" value={row.quantity ?? "—"} />
-          </div>
-        </Section>
+        {Array.isArray(row.items) && row.items.length > 0 ? (
+          <Section title="Items">
+            <ul className="space-y-2">
+              {(row.items as Array<{ label?: string; slug?: string; qty?: number }>).map(
+                (item, i) => (
+                  <li key={i} className="flex items-baseline gap-3 text-zinc-200">
+                    <span className="font-medium">{item.label || "—"}</span>
+                    {item.qty && item.qty > 1 && (
+                      <span className="text-zinc-500">× {item.qty}</span>
+                    )}
+                    {item.slug && (
+                      <span className="text-xs text-zinc-600">{item.slug}</span>
+                    )}
+                  </li>
+                ),
+              )}
+            </ul>
+          </Section>
+        ) : (
+          <Section title="Rental">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Product"
+                value={slugToReadableName(row.product_slug)}
+              />
+              <Field label="Quantity" value={row.quantity ?? "—"} />
+            </div>
+          </Section>
+        )}
 
         {addonLines.length > 0 ? (
           <Section title="Add-Ons">

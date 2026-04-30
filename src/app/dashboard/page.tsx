@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { BookingCalendar } from "./_booking-calendar";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -56,6 +57,14 @@ export default async function DashboardHomePage() {
 
   const today = todayStr();
   const tomorrow = tomorrowStr();
+
+  const nowDate = new Date();
+  /** Calendar navigation: fetch a window client can scroll without round-trips (~6mo back → +12mo). */
+  const calFetchStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - 6, 1);
+  const calFetchEnd = new Date(nowDate.getFullYear(), nowDate.getMonth() + 13, 0);
+  const calStartStr = `${calFetchStart.getFullYear()}-${String(calFetchStart.getMonth() + 1).padStart(2, "0")}-${String(calFetchStart.getDate()).padStart(2, "0")}`;
+  const calEndStr = `${calFetchEnd.getFullYear()}-${String(calFetchEnd.getMonth() + 1).padStart(2, "0")}-${String(calFetchEnd.getDate()).padStart(2, "0")}`;
+
   const supabase = await createSupabaseServerClient();
 
   const [
@@ -65,6 +74,7 @@ export default async function DashboardHomePage() {
     { count: tomorrowCount },
     { data: attentionRows },
     { data: upcomingRows },
+    { data: calendarRows },
   ] = await Promise.all([
     supabase
       .from("bookings")
@@ -102,6 +112,13 @@ export default async function DashboardHomePage() {
       .gte("event_date", today)
       .order("event_date", { ascending: true })
       .limit(5),
+    supabase
+      .from("bookings")
+      .select("id, event_date, status, customer_name, product_slug")
+      .in("source", ["online_reservation", "staff_created"])
+      .gte("event_date", calStartStr)
+      .lte("event_date", calEndStr)
+      .order("event_date", { ascending: true }),
   ]);
 
   const statCards = [
@@ -162,7 +179,15 @@ export default async function DashboardHomePage() {
         ))}
       </div>
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+      <div className="mt-10">
+        <BookingCalendar
+          bookings={calendarRows ?? []}
+          initialYear={nowDate.getFullYear()}
+          initialMonth={nowDate.getMonth()}
+        />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">

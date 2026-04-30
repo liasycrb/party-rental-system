@@ -5,14 +5,17 @@ import { Suspense, useMemo, type ReactNode } from "react";
 import { BRANDS, type Brand } from "@/lib/brand/config";
 import { resolveHomeBrandSlug } from "@/lib/brand/resolve-brand";
 import { SiteShell } from "./site-shell";
+import type { FooterOverride } from "./site-footer";
 
 function SiteShellWithUrlSearchParams({
   serverBrand,
   phoneOverrides,
+  footerOverrides,
   children,
 }: {
   serverBrand: Brand;
   phoneOverrides?: Record<string, string | null>;
+  footerOverrides?: Record<string, FooterOverride | null>;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -32,12 +35,13 @@ function SiteShellWithUrlSearchParams({
     return serverBrand;
   }, [pathname, searchParams, serverBrand]);
 
-  // Pick the phone override that matches whichever brand is active after
+  // Pick the override that matches whichever brand is active after
   // client-side ?brand= resolution, so header/footer always stay in sync.
   const phoneOverride = phoneOverrides?.[brand.slug] ?? null;
+  const footerOverride = footerOverrides?.[brand.slug] ?? null;
 
   return (
-    <SiteShell brand={brand} phoneOverride={phoneOverride}>
+    <SiteShell brand={brand} phoneOverride={phoneOverride} footerOverride={footerOverride}>
       {children}
     </SiteShell>
   );
@@ -46,17 +50,20 @@ function SiteShellWithUrlSearchParams({
 export function SiteLayoutBrand({
   serverBrand,
   phoneOverrides,
+  footerOverrides,
   children,
 }: {
   serverBrand: Brand;
   phoneOverrides?: Record<string, string | null>;
+  footerOverrides?: Record<string, FooterOverride | null>;
   children: ReactNode;
 }) {
   const serverPhoneOverride = phoneOverrides?.[serverBrand.slug] ?? null;
+  const serverFooterOverride = footerOverrides?.[serverBrand.slug] ?? null;
   return (
     <Suspense
       fallback={
-        <SiteShell brand={serverBrand} phoneOverride={serverPhoneOverride}>
+        <SiteShell brand={serverBrand} phoneOverride={serverPhoneOverride} footerOverride={serverFooterOverride}>
           {children}
         </SiteShell>
       }
@@ -64,6 +71,7 @@ export function SiteLayoutBrand({
       <SiteShellWithUrlSearchParams
         serverBrand={serverBrand}
         phoneOverrides={phoneOverrides}
+        footerOverrides={footerOverrides}
       >
         {children}
       </SiteShellWithUrlSearchParams>

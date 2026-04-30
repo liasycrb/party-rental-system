@@ -10,6 +10,7 @@ type Lead = {
   id: string;
   created_at: string;
   request_type: string | null;
+  package_id: string | null;
   package_title: string | null;
   product_slug: string | null;
   customer_name: string;
@@ -18,6 +19,22 @@ type Lead = {
   event_city: string | null;
   status: string | null;
 };
+
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function packageLabel(title: string | null, id: string | null): string {
+  if (title) return title;
+  if (id && !UUID_RE.test(id)) return slugToTitle(id);
+  return "—";
+}
 
 type PageProps = {
   searchParams: Promise<{ brand?: string | string[] }>;
@@ -96,7 +113,8 @@ export default async function LeadsDashboardPage({ searchParams }: PageProps) {
                 <th className="pb-2 pr-4">Name</th>
                 <th className="pb-2 pr-4">Phone</th>
                 <th className="pb-2 pr-4">Event date</th>
-                <th className="pb-2">City</th>
+                <th className="pb-2 pr-4">City</th>
+                <th className="pb-2"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -113,12 +131,17 @@ export default async function LeadsDashboardPage({ searchParams }: PageProps) {
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-zinc-300">
-                    {lead.package_title ?? lead.product_slug ?? "—"}
+                    {packageLabel(lead.package_title, lead.package_id)}
                   </td>
                   <td className="py-2 pr-4">{lead.customer_name}</td>
                   <td className="py-2 pr-4 text-zinc-400">{lead.phone}</td>
                   <td className="py-2 pr-4 text-zinc-400">{fmt(lead.event_date)}</td>
                   <td className="py-2 text-zinc-400">{lead.event_city ?? "—"}</td>
+                  <td className="py-2 pl-4">
+                    <Link href={`/dashboard/leads/${lead.id}`} className="text-xs text-violet-400 hover:underline">
+                      View
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
