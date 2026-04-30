@@ -37,10 +37,22 @@ export default function DashboardLayout({
               Bookings
             </Link>
             <Link
+              href="/dashboard/leads"
+              className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:bg-white/10 sm:text-sm"
+            >
+              Leads
+            </Link>
+            <Link
               href="/dashboard/products"
               className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:bg-white/10 sm:text-sm"
             >
               Products
+            </Link>
+            <Link
+              href="/dashboard/packages"
+              className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:bg-white/10 sm:text-sm"
+            >
+              Packages
             </Link>
             <Link
               href="/dashboard/site"

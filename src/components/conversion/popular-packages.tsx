@@ -1,20 +1,59 @@
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
-import { withBrand } from "@/lib/brand/with-brand-href";
 import { POPULAR_PACKAGES } from "@/lib/marketing/popular-packages";
+import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
 import { Container } from "@/components/marketing/container";
 import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
 
+/** Normalised shape used for rendering — works for both DB and hardcoded sources. */
+type DisplayPackage = {
+  id: string;
+  title: string;
+  tagline: string | null;
+  includes: string[];
+  fromPrice: number;
+  badge?: string | null;
+  primaryProductSlug: string | null;
+};
+
+function fromRentalPackage(p: RentalPackage): DisplayPackage {
+  return {
+    id: p.id,
+    title: p.title,
+    tagline: p.tagline,
+    includes: p.includes,
+    fromPrice: p.from_price,
+    badge: p.badge,
+    primaryProductSlug: p.primary_product_slug,
+  };
+}
+
 export function PopularPackagesSection({
   brand,
+  packages: dbPackages,
   id = "packages-heading",
 }: {
   brand: Brand;
+  /** DB packages from rental_packages table. Falls back to hardcoded list when empty/null. */
+  packages?: RentalPackage[] | null;
   id?: string;
 }) {
   const isCrb = brand.slug === "crb";
   const b = brand.slug;
+
+  const displayPackages: DisplayPackage[] =
+    dbPackages && dbPackages.length > 0
+      ? dbPackages.map(fromRentalPackage)
+      : POPULAR_PACKAGES.map((p) => ({
+          id: p.id,
+          title: p.title,
+          tagline: p.tagline,
+          includes: p.includes,
+          fromPrice: p.fromPrice,
+          badge: p.badge ?? null,
+          primaryProductSlug: p.primaryProductSlug,
+        }));
 
   return (
     <section
@@ -38,7 +77,7 @@ export function PopularPackagesSection({
           description="Real bundles your customers actually book — each jumps into the builder with the right starter jumper."
         />
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {POPULAR_PACKAGES.map((pkg, i) => (
+          {displayPackages.map((pkg, i) => (
             <div
               key={pkg.id}
               className={cn(
@@ -111,10 +150,10 @@ export function PopularPackagesSection({
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="mt-6">
                   <Link
-                    href={withBrand(`/build?package=${pkg.id}`, b)}
-                    className="inline-flex flex-1 items-center justify-center px-5 py-3 text-center text-sm font-black text-white shadow-lg transition hover:brightness-110"
+                    href={`/package-inquiry?package=${pkg.id}&brand=${b}`}
+                    className="inline-flex w-full items-center justify-center px-5 py-3 text-center text-sm font-black text-white shadow-lg transition hover:brightness-110"
                     style={{
                       background: isCrb
                         ? "linear-gradient(90deg, var(--brand-primary), #22d3ee)"
@@ -123,15 +162,6 @@ export function PopularPackagesSection({
                     }}
                   >
                     Book this setup
-                  </Link>
-                  <Link
-                    href={withBrand(`/build?package=${pkg.id}`, b)}
-                    className={cn(
-                      "inline-flex items-center justify-center px-3 py-3 text-center text-xs font-black uppercase tracking-wider underline-offset-4 hover:underline",
-                      isCrb ? "text-cyan-200" : "text-orange-900",
-                    )}
-                  >
-                    Check availability
                   </Link>
                 </div>
               </div>

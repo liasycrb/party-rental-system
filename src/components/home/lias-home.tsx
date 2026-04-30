@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
 import type { SiteSettings } from "@/lib/site/get-site-settings";
+import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
@@ -21,9 +22,11 @@ import { SectionTitle } from "@/components/marketing/section-title";
 export function LiasHome({
   brand,
   siteSettings,
+  packages,
 }: {
   brand: Brand;
   siteSettings: SiteSettings | null;
+  packages?: RentalPackage[] | null;
 }) {
   const [p1, p2, p3] = DEMO_PRODUCTS;
   const b = brand.slug;
@@ -63,7 +66,7 @@ export function LiasHome({
 
       <CategoryShowcase isCrb={false} brandSlug={b} />
 
-      <PopularPackagesSection brand={brand} />
+      <PopularPackagesSection brand={brand} packages={packages} />
       <WhyChooseStrip brand={brand} />
 
       {/* Experience storytelling — break the grid */}
