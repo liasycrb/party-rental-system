@@ -1059,48 +1059,51 @@ export function BuildBookingStart({
                               )}
                               style={{ borderRadius: "var(--brand-radius-lg)" }}
                             >
-                              {item.image_src ? (
-                                <img
-                                  src={item.image_src}
-                                  alt={item.name}
-                                  className="aspect-[4/3] w-full object-cover"
-                                />
-                              ) : (
+                              {/* Image area — fixed height so missing/broken images never distort layout */}
+                              <div className="relative h-[180px] w-full shrink-0 overflow-hidden">
                                 <div
                                   className={cn(
-                                    "flex aspect-[4/3] items-center justify-center text-sm font-semibold",
+                                    "absolute inset-0 flex items-center justify-center text-xs font-semibold",
                                     isCrb ? "bg-slate-900/80 text-slate-500" : "bg-stone-100 text-stone-400",
                                   )}
                                 >
-                                  Photo coming soon
+                                  Image coming soon
                                 </div>
-                              )}
+                                {item.image_src ? (
+                                  <img
+                                    src={item.image_src}
+                                    alt=""
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : null}
+                              </div>
 
-                              <div className="flex flex-1 flex-col gap-3 p-4">
+                              <div className="flex flex-1 flex-col gap-2 p-4">
                                 <p className={cn("font-bold leading-snug", isCrb ? "text-white" : "text-stone-900")}>
                                   {item.name}
                                 </p>
 
                                 {item.price != null && (
-                                  <p className={cn("text-2xl font-black tabular-nums", isCrb ? "text-white" : "text-stone-900")}>
-                                    <span className={cn("text-sm font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
+                                  <p className={cn("text-xl font-black tabular-nums", isCrb ? "text-white" : "text-stone-900")}>
+                                    <span className={cn("text-xs font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
                                       from{" "}
                                     </span>
                                     ${item.price}
                                   </p>
                                 )}
 
-                                <ul className={cn("space-y-0.5 text-xs", isCrb ? "text-slate-400" : "text-stone-500")}>
-                                  <li>✓ Setup included</li>
-                                  <li>✓ Cleaned &amp; sanitized</li>
-                                  <li>✓ On-time delivery</li>
-                                </ul>
+                                <p className={cn("text-xs", isCrb ? "text-slate-400" : "text-stone-500")}>
+                                  ✓ Setup &amp; delivery included · Cleaned &amp; sanitized
+                                </p>
 
                                 <button
                                   type="button"
                                   disabled={!isAvailable}
                                   className={cn(
-                                    "mt-auto h-11 rounded-xl text-sm font-black transition active:scale-[0.99]",
+                                    "mt-auto h-10 rounded-xl text-sm font-black transition active:scale-[0.99]",
                                     isAvailable
                                       ? isCrb
                                         ? "bg-cyan-500 text-black hover:bg-cyan-400"
