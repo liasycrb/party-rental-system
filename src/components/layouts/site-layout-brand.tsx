@@ -8,9 +8,11 @@ import { SiteShell } from "./site-shell";
 
 function SiteShellWithUrlSearchParams({
   serverBrand,
+  phoneOverrides,
   children,
 }: {
   serverBrand: Brand;
+  phoneOverrides?: Record<string, string | null>;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -30,21 +32,39 @@ function SiteShellWithUrlSearchParams({
     return serverBrand;
   }, [pathname, searchParams, serverBrand]);
 
-  return <SiteShell brand={brand}>{children}</SiteShell>;
+  // Pick the phone override that matches whichever brand is active after
+  // client-side ?brand= resolution, so header/footer always stay in sync.
+  const phoneOverride = phoneOverrides?.[brand.slug] ?? null;
+
+  return (
+    <SiteShell brand={brand} phoneOverride={phoneOverride}>
+      {children}
+    </SiteShell>
+  );
 }
 
 export function SiteLayoutBrand({
   serverBrand,
+  phoneOverrides,
   children,
 }: {
   serverBrand: Brand;
+  phoneOverrides?: Record<string, string | null>;
   children: ReactNode;
 }) {
+  const serverPhoneOverride = phoneOverrides?.[serverBrand.slug] ?? null;
   return (
     <Suspense
-      fallback={<SiteShell brand={serverBrand}>{children}</SiteShell>}
+      fallback={
+        <SiteShell brand={serverBrand} phoneOverride={serverPhoneOverride}>
+          {children}
+        </SiteShell>
+      }
     >
-      <SiteShellWithUrlSearchParams serverBrand={serverBrand}>
+      <SiteShellWithUrlSearchParams
+        serverBrand={serverBrand}
+        phoneOverrides={phoneOverrides}
+      >
         {children}
       </SiteShellWithUrlSearchParams>
     </Suspense>

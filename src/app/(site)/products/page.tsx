@@ -8,6 +8,8 @@ import {
 import { withBrand } from "@/lib/brand/with-brand-href";
 import type { CatalogProduct } from "@/lib/catalog/get-products";
 import { getProducts } from "@/lib/catalog/get-products";
+import { getSiteSettings } from "@/lib/site/get-site-settings";
+import { formatPhoneDisplay } from "@/lib/utils/format-phone";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
 import { ProductCard } from "@/components/marketing/product-card";
@@ -55,8 +57,14 @@ export default async function ProductsPage({
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
-  const rawProducts = await getProducts(brandSlug);
+  const [rawProducts, siteSettings] = await Promise.all([
+    getProducts(brandSlug),
+    getSiteSettings(brandSlug),
+  ]);
   const products = rawProducts.map(toCardProduct);
+  const phoneDisplay = siteSettings?.support_phone
+    ? formatPhoneDisplay(siteSettings.support_phone)
+    : brand.supportPhoneDisplay;
   const bannerSrc = products[0]?.imageSrc || "/images/placeholder-party-rental.jpg";
   const bannerAlt = products[0]?.title ?? "Party rentals";
   const [headliner, ...rest] = products;
@@ -221,7 +229,7 @@ export default async function ProductsPage({
                 isCrb ? "text-slate-300" : "text-stone-600",
               )}
             >
-              {brand.supportPhoneDisplay} — we&apos;ll match footprint, stakes vs
+              {phoneDisplay} — we&apos;ll match footprint, stakes vs
               sandbags, and gate realities in minutes.
             </p>
           </div>

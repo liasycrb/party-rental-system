@@ -2,9 +2,22 @@ import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
+import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
 
-export function SiteHeader({ brand }: { brand: Brand }) {
+export function SiteHeader({
+  brand,
+  phoneOverride,
+}: {
+  brand: Brand;
+  phoneOverride?: string | null;
+}) {
   const isCrb = brand.slug === "crb";
+  const phoneTel = phoneOverride
+    ? formatPhoneTel(phoneOverride)
+    : brand.supportPhone;
+  const phoneDisplay = phoneOverride
+    ? formatPhoneDisplay(phoneOverride)
+    : brand.supportPhoneDisplay;
 
   const navLinkClass = cn(
     "text-sm font-semibold transition-colors",
@@ -40,13 +53,13 @@ export function SiteHeader({ brand }: { brand: Brand }) {
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <a
-            href={`tel:${brand.supportPhone}`}
+            href={`tel:${phoneTel}`}
             className={cn(
               "hidden text-sm font-bold md:inline",
               isCrb ? "text-cyan-100" : "text-orange-950",
             )}
           >
-            {brand.supportPhoneDisplay}
+            {phoneDisplay}
           </a>
           <nav
             className="flex items-center gap-2 sm:gap-3"

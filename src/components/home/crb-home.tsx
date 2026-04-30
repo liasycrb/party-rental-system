@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import type { SiteSettings } from "@/lib/site/get-site-settings";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
@@ -17,9 +18,19 @@ import { ProductCard } from "@/components/marketing/product-card";
 import { CategoryShowcase } from "@/components/marketing/category-showcase";
 import { SectionTitle } from "@/components/marketing/section-title";
 
-export function CrbHome({ brand }: { brand: Brand }) {
+export function CrbHome({
+  brand,
+  siteSettings,
+}: {
+  brand: Brand;
+  siteSettings: SiteSettings | null;
+}) {
   const [p1, p2, p3] = DEMO_PRODUCTS;
   const b = brand.slug;
+
+  const tickerText =
+    siteSettings?.announcement_text ||
+    "Hear the blower hum · smell the grass · watch the kids lose their minds";
 
   return (
     <>
@@ -31,6 +42,9 @@ export function CrbHome({ brand }: { brand: Brand }) {
           imageSrc: HERO_BOUNCE_HOUSE.imageSrc,
           imageAlt: HERO_BOUNCE_HOUSE.imageAlt,
         }}
+        heroTitleOverride={siteSettings?.hero_headline}
+        heroSubtitleOverride={siteSettings?.hero_subheadline}
+        ctaPrimaryOverride={siteSettings?.hero_cta_primary}
       />
 
       <section
@@ -42,7 +56,7 @@ export function CrbHome({ brand }: { brand: Brand }) {
       >
         <Container>
           <p className="text-center text-xs font-black uppercase tracking-[0.28em] text-cyan-100/92">
-            Hear the blower hum · smell the grass · watch the kids lose their minds
+            {tickerText}
           </p>
         </Container>
       </section>

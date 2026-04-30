@@ -2,10 +2,23 @@ import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
+import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
 
-export function SiteFooter({ brand }: { brand: Brand }) {
+export function SiteFooter({
+  brand,
+  phoneOverride,
+}: {
+  brand: Brand;
+  phoneOverride?: string | null;
+}) {
   const year = new Date().getFullYear();
   const isCrb = brand.slug === "crb";
+  const phoneTel = phoneOverride
+    ? formatPhoneTel(phoneOverride)
+    : brand.supportPhone;
+  const phoneDisplay = phoneOverride
+    ? formatPhoneDisplay(phoneOverride)
+    : brand.supportPhoneDisplay;
 
   return (
     <footer
@@ -60,10 +73,10 @@ export function SiteFooter({ brand }: { brand: Brand }) {
             </p>
             <p className="mt-4 text-sm">
               <a
-                href={`tel:${brand.supportPhone}`}
+                href={`tel:${phoneTel}`}
                 className="text-lg font-bold hover:underline"
               >
-                {brand.supportPhoneDisplay}
+                {phoneDisplay}
               </a>
             </p>
             <p className="mt-2 text-xs leading-relaxed text-white/75">

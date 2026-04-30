@@ -5,9 +5,11 @@ import { SiteHeader } from "./site-header";
 
 export function SiteShell({
   brand,
+  phoneOverride,
   children,
 }: {
   brand: Brand;
+  phoneOverride?: string | null;
   children: React.ReactNode;
 }) {
   const t = brand.theme;
@@ -67,9 +69,9 @@ export function SiteShell({
         }}
       />
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
-        <SiteHeader brand={brand} />
+        <SiteHeader brand={brand} phoneOverride={phoneOverride} />
         <div className="flex-1">{children}</div>
-        <SiteFooter brand={brand} />
+        <SiteFooter brand={brand} phoneOverride={phoneOverride} />
       </div>
     </div>
   );

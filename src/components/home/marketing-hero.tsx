@@ -253,6 +253,9 @@ export function MarketingHero({
   isCrb,
   heroProduct: _heroProduct,
   mobileLead,
+  heroTitleOverride,
+  heroSubtitleOverride,
+  ctaPrimaryOverride,
 }: {
   brand: Brand;
   isCrb: boolean;
@@ -260,6 +263,10 @@ export function MarketingHero({
   heroProduct: { imageSrc: string; imageAlt: string };
   /** Mobile-only block (badges, headline, sticker carousel) before the md+ marketing stack. */
   mobileLead?: ReactNode;
+  /** CMS overrides — fall back to brand.copy when null/empty. */
+  heroTitleOverride?: string | null;
+  heroSubtitleOverride?: string | null;
+  ctaPrimaryOverride?: string | null;
 }) {
   return (
     <section
@@ -417,7 +424,7 @@ export function MarketingHero({
             {brand.copy.heroKicker}
           </p>
 
-          <HeroHeadline title={brand.copy.heroTitle} isCrb={isCrb} />
+          <HeroHeadline title={heroTitleOverride || brand.copy.heroTitle} isCrb={isCrb} />
 
           <p
             className={cn(
@@ -425,7 +432,7 @@ export function MarketingHero({
               isCrb ? "text-white/90" : "text-stone-800",
             )}
           >
-            {brand.copy.heroSubtitle}
+            {heroSubtitleOverride || brand.copy.heroSubtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-6 lg:gap-8">
@@ -444,7 +451,7 @@ export function MarketingHero({
                   : undefined
               }
             >
-              Check availability
+              {ctaPrimaryOverride || "Check availability"}
               <ArrowRight className="h-5 w-5 transition-transform duration-300 motion-reduce:transition-none group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
             </Link>
             <Link
