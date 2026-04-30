@@ -14,6 +14,43 @@ type ProductRow = {
   image_src: string | null;
 };
 
+async function addProduct(formData: FormData) {
+  "use server";
+  const name = ((formData.get("name") as string) ?? "").trim();
+  if (!name) throw new Error("Name is required");
+
+  let slug = ((formData.get("slug") as string) ?? "").trim();
+  if (!slug) {
+    slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  const brandField = ((formData.get("brand_visibility") as string) ?? "").trim();
+  const brandSlugs =
+    brandField === "lias" ? ["lias"] :
+    brandField === "crb"  ? ["crb"]  :
+                            ["lias", "crb"];
+
+  const isActive = formData.get("is_active") === "true";
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("insert_rental_product_dashboard", {
+    p_name: name,
+    p_slug: slug,
+    p_category_slug: ((formData.get("category_slug") as string) ?? "").trim() || "jumpers",
+    p_brand_slugs: brandSlugs,
+    p_price: Number(formData.get("price") ?? 0),
+    p_is_active: isActive,
+    p_image_src: ((formData.get("image_src") as string) ?? "").trim() || null,
+    p_quantity_available: Number(formData.get("quantity_available") ?? 1),
+  });
+
+  if (error) throw new Error(`[addProduct] ${error.message}`);
+  revalidatePath("/dashboard/products");
+}
+
 async function updateProduct(formData: FormData) {
   "use server";
   const id = (formData.get("id") as string | null)?.trim();
@@ -53,7 +90,7 @@ export default async function ProductsDashboardPage({
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc(
-    "get_active_rental_products_for_brand",
+    "get_all_rental_products_for_dashboard",
     { p_brand_slug: "lias" },
   );
 
@@ -128,6 +165,108 @@ export default async function ProductsDashboardPage({
           </a>
         )}
       </form>
+
+      {/* Add product form */}
+      <details className="mb-5 rounded-xl border border-white/10 bg-white/5">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-zinc-200 hover:text-white">
+          + Add product
+        </summary>
+        <form
+          action={addProduct}
+          className="grid grid-cols-1 gap-3 border-t border-white/10 p-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Name *</label>
+            <input
+              name="name"
+              required
+              placeholder="e.g. Princess Combo 13x13"
+              className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Slug (auto if blank)</label>
+            <input
+              name="slug"
+              placeholder="e.g. princess-combo-13x13"
+              className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Category</label>
+            <select
+              name="category_slug"
+              className="rounded border border-white/15 bg-[#0c0c0f] px-2 py-1.5 text-sm text-zinc-200 outline-none focus:border-violet-400"
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>{formatCategory(c)}</option>
+              ))}
+              <option value="jumpers">Jumpers</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Price ($)</label>
+            <input
+              name="price"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={0}
+              className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Qty available</label>
+            <input
+              name="quantity_available"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={1}
+              className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Image path</label>
+            <input
+              name="image_src"
+              placeholder="/products/category/slug/main.jpg"
+              className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Brand visibility</label>
+            <select
+              name="brand_visibility"
+              defaultValue="both"
+              className="rounded border border-white/15 bg-[#0c0c0f] px-2 py-1.5 text-sm text-zinc-200 outline-none focus:border-violet-400"
+            >
+              <option value="both">Both — Lias &amp; CRB</option>
+              <option value="lias">Lias only</option>
+              <option value="crb">CRB only</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Status</label>
+            <select
+              name="is_active"
+              defaultValue="false"
+              className="rounded border border-white/15 bg-[#0c0c0f] px-2 py-1.5 text-sm text-zinc-200 outline-none focus:border-violet-400"
+            >
+              <option value="false">Draft — hidden</option>
+              <option value="true">Active — visible</option>
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-emerald-500 active:scale-[0.98]"
+            >
+              Add product
+            </button>
+          </div>
+        </form>
+      </details>
 
       {/* Column headers */}
       <div className="mb-1 grid grid-cols-[48px_2fr_1fr_80px_80px_2fr_72px] gap-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
