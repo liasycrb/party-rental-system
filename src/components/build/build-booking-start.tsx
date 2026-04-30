@@ -16,8 +16,10 @@ import {
   inventoryMatchesGuidedCategory,
 } from "@/lib/build/build-guided-categories";
 import { checkBuildAvailability } from "@/lib/booking/check-build-availability";
+import { getBookedDates } from "@/lib/booking/get-booked-dates";
 import { submitBookingLead } from "@/lib/booking/submit-booking-lead";
 import { createOnlineBooking } from "@/lib/booking/create-online-booking";
+import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
@@ -371,6 +373,7 @@ export function BuildBookingStart({
   const [guidedCategoryIndex, setGuidedCategoryIndex] = useState<number | null>(null);
 
   const [formDate, setFormDate] = useState("");
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [formCity, setFormCity] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [preferredDeliveryTime, setPreferredDeliveryTime] = useState("");
@@ -406,6 +409,15 @@ export function BuildBookingStart({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const slug = selectedItem?.product_slug;
+    if (!slug) {
+      setBookedDates([]);
+      return;
+    }
+    getBookedDates(slug).then(setBookedDates).catch(() => setBookedDates([]));
+  }, [selectedItem?.product_slug]);
 
   function handlePaymentProofChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -924,41 +936,75 @@ export function BuildBookingStart({
                         {guidedCategoryLabelForSlug(slugKey)}
                       </h3>
                       <div className="grid gap-4 sm:grid-cols-2">
-                        {groupItems.map((item) => (
-                          <div
-                            key={item.id}
-                            className={cn("flex flex-col overflow-hidden rounded-2xl shadow-lg", cardShell)}
-                            style={{ borderRadius: "var(--brand-radius-lg)" }}
-                          >
+                        {groupItems.map((item) => {
+                          const isAvailable = item.quantity_active > 0;
+                          return (
                             <div
+                              key={item.id}
                               className={cn(
-                                "flex aspect-[4/3] items-center justify-center text-sm font-semibold",
-                                isCrb ? "bg-slate-900/80 text-slate-500" : "bg-stone-100 text-stone-400",
+                                "flex flex-col overflow-hidden shadow-lg transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-2xl",
+                                cardShell,
                               )}
+                              style={{ borderRadius: "var(--brand-radius-lg)" }}
                             >
-                              Photo coming soon
-                            </div>
-                            <div className="flex flex-1 flex-col gap-2 p-4">
-                              <p className="font-bold leading-snug">{item.name}</p>
-                              <p className={cn("text-sm", isCrb ? "text-slate-400" : "text-stone-600")}>
-                                Available qty: {item.quantity_active}
-                              </p>
-                              <button
-                                type="button"
-                                className={cn(
-                                  "mt-auto h-11 rounded-xl text-sm font-black transition active:scale-[0.99]",
-                                  isCrb
-                                    ? "bg-cyan-500 text-black hover:bg-cyan-400"
-                                    : "bg-rose-600 text-white hover:bg-rose-700",
+                              {item.image_src ? (
+                                <img
+                                  src={item.image_src}
+                                  alt={item.name}
+                                  className="aspect-[4/3] w-full object-cover"
+                                />
+                              ) : (
+                                <div
+                                  className={cn(
+                                    "flex aspect-[4/3] items-center justify-center text-sm font-semibold",
+                                    isCrb ? "bg-slate-900/80 text-slate-500" : "bg-stone-100 text-stone-400",
+                                  )}
+                                >
+                                  Photo coming soon
+                                </div>
+                              )}
+
+                              <div className="flex flex-1 flex-col gap-3 p-4">
+                                <p className={cn("font-bold leading-snug", isCrb ? "text-white" : "text-stone-900")}>
+                                  {item.name}
+                                </p>
+
+                                {item.price != null && (
+                                  <p className={cn("text-2xl font-black tabular-nums", isCrb ? "text-white" : "text-stone-900")}>
+                                    <span className={cn("text-sm font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
+                                      from{" "}
+                                    </span>
+                                    ${item.price}
+                                  </p>
                                 )}
-                                style={{ borderRadius: "var(--brand-radius-md)" }}
-                                onClick={() => selectInventoryItem(item)}
-                              >
-                                Select this item
-                              </button>
+
+                                <ul className={cn("space-y-0.5 text-xs", isCrb ? "text-slate-400" : "text-stone-500")}>
+                                  <li>✓ Setup included</li>
+                                  <li>✓ Cleaned &amp; sanitized</li>
+                                  <li>✓ On-time delivery</li>
+                                </ul>
+
+                                <button
+                                  type="button"
+                                  disabled={!isAvailable}
+                                  className={cn(
+                                    "mt-auto h-11 rounded-xl text-sm font-black transition active:scale-[0.99]",
+                                    isAvailable
+                                      ? isCrb
+                                        ? "bg-cyan-500 text-black hover:bg-cyan-400"
+                                        : "bg-rose-600 text-white hover:bg-rose-700"
+                                      : "cursor-not-allowed opacity-40",
+                                    !isAvailable && (isCrb ? "bg-slate-700 text-slate-400" : "bg-stone-200 text-stone-400"),
+                                  )}
+                                  style={{ borderRadius: "var(--brand-radius-md)" }}
+                                  onClick={() => isAvailable && selectInventoryItem(item)}
+                                >
+                                  {isAvailable ? "Check availability" : "Not available"}
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))
@@ -1049,17 +1095,15 @@ export function BuildBookingStart({
               </p>
             ) : null}
             <div>
-              <label htmlFor={idDate} className={labelClass(isCrb)}>
+              <label className={labelClass(isCrb)}>
                 Event date
               </label>
-              <input
-                id={idDate}
-                name="date"
-                type="date"
-                className={inputClass(isCrb)}
+              <AvailabilityCalendar
+                bookedDates={bookedDates}
                 value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
+                onChange={setFormDate}
                 disabled={isCheckingAvailability || isSubmitting}
+                isCrb={isCrb}
               />
             </div>
             <div>
