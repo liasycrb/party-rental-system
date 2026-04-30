@@ -6,11 +6,26 @@ const UNAUTHORIZED = new Response("Unauthorized", {
   headers: { "WWW-Authenticate": 'Basic realm="Dashboard"' },
 });
 
-export function proxy(request: NextRequest) {
-  const expectedUser = process.env.DASHBOARD_USER;
-  const expectedPassword = process.env.DASHBOARD_PASSWORD;
+function resolveDashboardBasicAuthCredentials(): {
+  expectedUser: string | undefined;
+  expectedPassword: string | undefined;
+} {
+  const isDev = process.env.NODE_ENV === "development";
+  const expectedUser =
+    process.env.DASHBOARD_AUTH_USER ??
+    process.env.DASHBOARD_USER ??
+    (isDev ? "admin" : undefined);
+  const expectedPassword =
+    process.env.DASHBOARD_AUTH_PASSWORD ??
+    process.env.DASHBOARD_PASSWORD ??
+    (isDev ? "1234" : undefined);
+  return { expectedUser, expectedPassword };
+}
 
-  // If credentials are not configured, deny access rather than open it up.
+export function proxy(request: NextRequest) {
+  const { expectedUser, expectedPassword } = resolveDashboardBasicAuthCredentials();
+
+  // Production: credentials must come from env. Dev: fallback admin / 1234.
   if (!expectedUser || !expectedPassword) {
     return UNAUTHORIZED;
   }
