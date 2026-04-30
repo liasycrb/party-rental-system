@@ -48,21 +48,6 @@ function inputClass(isCrb: boolean) {
 const labelClass = (isCrb: boolean) =>
   cn("mb-1.5 block text-sm font-semibold", isCrb ? "text-cyan-100/90" : "text-stone-700");
 
-function groupByCategorySlug(
-  items: BuildInventoryOption[],
-): [string | null, BuildInventoryOption[]][] {
-  const map = new Map<string | null, BuildInventoryOption[]>();
-  for (const it of items) {
-    const k = it.category_slug;
-    if (!map.has(k)) map.set(k, []);
-    map.get(k)!.push(it);
-  }
-  return Array.from(map.entries()).sort(([a], [b]) => {
-    if (a == null) return 1;
-    if (b == null) return -1;
-    return a.localeCompare(b);
-  });
-}
 
 function countInGuidedCategory(
   items: BuildInventoryOption[],
@@ -481,10 +466,6 @@ export function BuildBookingStart({
       inventoryMatchesGuidedCategory(o.category_slug, guidedDef),
     );
   }, [guidedDef, inventoryOptions]);
-  const groupedInCategory = useMemo(
-    () => groupByCategorySlug(itemsInGuidedCategory),
-    [itemsInGuidedCategory],
-  );
 
   const reservationPricing = useMemo(
     () =>
@@ -1037,92 +1018,114 @@ export function BuildBookingStart({
                     No items in this category right now. Try another or call us.
                   </p>
                 ) : (
-                  groupedInCategory.map(([slugKey, groupItems]) => (
-                    <div key={slugKey ?? "none"} className="space-y-3">
-                      <h3
-                        className={cn(
-                          "text-xs font-bold uppercase tracking-wide",
-                          isCrb ? "text-cyan-200/90" : "text-stone-500",
-                        )}
-                      >
-                        {guidedCategoryLabelForSlug(slugKey)}
-                      </h3>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        {groupItems.map((item) => {
-                          const isAvailable = item.quantity_active > 0;
-                          return (
-                            <div
-                              key={item.id}
-                              className={cn(
-                                "flex flex-col overflow-hidden shadow-lg transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-2xl",
-                                cardShell,
-                              )}
-                              style={{ borderRadius: "var(--brand-radius-lg)" }}
-                            >
-                              {/* Image area — fixed height so missing/broken images never distort layout */}
-                              <div className="relative h-[180px] w-full shrink-0 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    "absolute inset-0 flex items-center justify-center text-xs font-semibold",
-                                    isCrb ? "bg-slate-900/80 text-slate-500" : "bg-stone-100 text-stone-400",
-                                  )}
-                                >
-                                  Image coming soon
-                                </div>
-                                {item.image_src ? (
-                                  <img
-                                    src={item.image_src}
-                                    alt=""
-                                    className="absolute inset-0 h-full w-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                    }}
-                                  />
-                                ) : null}
-                              </div>
-
-                              <div className="flex flex-1 flex-col gap-2 p-4">
-                                <p className={cn("font-bold leading-snug", isCrb ? "text-white" : "text-stone-900")}>
-                                  {item.name}
-                                </p>
-
-                                {item.price != null && (
-                                  <p className={cn("text-xl font-black tabular-nums", isCrb ? "text-white" : "text-stone-900")}>
-                                    <span className={cn("text-xs font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
-                                      from{" "}
-                                    </span>
-                                    ${item.price}
-                                  </p>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {itemsInGuidedCategory
+                      .slice()
+                      .sort((a, b) => {
+                        const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
+                        if (cat !== 0) return cat;
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map((item) => {
+                        const isAvailable = item.quantity_active > 0;
+                        return (
+                          <div
+                            key={item.id}
+                            className={cn(
+                              "flex flex-col overflow-hidden shadow-md transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-xl",
+                              cardShell,
+                            )}
+                            style={{ borderRadius: "var(--brand-radius-lg)" }}
+                          >
+                            {/* Fixed-height image area — placeholder always rendered beneath so broken/missing images degrade cleanly */}
+                            <div className="relative h-[155px] w-full shrink-0 overflow-hidden">
+                              <div
+                                className={cn(
+                                  "absolute inset-0 flex flex-col items-center justify-center gap-1.5",
+                                  isCrb ? "bg-slate-800 text-slate-600" : "bg-stone-100 text-stone-400",
                                 )}
-
-                                <p className={cn("text-xs", isCrb ? "text-slate-400" : "text-stone-500")}>
-                                  ✓ Setup &amp; delivery included · Cleaned &amp; sanitized
-                                </p>
-
-                                <button
-                                  type="button"
-                                  disabled={!isAvailable}
-                                  className={cn(
-                                    "mt-auto h-10 rounded-xl text-sm font-black transition active:scale-[0.99]",
-                                    isAvailable
-                                      ? isCrb
-                                        ? "bg-cyan-500 text-black hover:bg-cyan-400"
-                                        : "bg-rose-600 text-white hover:bg-rose-700"
-                                      : "cursor-not-allowed opacity-40",
-                                    !isAvailable && (isCrb ? "bg-slate-700 text-slate-400" : "bg-stone-200 text-stone-400"),
-                                  )}
-                                  style={{ borderRadius: "var(--brand-radius-md)" }}
-                                  onClick={() => isAvailable && selectInventoryItem(item)}
+                              >
+                                <svg
+                                  className="h-7 w-7 opacity-40"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth={1.5}
+                                  viewBox="0 0 24 24"
+                                  aria-hidden
                                 >
-                                  {isAvailable ? "Check availability" : "Not available"}
-                                </button>
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 20.25h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12.75c0 .828.672 1.5 1.5 1.5z"
+                                  />
+                                </svg>
+                                <span className="text-[11px] font-medium">Photo coming soon</span>
                               </div>
+                              {item.image_src ? (
+                                <img
+                                  src={item.image_src}
+                                  alt=""
+                                  className="absolute inset-0 h-full w-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : null}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
+
+                            <div className="flex flex-1 flex-col gap-2 p-3">
+                              {item.category_slug && (
+                                <span
+                                  className={cn(
+                                    "inline-block w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                                    isCrb
+                                      ? "bg-slate-700/80 text-cyan-300"
+                                      : "bg-stone-100 text-stone-500",
+                                  )}
+                                >
+                                  {guidedCategoryLabelForSlug(item.category_slug)}
+                                </span>
+                              )}
+
+                              <p className={cn("text-sm font-bold leading-snug", isCrb ? "text-white" : "text-stone-900")}>
+                                {item.name}
+                              </p>
+
+                              {item.price != null && (
+                                <p className={cn("text-lg font-black tabular-nums leading-none", isCrb ? "text-white" : "text-stone-900")}>
+                                  <span className={cn("text-[11px] font-semibold", isCrb ? "text-slate-400" : "text-stone-400")}>
+                                    from{" "}
+                                  </span>
+                                  ${item.price}
+                                </p>
+                              )}
+
+                              <p className={cn("text-[11px] leading-relaxed", isCrb ? "text-slate-500" : "text-stone-400")}>
+                                ✓ Setup &amp; delivery · Cleaned &amp; sanitized
+                              </p>
+
+                              <button
+                                type="button"
+                                disabled={!isAvailable}
+                                className={cn(
+                                  "mt-auto h-9 rounded-lg text-xs font-black transition active:scale-[0.99]",
+                                  isAvailable
+                                    ? isCrb
+                                      ? "bg-cyan-500 text-black hover:bg-cyan-400"
+                                      : "bg-rose-600 text-white hover:bg-rose-700"
+                                    : "cursor-not-allowed opacity-40",
+                                  !isAvailable && (isCrb ? "bg-slate-700 text-slate-400" : "bg-stone-200 text-stone-400"),
+                                )}
+                                style={{ borderRadius: "var(--brand-radius-md)" }}
+                                onClick={() => isAvailable && selectInventoryItem(item)}
+                              >
+                                {isAvailable ? "Check availability" : "Not available"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
                 )}
               </>
             )}
