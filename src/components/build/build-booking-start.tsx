@@ -23,6 +23,7 @@ import { BuildInventoryCardImage } from "@/components/build/build-inventory-card
 import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import type { RentalCategoryUIModel } from "@/lib/catalog/get-rental-categories";
+import { resolveRentalCategoryForLookup } from "@/lib/catalog/get-rental-categories";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -445,6 +446,9 @@ export function BuildBookingStart({
   const productSlugTrimmed =
     productSlug && productSlug.trim() !== "" ? productSlug.trim() : null;
 
+  const guidedCatsRef = useRef(guidedCategories);
+  guidedCatsRef.current = guidedCategories;
+
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(() => {
     if (inventoryEmpty) return 2;
     const match =
@@ -459,7 +463,15 @@ export function BuildBookingStart({
     return inventoryOptions.find((o) => o.product_slug === productSlugTrimmed) ?? null;
   });
 
-  const [guidedCategoryIndex, setGuidedCategoryIndex] = useState<number | null>(null);
+  const [guidedCategoryIndex, setGuidedCategoryIndex] = useState<number | null>(() => {
+    if (productSlugTrimmed) return null;
+    const cs = categorySlug?.trim();
+    if (!cs || cs === "*") return null;
+    const def = resolveRentalCategoryForLookup(categorySlug, guidedCategories);
+    if (!def) return null;
+    const idx = guidedCategories.findIndex((c) => c.slug === def.slug);
+    return idx >= 0 ? idx : null;
+  });
 
   const [formDate, setFormDate] = useState("");
   const [bookedDates, setBookedDates] = useState<string[]>([]);
@@ -507,6 +519,22 @@ export function BuildBookingStart({
     }
     getBookedDates(slug).then(setBookedDates).catch(() => setBookedDates([]));
   }, [selectedItem?.product_slug]);
+
+  useEffect(() => {
+    if (productSlugTrimmed) {
+      setGuidedCategoryIndex(null);
+      return;
+    }
+    const cs = categorySlug?.trim();
+    if (!cs || cs === "*") return;
+    const def = resolveRentalCategoryForLookup(categorySlug, guidedCatsRef.current);
+    if (!def) {
+      setGuidedCategoryIndex(null);
+      return;
+    }
+    const idx = guidedCatsRef.current.findIndex((c) => c.slug === def.slug);
+    setGuidedCategoryIndex(idx >= 0 ? idx : null);
+  }, [categorySlug, productSlugTrimmed]);
 
   const inventoryCategoryLabels = useMemo(() => {
     const m = new Map<string, string>();

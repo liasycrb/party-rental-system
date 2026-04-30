@@ -21,13 +21,13 @@ export const LEGACY_CATEGORY_SLUG_MAP: Record<string, string> = {
   games: "inflatable-games",
   concessions: "inflatable-games",
   "party-extras": "inflatable-games",
-  "tables-chairs": "throne-chairs",
-  "canopies-tent": "throne-chairs",
-  tables: "throne-chairs",
-  chairs: "throne-chairs",
-  canopy: "throne-chairs",
-  tents: "throne-chairs",
-  seating: "throne-chairs",
+  "tables-chairs": "tables-and-chairs",
+  tables: "tables-and-chairs",
+  chairs: "tables-and-chairs",
+  seating: "tables-and-chairs",
+  "canopies-tent": "canopies",
+  canopy: "canopies",
+  tents: "canopies",
 };
 
 export function inventoryMatchesGuidedCategory(

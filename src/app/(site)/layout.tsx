@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { BrandSlug } from "@/lib/brand/config";
 import { getBrand } from "@/lib/brand/get-brand";
 import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
+import { categoryBuildHref } from "@/lib/catalog/category-carousel";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
 import { SiteLayoutBrand } from "@/components/layouts/site-layout-brand";
 import type { FooterCategoryLink, FooterOverride } from "@/components/layouts/site-footer";
@@ -34,7 +35,7 @@ export default async function SiteLayout({
   ): FooterCategoryLink[] {
     return cats.map((c) => ({
       label: c.label,
-      href: `/categories/${encodeURIComponent(c.slug)}`,
+      href: categoryBuildHref(c.slug),
     }));
   }
 

@@ -15,6 +15,7 @@ import { CatalogImage } from "@/components/media/catalog-image";
 import { ProductCard } from "@/components/marketing/product-card";
 import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
+import { categoryBuildHref } from "@/lib/catalog/category-carousel";
 import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 
 function formatCategoryLabel(slug: string | null): string {
@@ -155,7 +156,7 @@ export default async function ProductsPage({
               <Link
                 key={cat.slug}
                 href={withBrand(
-                  `/categories/${encodeURIComponent(cat.slug)}`,
+                  categoryBuildHref(cat.slug),
                   brandSlug,
                 )}
                 className={cn(

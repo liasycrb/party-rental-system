@@ -1,6 +1,7 @@
 import type { BrandSlug } from "@/lib/brand/config";
 import {
   CATEGORY_CAROUSEL_ITEMS,
+  categoryBuildHref,
   type CategoryCarouselItem,
 } from "@/lib/catalog/category-carousel";
 import {
@@ -56,7 +57,7 @@ export async function getRentalCategories(options?: {
   return CATEGORY_CAROUSEL_ITEMS.map(carouselRowToUIModel);
 }
 
-/** Map UI model → client carousel / showcase item (pathname-based href). */
+/** Map UI model → client carousel / showcase item (`href` → `/build?category=`). */
 export function rentalCategoryToCarouselItem(
   ui: RentalCategoryUIModel,
 ): SiteCategoryCarouselItem {
@@ -65,7 +66,7 @@ export function rentalCategoryToCarouselItem(
     title: ui.label,
     description: ui.description,
     imageSrc: ui.image,
-    href: `/categories/${encodeURIComponent(ui.slug)}`,
+    href: categoryBuildHref(ui.slug),
     isPopular: ui.isPopular,
   };
 }

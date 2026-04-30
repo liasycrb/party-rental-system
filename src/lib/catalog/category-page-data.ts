@@ -1,7 +1,10 @@
 import type { BrandSlug } from "@/lib/brand/config";
 import type { CatalogProduct } from "@/lib/catalog/get-products";
 import { getProducts } from "@/lib/catalog/get-products";
-import type { CategoryCarouselItem } from "@/lib/catalog/category-carousel";
+import {
+  categoryBuildHref,
+  type CategoryCarouselItem,
+} from "@/lib/catalog/category-carousel";
 import {
   getRentalCategories,
   resolveRentalCategoryForLookup,
@@ -35,7 +38,7 @@ function uiModelToCarouselItem(ui: RentalCategoryUIModel): CategoryCarouselItem 
     slug: ui.slug,
     title: ui.label,
     imageSrc: ui.image,
-    href: `/categories/${encodeURIComponent(ui.slug)}`,
+    href: categoryBuildHref(ui.slug),
     description: ui.description,
     isPopular: ui.isPopular,
   };
@@ -78,7 +81,8 @@ function fallbackProducts(item: CategoryCarouselItem): CategoryPageProduct[] {
 }
 
 /**
- * Hydrate `/categories/[slug]` from static catalog + matching `rental_products`.
+ * Hydrate category landing data from static catalog + matching `rental_products`
+ * (still used if `/categories/[slug]` is hit directly).
  */
 export async function resolveCategoryPageViewModel(
   slug: string,

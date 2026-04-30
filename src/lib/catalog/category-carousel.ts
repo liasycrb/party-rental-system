@@ -13,12 +13,17 @@ export type CategoryCarouselItem = {
   isPopular?: boolean;
 };
 
+/** Category teaser links jump into `/build` with `category` preselected. */
+export function categoryBuildHref(slug: string): string {
+  return `/build?category=${encodeURIComponent(slug)}`;
+}
+
 export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
   {
     slug: "regular-jumper-13x13",
     title: "Regular Jumper 13x13",
     imageSrc: "/party-rentals/categories/regular-jumper-13x13.png",
-    href: "/categories/regular-jumper-13x13",
+    href: categoryBuildHref("regular-jumper-13x13"),
     description:
       "Simple, fun, and perfect for any backyard party. Easy setup, nonstop jumping.",
   },
@@ -26,7 +31,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "five-in-one-jumpers",
     title: "5 en 1 Jumpers",
     imageSrc: "/party-rentals/categories/five-in-one-jumpers.png",
-    href: "/categories/five-in-one-jumpers",
+    href: categoryBuildHref("five-in-one-jumpers"),
     description:
       "Bounce, slide, climb, shoot, repeat. The all-in-one favorite for bigger parties.",
   },
@@ -34,7 +39,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "eleven-by-eleven-jumpers",
     title: "11x11 Jumpers",
     imageSrc: "/party-rentals/categories/eleven-by-eleven-jumpers.png",
-    href: "/categories/eleven-by-eleven-jumpers",
+    href: categoryBuildHref("eleven-by-eleven-jumpers"),
     description:
       "Compact size, full fun. Ideal for smaller spaces without sacrificing the experience.",
   },
@@ -42,7 +47,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "waterslide",
     title: "Waterslide",
     imageSrc: "/party-rentals/categories/waterslide.png",
-    href: "/categories/waterslide",
+    href: categoryBuildHref("waterslide"),
     description:
       "Beat the heat with high-energy water slides. Summer parties solved instantly.",
     isPopular: true,
@@ -51,7 +56,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "disney-jumpers",
     title: "Disney Jumpers",
     imageSrc: "/party-rentals/categories/disney-jumpers.png",
-    href: "/categories/disney-jumpers",
+    href: categoryBuildHref("disney-jumpers"),
     description:
       "Bring their favorite characters to life. Magic, color, and excitement in one setup.",
   },
@@ -59,16 +64,33 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "xtreme-disco-dome",
     title: "XTreme Disco Dome",
     imageSrc: "/party-rentals/categories/xtreme-disco-dome.png",
-    href: "/categories/xtreme-disco-dome",
+    href: categoryBuildHref("xtreme-disco-dome"),
     description:
       "Lights, music, and bounce. A full party experience inside one inflatable.",
+    isPopular: true,
+  },
+  {
+    slug: "tables-and-chairs",
+    title: "Tables & Chairs",
+    imageSrc: "/party-rentals/categories/tables-and-chairs.png",
+    href: categoryBuildHref("tables-and-chairs"),
+    description:
+      "Seat every guest comfortably — rounds, rectangles, and kid-height options for food, gifts, and cake.",
+  },
+  {
+    slug: "canopies",
+    title: "Canopies",
+    imageSrc: "/party-rentals/categories/canopies.png",
+    href: categoryBuildHref("canopies"),
+    description:
+      "Shade and shelter for sun or light weather — define your party footprint and protect your spread.",
     isPopular: true,
   },
   {
     slug: "throne-chairs",
     title: "Throne Chairs",
     imageSrc: "/party-rentals/categories/throne-chairs.png",
-    href: "/categories/throne-chairs",
+    href: categoryBuildHref("throne-chairs"),
     description:
       "Make your event feel VIP. Perfect for birthdays, photos, and special moments.",
   },
@@ -76,7 +98,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "inflatable-games",
     title: "Inflatable Games",
     imageSrc: "/party-rentals/categories/inflatable-games.png",
-    href: "/categories/inflatable-games",
+    href: categoryBuildHref("inflatable-games"),
     description:
       "Interactive fun for all ages. Perfect for groups, competitions, and events.",
   },
@@ -84,7 +106,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "obstacle-course",
     title: "Obstacle Course",
     imageSrc: "/party-rentals/categories/obstacle-course.png",
-    href: "/categories/obstacle-course",
+    href: categoryBuildHref("obstacle-course"),
     description:
       "Race, climb, and compete. High-energy fun that keeps everyone engaged.",
   },
@@ -92,7 +114,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "minicombo",
     title: "Minicombo",
     imageSrc: "/party-rentals/categories/minicombo.png",
-    href: "/categories/minicombo",
+    href: categoryBuildHref("minicombo"),
     description:
       "Slide + bounce in one compact unit. Perfect balance of fun and space-saving.",
   },
@@ -100,7 +122,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     slug: "combos",
     title: "Combos",
     imageSrc: "/party-rentals/categories/combos.png",
-    href: "/categories/combos",
+    href: categoryBuildHref("combos"),
     description:
       "More features, more fun. The perfect upgrade for unforgettable parties.",
     isPopular: true,
