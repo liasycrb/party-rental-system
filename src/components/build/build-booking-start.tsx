@@ -88,6 +88,10 @@ function whatsappHrefFromPhone(supportPhone: string): string {
   return `https://wa.me/${supportPhone.replace(/\D/g, "")}`;
 }
 
+function whatsappHrefPrefilled(supportPhone: string, message: string): string {
+  return `${whatsappHrefFromPhone(supportPhone)}?text=${encodeURIComponent(message)}`;
+}
+
 type SelectedAddonsState = {
   tables: number;
   chairs: number;
@@ -742,6 +746,38 @@ export function BuildBookingStart({
   const waHref = whatsappHrefFromPhone(brandContact.supportPhone);
 
   if (success) {
+    const firstName = formName.trim().split(/\s+/)[0] ?? formName.trim();
+    const refCode = `${firstName.toUpperCase()}-${formDate.replace(/-/g, "")}`;
+    const readableDate = formDate
+      ? new Date(`${formDate}T12:00:00`).toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "—";
+
+    const waMessage = [
+      "Hi, I just submitted a reservation request.",
+      `Product: ${selectedItem?.name ?? productSlugTrimmed ?? "—"}`,
+      `Date: ${readableDate}`,
+      `City: ${formCity.trim() || "—"}`,
+      `Name: ${formName.trim()}`,
+      `Deposit paid: ${formatUsd(reservationPricing.depositAmount)}`,
+      `Reference: ${refCode}`,
+    ].join("\n");
+
+    const waHrefPrefilled = whatsappHrefPrefilled(brandContact.supportPhone, waMessage);
+
+    const summaryRows: [string, string][] = [
+      ["Product", selectedItem?.name ?? productSlugTrimmed ?? "—"],
+      ["Date", readableDate],
+      ["City", formCity.trim() || "—"],
+      ["Customer", formName.trim()],
+      ["Deposit paid", formatUsd(reservationPricing.depositAmount)],
+      ["Balance due", formatUsd(reservationPricing.balanceDue)],
+    ];
+
     return (
       <div
         className={cn(
@@ -749,7 +785,7 @@ export function BuildBookingStart({
           isCrb ? "bg-slate-900 text-slate-100" : "bg-amber-50/50 text-stone-900",
         )}
       >
-        <Container className="max-w-lg text-center">
+        <Container className="max-w-lg">
           <div
             className={cn(
               "rounded-2xl p-8 shadow-lg ring-1 sm:p-10",
@@ -758,9 +794,85 @@ export function BuildBookingStart({
             style={{ borderRadius: "var(--brand-radius-lg)" }}
             role="status"
           >
-            <p className="text-lg font-bold leading-relaxed sm:text-xl">
-              Thanks — we received your request and will contact you shortly to confirm availability.
+            {/* Heading */}
+            <p
+              className={cn(
+                "text-2xl font-black tracking-tight sm:text-3xl",
+                isCrb ? "text-cyan-300" : "text-rose-600",
+              )}
+            >
+              Reservation request received ✓
             </p>
+            <p
+              className={cn(
+                "mt-2 text-sm leading-relaxed",
+                isCrb ? "text-slate-300" : "text-stone-600",
+              )}
+            >
+              We received your request and will contact you shortly to confirm final details.
+            </p>
+
+            {/* Summary */}
+            <dl
+              className={cn(
+                "mt-6 divide-y rounded-xl px-4 py-1 text-sm",
+                isCrb
+                  ? "divide-slate-700 bg-slate-900/50 ring-1 ring-slate-700"
+                  : "divide-stone-100 bg-stone-50 ring-1 ring-stone-200",
+              )}
+              style={{ borderRadius: "var(--brand-radius-md)" }}
+            >
+              {summaryRows.map(([label, value]) => (
+                <div key={label} className="flex items-baseline justify-between gap-4 py-2.5">
+                  <dt className={cn("shrink-0 font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
+                    {label}
+                  </dt>
+                  <dd className={cn("text-right font-bold", isCrb ? "text-white" : "text-stone-900")}>
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            {/* Reference */}
+            <p
+              className={cn(
+                "mt-4 text-center text-xs font-bold uppercase tracking-widest",
+                isCrb ? "text-slate-500" : "text-stone-400",
+              )}
+            >
+              Ref: {refCode}
+            </p>
+
+            {/* Action buttons */}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <a
+                href={waHrefPrefilled}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "flex flex-1 items-center justify-center rounded-xl px-5 py-3 text-sm font-black transition",
+                  isCrb
+                    ? "bg-cyan-500 text-black hover:bg-cyan-400"
+                    : "bg-emerald-500 text-white hover:bg-emerald-600",
+                )}
+                style={{ borderRadius: "var(--brand-radius-md)" }}
+              >
+                Message us on WhatsApp
+              </a>
+              <a
+                href={`tel:${brandContact.supportPhone}`}
+                className={cn(
+                  "flex flex-1 items-center justify-center rounded-xl border px-5 py-3 text-sm font-black transition",
+                  isCrb
+                    ? "border-slate-600 text-slate-200 hover:bg-slate-700"
+                    : "border-stone-300 text-stone-700 hover:bg-stone-100",
+                )}
+                style={{ borderRadius: "var(--brand-radius-md)" }}
+              >
+                Call {brandContact.supportPhoneDisplay}
+              </a>
+            </div>
           </div>
         </Container>
       </div>
