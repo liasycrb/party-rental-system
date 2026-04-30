@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -96,6 +97,39 @@ function priorityPillClass(label: string): string {
   }
 }
 
+const OPERATIONAL_STATUS_LABELS: Record<string, string> = {
+  needs_review: "Needs review",
+  ready_for_delivery: "Ready for delivery",
+  out_for_delivery: "Out for delivery",
+  delivered: "Delivered",
+  picked_up: "Picked up",
+  completed: "Completed",
+};
+
+function operationalStatusLabel(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  return OPERATIONAL_STATUS_LABELS[value.trim()] ?? humanizeLabel(value);
+}
+
+function operationalStatusPillClass(value: string): string {
+  switch (value) {
+    case "needs_review":
+      return "border-amber-500/40 bg-amber-500/15 text-amber-300";
+    case "ready_for_delivery":
+      return "border-sky-500/40 bg-sky-500/15 text-sky-300";
+    case "out_for_delivery":
+      return "border-violet-500/40 bg-violet-500/15 text-violet-300";
+    case "delivered":
+      return "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
+    case "picked_up":
+      return "border-teal-500/40 bg-teal-500/15 text-teal-300";
+    case "completed":
+      return "border-zinc-500/40 bg-zinc-500/15 text-zinc-300";
+    default:
+      return "border-white/10 bg-white/5 text-zinc-500";
+  }
+}
+
 type PageProps = {
   searchParams: Promise<{ status?: string | string[] }>;
 };
@@ -116,7 +150,7 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
   let query = supabase
     .from("bookings")
     .select(
-      "id, product_slug, event_date, customer_name, phone, status, payment_status",
+      "id, product_slug, event_date, customer_name, phone, status, payment_status, operational_status",
     )
     .eq("source", "online_reservation")
     .order("event_date", { ascending: true });
@@ -138,6 +172,14 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
   }
 
   const list = rows ?? [];
+
+  const PRIORITY_ORDER = ["Today", "Tomorrow", "Upcoming", "Past"] as const;
+  const grouped = PRIORITY_ORDER
+    .map((label) => ({
+      label,
+      rows: list.filter((r) => eventDatePriorityLabel(r.event_date) === label),
+    }))
+    .filter((g) => g.rows.length > 0);
 
   const tabs: Array<{ href: string; label: string; filter: StatusFilter }> = [
     { href: "/dashboard/bookings", label: "Pending", filter: "pending_confirmation" },
@@ -204,50 +246,79 @@ export default async function DashboardBookingsPage({ searchParams }: PageProps)
                 </td>
               </tr>
             ) : (
-              list.map((r) => {
-                const priority = eventDatePriorityLabel(r.event_date);
+              grouped.map(({ label, rows }) => {
+                const count = rows.length;
                 return (
-                  <tr
-                    key={r.id}
-                    className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
-                  >
-                    <td className="px-4 py-3 align-top">
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${priorityPillClass(priority)}`}
+                  <Fragment key={label}>
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="border-t border-white/10 bg-white/[0.02] px-4 py-2"
                       >
-                        {priority}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 align-top font-medium text-zinc-100">
-                      {r.customer_name?.trim() || "—"}
-                    </td>
-                    <td className="px-4 py-3 align-top whitespace-nowrap">
-                      {r.phone?.trim() || "—"}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {slugToReadableName(r.product_slug)}
-                    </td>
-                    <td className="px-4 py-3 align-top text-zinc-300">
-                      {formatListEventDate(r.event_date)}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {humanizeLabel(r.status)}
-                    </td>
-                    <td className="px-4 py-3 align-top text-zinc-400">
-                      {humanizeLabel(r.payment_status)}
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <Link
-                        href={`/dashboard/bookings/${r.id}`}
-                        className="font-semibold text-violet-300 underline-offset-2 hover:underline"
-                      >
-                        View
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <RowActions id={r.id} status={r.status} />
-                    </td>
-                  </tr>
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${priorityPillClass(label)}`}
+                        >
+                          {label}
+                        </span>
+                        <span className="ml-2 text-[11px] text-zinc-500">
+                          {count} {count === 1 ? "reservation" : "reservations"}
+                        </span>
+                      </td>
+                    </tr>
+                    {rows.map((r) => {
+                      const priority = eventDatePriorityLabel(r.event_date);
+                      return (
+                        <tr
+                          key={r.id}
+                          className="border-b border-white/5 transition-colors hover:bg-white/[0.04]"
+                        >
+                          <td className="px-4 py-3 align-top">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${priorityPillClass(priority)}`}
+                            >
+                              {priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 align-top font-medium text-zinc-100">
+                            {r.customer_name?.trim() || "—"}
+                          </td>
+                          <td className="px-4 py-3 align-top whitespace-nowrap">
+                            {r.phone?.trim() || "—"}
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            {slugToReadableName(r.product_slug)}
+                          </td>
+                          <td className="px-4 py-3 align-top text-zinc-300">
+                            {formatListEventDate(r.event_date)}
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <span className="block">{humanizeLabel(r.status)}</span>
+                            {operationalStatusLabel(r.operational_status) ? (
+                              <span
+                                className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${operationalStatusPillClass(r.operational_status ?? "")}`}
+                              >
+                                {operationalStatusLabel(r.operational_status)}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="px-4 py-3 align-top text-zinc-400">
+                            {humanizeLabel(r.payment_status)}
+                          </td>
+                          <td className="px-4 py-3 align-top text-right">
+                            <Link
+                              href={`/dashboard/bookings/${r.id}`}
+                              className="font-semibold text-violet-300 underline-offset-2 hover:underline"
+                            >
+                              View
+                            </Link>
+                          </td>
+                          <td className="px-4 py-3 align-top text-right">
+                            <RowActions id={r.id} status={r.status} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 );
               })
             )}

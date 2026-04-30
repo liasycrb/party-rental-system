@@ -6,12 +6,35 @@ import {
   resolveHomeBrandSlug,
 } from "@/lib/brand/resolve-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
-import { DEMO_PRODUCTS } from "@/lib/catalog/demo-products";
+import type { CatalogProduct } from "@/lib/catalog/get-products";
+import { getProducts } from "@/lib/catalog/get-products";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
 import { ProductCard } from "@/components/marketing/product-card";
 import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
+
+function formatCategoryLabel(slug: string | null): string {
+  if (!slug) return "Party Rental";
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function toCardProduct(p: CatalogProduct) {
+  return {
+    slug: p.slug,
+    title: p.name,
+    category: formatCategoryLabel(p.category_slug),
+    sizeLabel: p.dimensions ?? "",
+    setupSpace: p.required_space ?? "",
+    priceFrom: p.price ?? 0,
+    imageSrc: p.image_src || "/images/placeholder-party-rental.jpg",
+    imageAlt: p.name,
+    blurb: p.short_description ?? "",
+    surfaceRequirements: "",
+    accessRequirements: "",
+    setupNotes: [] as string[],
+  };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = BRANDS[resolveHomeBrandSlug(null)];
@@ -32,8 +55,11 @@ export default async function ProductsPage({
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
-  const bannerSrc = DEMO_PRODUCTS[0]!.imageSrc;
-  const [headliner, ...rest] = DEMO_PRODUCTS;
+  const rawProducts = await getProducts(brandSlug);
+  const products = rawProducts.map(toCardProduct);
+  const bannerSrc = products[0]?.imageSrc || "/images/placeholder-party-rental.jpg";
+  const bannerAlt = products[0]?.title ?? "Party rentals";
+  const [headliner, ...rest] = products;
 
   return (
     <div className={cn("pb-16 sm:pb-24", isCrb && "text-slate-100")}>
@@ -41,7 +67,7 @@ export default async function ProductsPage({
         <div className="absolute inset-0">
           <CatalogImage
             src={bannerSrc}
-            alt={headliner.imageAlt}
+            alt={bannerAlt}
             fill
             className="object-cover"
             sizes="100vw"

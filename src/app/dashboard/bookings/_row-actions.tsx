@@ -26,6 +26,7 @@ export function RowActions({ id, status }: Props) {
   };
 
   const handleCancel = () => {
+    if (!window.confirm("Are you sure you want to cancel this reservation?")) return;
     startTransition(async () => {
       await cancelBooking(id);
       router.refresh();
