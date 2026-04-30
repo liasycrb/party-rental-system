@@ -7,14 +7,15 @@ import {
 } from "@/lib/brand/resolve-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import type { CatalogProduct } from "@/lib/catalog/get-products";
+import { canonicalRentalProductMainImage } from "@/lib/inventory/get-build-inventory-options";
 import { getProducts } from "@/lib/catalog/get-products";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
 import { formatPhoneDisplay } from "@/lib/utils/format-phone";
 import { CatalogImage } from "@/components/media/catalog-image";
-import { Container } from "@/components/marketing/container";
 import { ProductCard } from "@/components/marketing/product-card";
 import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
+import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 
 function formatCategoryLabel(slug: string | null): string {
   if (!slug) return "Party Rental";
@@ -22,6 +23,11 @@ function formatCategoryLabel(slug: string | null): string {
 }
 
 function toCardProduct(p: CatalogProduct) {
+  const legacyImg = (p.image_src ?? "").trim();
+  const canonical =
+    canonicalRentalProductMainImage(p.category_slug, p.slug) ?? "";
+  const resolvedImage =
+    canonical || legacyImg || "/images/placeholder-party-rental.jpg";
   return {
     slug: p.slug,
     title: p.name,
@@ -29,7 +35,7 @@ function toCardProduct(p: CatalogProduct) {
     sizeLabel: p.dimensions ?? "",
     setupSpace: p.required_space ?? "",
     priceFrom: p.price ?? 0,
-    imageSrc: p.image_src || "/images/placeholder-party-rental.jpg",
+    imageSrc: resolvedImage,
     imageAlt: p.name,
     blurb: p.short_description ?? "",
     surfaceRequirements: "",
@@ -42,12 +48,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const brand = BRANDS[resolveHomeBrandSlug(null)];
   return {
     title: "Jumpers & party rentals",
-    description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Moreno Valley area — shared live availability across brands.`,
+    description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Moreno Valley area — check live availability and pricing online.`,
   };
 }
-
-const CATEGORIES = ["All", "Classic jumpers", "Combo units", "Themed jumpers"];
-
 export default async function ProductsPage({
   searchParams,
 }: {
@@ -57,9 +60,10 @@ export default async function ProductsPage({
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
-  const [rawProducts, siteSettings] = await Promise.all([
+  const [rawProducts, siteSettings, categoryRows] = await Promise.all([
     getProducts(brandSlug),
     getSiteSettings(brandSlug),
+    getRentalCategories({ brandSlug }),
   ]);
   const products = rawProducts.map(toCardProduct);
   const phoneDisplay = siteSettings?.support_phone
@@ -67,10 +71,9 @@ export default async function ProductsPage({
     : brand.supportPhoneDisplay;
   const bannerSrc = products[0]?.imageSrc || "/images/placeholder-party-rental.jpg";
   const bannerAlt = products[0]?.title ?? "Party rentals";
-  const [headliner, ...rest] = products;
 
   return (
-    <div className={cn("pb-16 sm:pb-24", isCrb && "text-slate-100")}>
+    <div className={cn(isCrb && "text-slate-100")}>
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <CatalogImage
@@ -99,7 +102,7 @@ export default async function ProductsPage({
           />
         </div>
 
-        <Container className="relative py-14 sm:py-20">
+        <div className="relative mx-auto w-full max-w-[1280px] px-6 py-14 sm:py-20">
           <p
             className={cn(
               "inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em]",
@@ -124,82 +127,88 @@ export default async function ProductsPage({
               isCrb ? "text-cyan-100/90" : "text-orange-950/90",
             )}
           >
-            Big imagery, loud clarity on footprint, and pricing that nudges guests
-            toward booking — same data powers both brands, so inventory always
-            tells the truth.
+            Big imagery, footprint clarity, and transparent starting prices—browse
+            with confidence before you jump into checkout.
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-2">
-            {CATEGORIES.map((cat, i) => (
-              <button
-                key={cat}
-                type="button"
+          <nav
+            className="mt-10 flex flex-wrap gap-2"
+            aria-label="Browse by category"
+          >
+            <Link
+              href={withBrand("/products", brandSlug)}
+              className={cn(
+                "px-4 py-2.5 text-sm font-black shadow-lg transition-[transform,box-shadow]",
+                isCrb
+                  ? "text-slate-950 shadow-lg shadow-cyan-500/30"
+                  : "text-white shadow-lg",
+              )}
+              style={{
+                borderRadius: "var(--brand-radius-md)",
+                background:
+                  "linear-gradient(90deg, var(--brand-primary), var(--brand-secondary))",
+              }}
+            >
+              All rentals
+            </Link>
+            {categoryRows.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={withBrand(
+                  `/categories/${encodeURIComponent(cat.slug)}`,
+                  brandSlug,
+                )}
                 className={cn(
                   "px-4 py-2.5 text-sm font-black transition-[transform,box-shadow]",
-                  i === 0
-                    ? isCrb
-                      ? "text-slate-950 shadow-lg shadow-cyan-500/30"
-                      : "text-white shadow-lg"
-                    : isCrb
-                      ? "border border-cyan-400/35 bg-slate-950/45 text-cyan-100 backdrop-blur hover:border-orange-400/55"
-                      : "border border-orange-400/22 bg-white/70 text-orange-950/90 backdrop-blur hover:bg-white/90",
+                  isCrb
+                    ? "border border-cyan-400/35 bg-slate-950/45 text-cyan-100 backdrop-blur hover:border-orange-400/55"
+                    : "border border-orange-400/22 bg-white/70 text-orange-950/90 backdrop-blur hover:bg-white/90",
                 )}
-                style={{
-                  borderRadius: "var(--brand-radius-md)",
-                  background:
-                    i === 0
-                      ? isCrb
-                        ? "linear-gradient(90deg, var(--brand-primary), var(--brand-secondary))"
-                        : "linear-gradient(90deg, var(--brand-primary), var(--brand-secondary))"
-                      : undefined,
-                }}
+                style={{ borderRadius: "var(--brand-radius-md)" }}
               >
-                {cat}
-              </button>
+                {cat.label}
+              </Link>
             ))}
-          </div>
-        </Container>
+          </nav>
+        </div>
       </section>
 
-      <Container className="relative mt-12">
-        <SectionTitle
-          tone={isCrb ? "onDark" : "default"}
-          eyebrow="Desire-first merchandising"
-          title="Pick the unit your guests won’t stop talking about"
-          description="Lead with a hero, then wander through mismatched sizes on purpose — it feels like a showroom, not a spreadsheet."
-        />
-        {headliner ? (
-          <div className="mt-12">
-            <ProductCard
-              brand={brand}
-              product={headliner}
-              visual="showcase"
-              className="min-h-[400px] lg:min-h-[460px]"
-            />
-          </div>
-        ) : null}
-        <div className="mt-8 grid gap-8 lg:grid-cols-12">
-          {rest.map((p, i) => (
-            <div
-              key={p.slug}
+      <section
+        className={cn(
+          "relative mt-10 sm:mt-14",
+          !isCrb && "border-t border-orange-400/15",
+          isCrb && "border-t border-cyan-400/18",
+        )}
+      >
+        <div className="mx-auto w-full max-w-[1280px] px-6 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
+          <SectionTitle
+            tone={isCrb ? "onDark" : "default"}
+            eyebrow="Desire-first merchandising"
+            title="Pick the unit your guests won’t stop talking about"
+            description="Lead with a hero, then wander through mismatched sizes on purpose — it feels like a showroom, not a spreadsheet."
+          />
+          {products.length > 0 ? (
+            <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {products.map((p) => (
+                <ProductCard
+                  key={p.slug}
+                  brand={brand}
+                  product={p}
+                  visual="catalog"
+                />
+              ))}
+            </div>
+          ) : (
+            <p
               className={cn(
-                i === 0 && "lg:col-span-7",
-                i === 1 && "lg:col-span-5",
-                i >= 2 && "lg:col-span-12",
+                "mt-10 text-center text-sm font-semibold",
+                isCrb ? "text-slate-400" : "text-stone-600",
               )}
             >
-              <ProductCard
-                brand={brand}
-                product={p}
-                visual="showcase"
-                className={cn(
-                  "min-h-[340px]",
-                  i >= 2 && "lg:min-h-[380px]",
-                )}
-              />
-            </div>
-          ))}
-        </div>
+              No active rentals listed for this brand yet — check back soon or call{" "}
+              {phoneDisplay}.
+            </p>
+          )}
 
         <div
           className={cn(
@@ -246,7 +255,8 @@ export default async function ProductsPage({
             Open the builder
           </Link>
         </div>
-      </Container>
+        </div>
+      </section>
     </div>
   );
 }

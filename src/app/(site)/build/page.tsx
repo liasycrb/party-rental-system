@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { BuildBookingStart } from "@/components/build/build-booking-start";
 import { BRANDS } from "@/lib/brand/config";
 import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
-import { getCategoryBySlug } from "@/lib/catalog/category-carousel";
+import {
+  getRentalCategories,
+  resolveRentalCategoryForLookup,
+  type RentalCategoryUIModel,
+} from "@/lib/catalog/get-rental-categories";
 import { getBuildInventoryOptions } from "@/lib/inventory/get-build-inventory-options";
-import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
-import type { GuidedCategoryDef } from "@/lib/build/build-guided-categories";
 
 type BuildPageProps = {
   searchParams: Promise<{
@@ -17,9 +19,7 @@ type BuildPageProps = {
   }>;
 };
 
-function firstParam(
-  v: string | string[] | undefined,
-): string | undefined {
+function firstParam(v: string | string[] | undefined): string | undefined {
   if (typeof v === "string") return v;
   if (Array.isArray(v) && v[0]) return v[0];
   return undefined;
@@ -35,11 +35,13 @@ export async function generateMetadata({ searchParams }: BuildPageProps): Promis
   };
 }
 
-const BROWSE_ALL: GuidedCategoryDef = {
+const BROWSE_ALL: RentalCategoryUIModel = {
   slug: "*",
   label: "Browse all inventory",
   image: "/party-rentals/categories/regular-jumper-13x13.png",
   categorySlugs: ["*"],
+  description: "",
+  isPopular: false,
 };
 
 export default async function BuildPage({ searchParams }: BuildPageProps) {
@@ -49,15 +51,19 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
 
   const categorySlug = firstParam(sp.category) ?? null;
   const productSlug = firstParam(sp.product) ?? null;
-  const category = categorySlug ? getCategoryBySlug(categorySlug) : undefined;
-  const categoryLine = category ? `You're booking: ${category.title}` : null;
 
   const [inventoryOptions, canonicalCategories] = await Promise.all([
     getBuildInventoryOptions(brandSlug),
-    getRentalCategories(),
+    getRentalCategories({ brandSlug }),
   ]);
 
-  const guidedCategories: GuidedCategoryDef[] = [...canonicalCategories, BROWSE_ALL];
+  const matched = resolveRentalCategoryForLookup(categorySlug, canonicalCategories);
+  const categoryLine = matched ? `You're booking: ${matched.label}` : null;
+
+  const guidedCategories: RentalCategoryUIModel[] = [
+    ...canonicalCategories,
+    BROWSE_ALL,
+  ];
 
   return (
     <BuildBookingStart

@@ -1,4 +1,16 @@
-import { getCategoryBySlug, type CategoryCarouselItem } from "./category-carousel";
+import type { BrandSlug } from "@/lib/brand/config";
+import type { CatalogProduct } from "@/lib/catalog/get-products";
+import { getProducts } from "@/lib/catalog/get-products";
+import type { CategoryCarouselItem } from "@/lib/catalog/category-carousel";
+import {
+  getRentalCategories,
+  resolveRentalCategoryForLookup,
+  type RentalCategoryUIModel,
+} from "@/lib/catalog/get-rental-categories";
+import { inventoryMatchesGuidedCategory } from "@/lib/build/build-guided-categories";
+import { canonicalRentalProductMainImage } from "@/lib/inventory/get-build-inventory-options";
+
+export type { CategoryCarouselItem } from "@/lib/catalog/category-carousel";
 
 export type CategoryPageProduct = {
   name: string;
@@ -18,101 +30,84 @@ export type CategoryPageViewModel = {
   products: CategoryPageProduct[];
 };
 
-const WATERSLIDE_SUBTITLE =
-  "Beat the heat with pro delivery, setup, and same-week availability — summer parties, solved in one booking.";
-
-const WATERSLIDE_PRODUCTS: CategoryPageProduct[] = [
-  {
-    name: "Palm Breeze 16ft slide",
-    imageSrc: "/party-rentals/categories/waterslide.png",
-    imageAlt: "Palm Breeze 16ft inflatable water slide with splash pool",
-    priceLabel: "from $225",
-    bookHref: "/build?category=waterslide",
-  },
-  {
-    name: "Tropical Rush — dual lane",
-    imageSrc: "/party-rentals/shared/tropical-combo.jpg",
-    imageAlt: "Tropical theme inflatable slide and bounce setup outdoors",
-    priceLabel: "from $265",
-    isPopular: true,
-    bookHref: "/build?category=waterslide",
-  },
-  {
-    name: "Canyon Plunge 20ft",
-    imageSrc: "/party-rentals/shared/rainbow-castle.jpg",
-    imageAlt: "Large inflatable water slide for backyard events",
-    priceLabel: "from $245",
-    bookHref: "/build?category=waterslide",
-  },
-  {
-    name: "Sunshine splash combo",
-    imageSrc: "/party-rentals/shared/experience-moment-03.jpg",
-    imageAlt: "Bright inflatable party rental at a home celebration",
-    priceLabel: "from $199",
-    bookHref: "/build?category=waterslide",
-  },
-];
-
-const GENERIC_HERO_IMAGES = [
-  "/party-rentals/shared/rainbow-castle.jpg",
-  "/party-rentals/shared/tropical-combo.jpg",
-  "/party-rentals/shared/experience-moment-03.jpg",
-] as const;
-
-function buildDefaultPageTitle(item: CategoryCarouselItem): string {
-  if (item.slug === "waterslide") {
-    return "Waterslides for Rent in Moreno Valley";
-  }
-  return `${item.title} for Rent in Moreno Valley`;
+function uiModelToCarouselItem(ui: RentalCategoryUIModel): CategoryCarouselItem {
+  return {
+    slug: ui.slug,
+    title: ui.label,
+    imageSrc: ui.image,
+    href: `/categories/${encodeURIComponent(ui.slug)}`,
+    description: ui.description,
+    isPopular: ui.isPopular,
+  };
 }
 
-function buildDefaultSubtitle(item: CategoryCarouselItem): string {
-  if (item.slug === "waterslide") {
-    return WATERSLIDE_SUBTITLE;
-  }
-  return item.description;
+function catalogProductToPageProduct(p: CatalogProduct): CategoryPageProduct {
+  const legacyImg = (p.image_src ?? "").trim();
+  const canonical =
+    canonicalRentalProductMainImage(p.category_slug, p.slug) ?? "";
+  const imageSrc =
+    canonical || legacyImg || "/images/placeholder-party-rental.jpg";
+
+  const priceNum =
+    typeof p.price === "number" && Number.isFinite(p.price) ? p.price : null;
+  const priceLabel =
+    priceNum != null && priceNum > 0
+      ? `from $${priceNum}`
+      : "Pricing on request";
+
+  return {
+    name: p.name,
+    imageSrc,
+    imageAlt: p.name,
+    priceLabel,
+    bookHref: `/build?product=${encodeURIComponent(p.slug)}`,
+    isPopular: false,
+  };
 }
 
-function buildDefaultProducts(item: CategoryCarouselItem): CategoryPageProduct[] {
-  return [0, 1, 2].map((i) => {
-    const n = i + 1;
-    return {
-      name: `${item.title} — popular pick ${n}`,
-      imageSrc: i === 0 ? item.imageSrc : GENERIC_HERO_IMAGES[i % GENERIC_HERO_IMAGES.length]!,
-      imageAlt: `${item.title} rental option ${n}`,
-      priceLabel: `from $${170 + n * 25}`,
-      isPopular: Boolean(item.isPopular) && n === 2,
+function fallbackProducts(item: CategoryCarouselItem): CategoryPageProduct[] {
+  return [
+    {
+      name: `Browse ${item.title}`,
+      imageSrc: item.imageSrc,
+      imageAlt: item.title,
+      priceLabel: "Check availability",
       bookHref: `/build?category=${encodeURIComponent(item.slug)}`,
-    } satisfies CategoryPageProduct;
-  });
+    },
+  ];
 }
 
 /**
- * Server-side content for `app/(site)/categories/[slug]`.
- * Replace with CMS/API; structure kept stable for migration.
+ * Hydrate `/categories/[slug]` from static catalog + matching `rental_products`.
  */
-export function getCategoryPageData(slug: string): CategoryPageViewModel | undefined {
-  const item = getCategoryBySlug(slug);
-  if (!item) {
-    return undefined;
-  }
+export async function resolveCategoryPageViewModel(
+  slug: string,
+  brandSlug: BrandSlug,
+): Promise<CategoryPageViewModel | null> {
+  const [categories, products] = await Promise.all([
+    getRentalCategories({ brandSlug }),
+    getProducts(brandSlug),
+  ]);
 
-  if (item.slug === "waterslide") {
-    return {
-      item,
-      pageTitle: buildDefaultPageTitle(item),
-      pageSubtitle: WATERSLIDE_SUBTITLE,
-      heroImageSrc: item.imageSrc,
-      products: WATERSLIDE_PRODUCTS,
-    };
-  }
+  const def = resolveRentalCategoryForLookup(slug, categories);
+  if (!def) return null;
+
+  const item = uiModelToCarouselItem(def);
+  const inCategory = products.filter((p) =>
+    inventoryMatchesGuidedCategory(p.category_slug, def),
+  );
+
+  const mapped =
+    inCategory.length > 0
+      ? inCategory.map(catalogProductToPageProduct)
+      : fallbackProducts(item);
 
   return {
     item,
-    pageTitle: buildDefaultPageTitle(item),
-    pageSubtitle: buildDefaultSubtitle(item),
-    heroImageSrc: item.imageSrc,
-    products: buildDefaultProducts(item),
+    pageTitle: `${def.label} for Rent in Moreno Valley`,
+    pageSubtitle: def.description,
+    heroImageSrc: def.image,
+    products: mapped.slice(0, 48),
   };
 }
 

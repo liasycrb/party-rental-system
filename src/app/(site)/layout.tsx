@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import type { BrandSlug } from "@/lib/brand/config";
 import { getBrand } from "@/lib/brand/get-brand";
+import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
 import { SiteLayoutBrand } from "@/components/layouts/site-layout-brand";
-import type { FooterOverride } from "@/components/layouts/site-footer";
+import type { FooterCategoryLink, FooterOverride } from "@/components/layouts/site-footer";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrand();
@@ -26,11 +28,21 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }>) {
   const serverBrand = await getBrand();
-  // Fetch both brands in parallel so the client-side ?brand= switcher gets
-  // the correct phone for whichever brand it activates.
-  const [liasSettings, crbSettings] = await Promise.all([
+
+  function toFooterLinks(
+    cats: Awaited<ReturnType<typeof getRentalCategories>>,
+  ): FooterCategoryLink[] {
+    return cats.map((c) => ({
+      label: c.label,
+      href: `/categories/${encodeURIComponent(c.slug)}`,
+    }));
+  }
+
+  const [liasSettings, crbSettings, liasCats, crbCats] = await Promise.all([
     getSiteSettings("lias"),
     getSiteSettings("crb"),
+    getRentalCategories({ brandSlug: "lias" }),
+    getRentalCategories({ brandSlug: "crb" }),
   ]);
   const phoneOverrides: Record<string, string | null> = {
     lias: liasSettings?.support_phone || null,
@@ -55,11 +67,19 @@ export default async function SiteLayout({
     crb: toFooterOverride(crbSettings),
   };
 
+  const footerCategoryLinksByBrand: Partial<
+    Record<BrandSlug, readonly FooterCategoryLink[]>
+  > = {
+    lias: toFooterLinks(liasCats),
+    crb: toFooterLinks(crbCats),
+  };
+
   return (
     <SiteLayoutBrand
       serverBrand={serverBrand}
       phoneOverrides={phoneOverrides}
       footerOverrides={footerOverrides}
+      footerCategoryLinksByBrand={footerCategoryLinksByBrand}
     >
       {children}
     </SiteLayoutBrand>

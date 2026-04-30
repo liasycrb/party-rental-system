@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { Brand } from "@/lib/brand/config";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { HeroDesktopStickerComposition } from "@/components/home/hero-desktop-sticker-composition";
 import { cn } from "@/lib/utils/cn";
@@ -255,6 +256,7 @@ export function MarketingHero({
   heroTitleOverride,
   heroSubtitleOverride,
   ctaPrimaryOverride,
+  carouselCategories,
 }: {
   brand: Brand;
   isCrb: boolean;
@@ -266,6 +268,7 @@ export function MarketingHero({
   heroTitleOverride?: string | null;
   heroSubtitleOverride?: string | null;
   ctaPrimaryOverride?: string | null;
+  carouselCategories: SiteCategoryCarouselItem[];
 }) {
   return (
     <section
@@ -540,6 +543,7 @@ export function MarketingHero({
               <HeroDesktopStickerComposition
                 isCrb={isCrb}
                 brandSlug={brand.slug}
+                items={carouselCategories}
               />
             </div>
           </div>

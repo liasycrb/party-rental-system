@@ -1,21 +1,26 @@
-import type { Brand } from "@/lib/brand/config";
+import type { Brand, BrandSlug } from "@/lib/brand/config";
 import { cn } from "@/lib/utils/cn";
-import { SiteFooter, type FooterOverride } from "./site-footer";
+import { SiteFooter, type FooterCategoryLink, type FooterOverride } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
 export function SiteShell({
   brand,
   phoneOverride,
   footerOverride,
+  footerCategoryLinksByBrand,
   children,
 }: {
   brand: Brand;
   phoneOverride?: string | null;
   footerOverride?: FooterOverride | null;
+  footerCategoryLinksByBrand?: Partial<Record<BrandSlug, readonly FooterCategoryLink[]>>;
   children: React.ReactNode;
 }) {
   const t = brand.theme;
   const isCrb = brand.slug === "crb";
+
+  const footerCategoryLinks =
+    footerCategoryLinksByBrand?.[brand.slug as BrandSlug];
 
   return (
     <div
@@ -73,7 +78,12 @@ export function SiteShell({
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
         <SiteHeader brand={brand} phoneOverride={phoneOverride} />
         <div className="flex-1">{children}</div>
-        <SiteFooter brand={brand} phoneOverride={phoneOverride} footerOverride={footerOverride} />
+        <SiteFooter
+          brand={brand}
+          phoneOverride={phoneOverride}
+          footerOverride={footerOverride}
+          footerCategoryLinks={footerCategoryLinks}
+        />
       </div>
     </div>
   );

@@ -9,26 +9,29 @@ import {
 } from "react";
 import type { BrandSlug } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { CategoryHeroCtaPill } from "@/components/home/category-hero-cta-pill";
-import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
 import { cn } from "@/lib/utils/cn";
 import { HeroStickerPng } from "@/components/home/hero-sticker-png";
 
 const AUTOPLAY_MS = 2700;
-const N = CATEGORY_CAROUSEL_ITEMS.length;
 
 export type HeroStickerCarouselVariant = "lias" | "crb";
 
 export function HeroMobileStickerCarousel({
   variant,
+  items,
 }: {
   variant: HeroStickerCarouselVariant;
+  items: SiteCategoryCarouselItem[];
 }) {
   const brandSlug: BrandSlug = variant === "lias" ? "lias" : "crb";
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const indexRef = useRef(0);
   const pauseAutoplayRef = useRef(false);
   const rafRef = useRef<number | null>(null);
+
+  const N = items.length;
 
   const [index, setIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -41,6 +44,7 @@ export function HeroMobileStickerCarousel({
 
   const setSlideIndex = useCallback(
     (i: number, opts?: { behavior?: ScrollBehavior }) => {
+      if (N === 0) return;
       const iClamped = (i + N) % N;
       indexRef.current = iClamped;
       setIndex(iClamped);
@@ -48,54 +52,29 @@ export function HeroMobileStickerCarousel({
       if (!el) return;
       const child = el.children[iClamped] as HTMLElement | undefined;
       if (!child) return;
-      const behavior: ScrollBehavior =
-        reducedMotion || opts?.behavior === "auto" ? "auto" : (opts?.behavior ?? "smooth");
-      el.scrollTo({ left: child.offsetLeft, behavior });
+      child.scrollIntoView({
+        behavior: opts?.behavior ?? (reducedMotion ? "auto" : "smooth"),
+        block: "nearest",
+        inline: "center",
+      });
     },
-    [reducedMotion],
+    [N, reducedMotion],
   );
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = window.setInterval(() => {
-      if (pauseAutoplayRef.current) return;
-      const next = (indexRef.current + 1) % N;
-      setSlideIndex(next, { behavior: "smooth" });
-    }, AUTOPLAY_MS);
-    return () => clearInterval(id);
-  }, [reducedMotion, setSlideIndex]);
 
   const onScroll = useCallback(() => {
-    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
+    const el = scrollerRef.current;
+    if (!el || N === 0) return;
+    if (rafRef.current != null) return;
+    rafRef.current = window.requestAnimationFrame(() => {
       rafRef.current = null;
-      const el = scrollerRef.current;
-      if (!el) return;
-      const left = el.scrollLeft;
-      const w = el.clientWidth;
-      const center = left + w / 2;
-      const children = el.children;
-      let best = 0;
+      const children = Array.from(el.children) as HTMLElement[];
+      let best = indexRef.current;
       let min = Infinity;
+      const viewportMid = el.getBoundingClientRect().left + el.clientWidth * 0.5;
       for (let j = 0; j < children.length; j++) {
-        const c = children[j] as HTMLElement;
-        const mid = c.offsetLeft + c.offsetWidth / 2;
-        const d = Math.abs(mid - center);
+        const rect = children[j].getBoundingClientRect();
+        const cMid = rect.left + rect.width * 0.5;
+        const d = Math.abs(cMid - viewportMid);
         if (d < min) {
           min = d;
           best = j;
@@ -106,7 +85,29 @@ export function HeroMobileStickerCarousel({
         setIndex(best);
       }
     });
+  }, [N]);
+
+  useEffect(() => {
+    indexRef.current = N === 0 ? 0 : Math.min(indexRef.current, N - 1);
+    setIndex(indexRef.current);
+  }, [N]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  useEffect(() => {
+    if (N <= 1 || reducedMotion) return;
+    const id = window.setInterval(() => {
+      if (pauseAutoplayRef.current) return;
+      setSlideIndex(indexRef.current + 1);
+    }, AUTOPLAY_MS);
+    return () => clearInterval(id);
+  }, [N, reducedMotion, setSlideIndex]);
 
   const onPointerDown = useCallback(() => {
     pauseAutoplayRef.current = true;
@@ -117,6 +118,24 @@ export function HeroMobileStickerCarousel({
       pauseAutoplayRef.current = false;
     }, 500);
   }, []);
+
+  if (N === 0) {
+    return (
+      <div className="mt-6 flex justify-center px-6">
+        <Link
+          href={withBrand("/products", brandSlug)}
+          className={cn(
+            "rounded-full px-6 py-3 text-[13px] font-black underline decoration-2",
+            variant === "lias"
+              ? "bg-white/85 text-stone-800 underline-rose-500"
+              : "bg-slate-900/85 text-cyan-100 underline-cyan-300",
+          )}
+        >
+          Browse party rentals →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -133,7 +152,7 @@ export function HeroMobileStickerCarousel({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        {CATEGORY_CAROUSEL_ITEMS.map((item) => {
+        {items.map((item) => {
           const isLias = variant === "lias";
           return (
             <Link
@@ -184,7 +203,7 @@ export function HeroMobileStickerCarousel({
         role="tablist"
         aria-label="Category slide indicators"
       >
-        {CATEGORY_CAROUSEL_ITEMS.map((item, i) => (
+        {items.map((item, i) => (
           <button
             key={item.slug}
             type="button"

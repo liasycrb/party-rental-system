@@ -11,11 +11,17 @@ function hasRenderableImageSrc(imageSrc?: string): boolean {
 const CARD_IMG_FRAME =
   "relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-slate-950/40 flex items-center justify-center";
 
+const CATALOG_IMG_FRAME =
+  "relative h-[240px] w-full shrink-0 overflow-hidden rounded-t-2xl bg-slate-950/40";
+
 /** Thumbnail frame + img classes (marketing + /build inventory cards). */
 export const PRODUCT_CARD_HERO_FRAME_CLASS = CARD_IMG_FRAME;
 
 const CARD_IMG_CLASS =
   "h-full w-full cursor-zoom-in object-contain motion-reduce:transition-none transition-transform duration-300 ease-out group-hover/cardimg:scale-[1.02] motion-reduce:group-hover/cardimg:scale-100";
+
+const CATALOG_IMG_CLASS =
+  "h-full w-full cursor-zoom-in object-cover motion-reduce:transition-none transition-transform duration-300 ease-out group-hover/cardimg:scale-[1.02] motion-reduce:group-hover/cardimg:scale-100";
 
 export const PRODUCT_CARD_HERO_IMG_CLASS = CARD_IMG_CLASS;
 
@@ -105,6 +111,8 @@ type CardHeroImageProps = {
   imageAlt: string;
   title: string;
   objectPosition?: string;
+  /** Public catalog listing: fixed height + cover crop */
+  layout?: "standard" | "catalog";
   /** Shelf: category + price chips on the image */
   shelfOverlays?: {
     category: string;
@@ -118,22 +126,29 @@ function ProductCardHeroImage({
   imageAlt,
   title,
   objectPosition,
+  layout = "standard",
   shelfOverlays,
 }: CardHeroImageProps) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [broken, setBroken] = useState(false);
   const canShow = hasRenderableImageSrc(imageSrc) && !broken;
 
+  const imgFrame =
+    layout === "catalog"
+      ? CATALOG_IMG_FRAME
+      : CARD_IMG_FRAME;
+  const imgClass = layout === "catalog" ? CATALOG_IMG_CLASS : CARD_IMG_CLASS;
+
   return (
     <>
-      <div className={cn("group/cardimg", CARD_IMG_FRAME)}>
+      <div className={cn("group/cardimg", imgFrame)}>
         {canShow ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageSrc}
               alt={imageAlt}
-              className={CARD_IMG_CLASS}
+              className={imgClass}
               style={
                 objectPosition
                   ? { objectPosition }
@@ -145,7 +160,12 @@ function ProductCardHeroImage({
 
             {/* subtle vignette — does not crop image */}
             <div
-              className="pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-t from-black/55 via-transparent to-transparent"
+              className={cn(
+                "pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-t via-transparent to-transparent",
+                layout === "catalog"
+                  ? "from-black/35"
+                  : "from-black/55",
+              )}
               aria-hidden
             />
 
@@ -182,7 +202,14 @@ function ProductCardHeroImage({
             ) : null}
           </>
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center px-6 py-12 text-center text-sm font-semibold text-zinc-500">
+          <div
+            className={cn(
+              "flex h-full w-full flex-col items-center justify-center px-4 text-center font-medium text-zinc-500",
+              layout === "catalog"
+                ? "py-8 text-[11px] uppercase tracking-[0.12em]"
+                : "py-12 text-sm",
+            )}
+          >
             Photo coming soon
           </div>
         )}
@@ -233,12 +260,14 @@ export function ProductShowcaseImagePanel({
   imageAlt,
   imagePosition,
   title,
+  layout,
 }: {
   imageSrc: string;
   imageAlt: string;
   imagePosition?: string;
   title: string;
   isCrb: boolean;
+  layout?: "standard" | "catalog";
 }) {
   return (
     <ProductCardHeroImage
@@ -246,6 +275,7 @@ export function ProductShowcaseImagePanel({
       imageAlt={imageAlt}
       title={title}
       objectPosition={imagePosition}
+      layout={layout}
     />
   );
 }

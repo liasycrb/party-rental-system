@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
-import type { SiteSettings } from "@/lib/site/get-site-settings";
 import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
+import type { SiteSettings } from "@/lib/site/get-site-settings";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
@@ -23,12 +24,13 @@ export function LiasHome({
   brand,
   siteSettings,
   packages,
+  carouselCategories,
 }: {
   brand: Brand;
   siteSettings: SiteSettings | null;
   packages?: RentalPackage[] | null;
+  carouselCategories: SiteCategoryCarouselItem[];
 }) {
-  const [p1, p2, p3] = DEMO_PRODUCTS;
   const b = brand.slug;
 
   const tickerText =
@@ -40,7 +42,8 @@ export function LiasHome({
       <MarketingHero
         brand={brand}
         isCrb={false}
-        mobileLead={<MobileProductStrip />}
+        mobileLead={<MobileProductStrip carouselItems={carouselCategories} />}
+        carouselCategories={carouselCategories}
         heroProduct={{
           imageSrc: HERO_BOUNCE_HOUSE.imageSrc,
           imageAlt: HERO_BOUNCE_HOUSE.imageAlt,
@@ -64,7 +67,7 @@ export function LiasHome({
         </Container>
       </section>
 
-      <CategoryShowcase isCrb={false} brandSlug={b} />
+      <CategoryShowcase isCrb={false} brandSlug={b} items={carouselCategories} />
 
       <PopularPackagesSection brand={brand} packages={packages} />
       <WhyChooseStrip brand={brand} />
@@ -155,7 +158,7 @@ export function LiasHome({
         />
       </Container>
 
-      {/* Bento fleet — showcase presentation */}
+      {/* Featured rentals — uniform grid (homepage catalog) */}
       <section
         className="relative py-16 sm:py-24"
         style={{ background: "var(--brand-stripe-fleet)" }}
@@ -166,46 +169,21 @@ export function LiasHome({
           style={{ background: "var(--brand-fleet-ambient)" }}
           aria-hidden
         />
-        <Container className="relative">
+        <div className="relative mx-auto w-full max-w-[1280px] px-6">
           <SectionTitle
             id="fleet-heading"
             eyebrow="The fleet"
             title="Fall in love before you check a single box"
-            description="One giant spotlight + two tight stories — same inventory everywhere you book."
+            description="One hero moment plus clear choices—see photos, footprints, and starting prices without guesswork."
           />
-          <div className="mt-12 grid auto-rows-fr gap-5 lg:grid-cols-12 lg:grid-rows-2">
-            {p1 ? (
-              <div className="lg:col-span-7 lg:row-span-2">
-                <ProductCard
-                  brand={brand}
-                  product={p1}
-                  visual="showcase"
-                  className="min-h-[380px] lg:min-h-full"
-                />
+          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {DEMO_PRODUCTS.map((product) => (
+              <div key={product.slug} className="flex h-full min-h-0">
+                <ProductCard brand={brand} product={product} visual="catalog" className="h-full w-full" />
               </div>
-            ) : null}
-            {p2 ? (
-              <div className="lg:col-span-5">
-                <ProductCard
-                  brand={brand}
-                  product={p2}
-                  visual="showcase"
-                  className="min-h-[320px]"
-                />
-              </div>
-            ) : null}
-            {p3 ? (
-              <div className="lg:col-span-5">
-                <ProductCard
-                  brand={brand}
-                  product={p3}
-                  visual="showcase"
-                  className="min-h-[320px]"
-                />
-              </div>
-            ) : null}
+            ))}
           </div>
-        </Container>
+        </div>
       </section>
 
       <section

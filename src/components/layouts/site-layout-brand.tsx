@@ -2,8 +2,9 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, type ReactNode } from "react";
-import { BRANDS, type Brand } from "@/lib/brand/config";
+import { BRANDS, type Brand, type BrandSlug } from "@/lib/brand/config";
 import { resolveHomeBrandSlug } from "@/lib/brand/resolve-brand";
+import type { FooterCategoryLink } from "./site-footer";
 import { SiteShell } from "./site-shell";
 import type { FooterOverride } from "./site-footer";
 
@@ -11,11 +12,15 @@ function SiteShellWithUrlSearchParams({
   serverBrand,
   phoneOverrides,
   footerOverrides,
+  footerCategoryLinksByBrand,
   children,
 }: {
   serverBrand: Brand;
   phoneOverrides?: Record<string, string | null>;
   footerOverrides?: Record<string, FooterOverride | null>;
+  footerCategoryLinksByBrand?: Partial<
+    Record<BrandSlug, readonly FooterCategoryLink[]>
+  >;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -35,13 +40,16 @@ function SiteShellWithUrlSearchParams({
     return serverBrand;
   }, [pathname, searchParams, serverBrand]);
 
-  // Pick the override that matches whichever brand is active after
-  // client-side ?brand= resolution, so header/footer always stay in sync.
   const phoneOverride = phoneOverrides?.[brand.slug] ?? null;
   const footerOverride = footerOverrides?.[brand.slug] ?? null;
 
   return (
-    <SiteShell brand={brand} phoneOverride={phoneOverride} footerOverride={footerOverride}>
+    <SiteShell
+      brand={brand}
+      phoneOverride={phoneOverride}
+      footerOverride={footerOverride}
+      footerCategoryLinksByBrand={footerCategoryLinksByBrand}
+    >
       {children}
     </SiteShell>
   );
@@ -51,11 +59,15 @@ export function SiteLayoutBrand({
   serverBrand,
   phoneOverrides,
   footerOverrides,
+  footerCategoryLinksByBrand,
   children,
 }: {
   serverBrand: Brand;
   phoneOverrides?: Record<string, string | null>;
   footerOverrides?: Record<string, FooterOverride | null>;
+  footerCategoryLinksByBrand?: Partial<
+    Record<BrandSlug, readonly FooterCategoryLink[]>
+  >;
   children: ReactNode;
 }) {
   const serverPhoneOverride = phoneOverrides?.[serverBrand.slug] ?? null;
@@ -63,7 +75,12 @@ export function SiteLayoutBrand({
   return (
     <Suspense
       fallback={
-        <SiteShell brand={serverBrand} phoneOverride={serverPhoneOverride} footerOverride={serverFooterOverride}>
+        <SiteShell
+          brand={serverBrand}
+          phoneOverride={serverPhoneOverride}
+          footerOverride={serverFooterOverride}
+          footerCategoryLinksByBrand={footerCategoryLinksByBrand}
+        >
           {children}
         </SiteShell>
       }
@@ -72,6 +89,7 @@ export function SiteLayoutBrand({
         serverBrand={serverBrand}
         phoneOverrides={phoneOverrides}
         footerOverrides={footerOverrides}
+        footerCategoryLinksByBrand={footerCategoryLinksByBrand}
       >
         {children}
       </SiteShellWithUrlSearchParams>

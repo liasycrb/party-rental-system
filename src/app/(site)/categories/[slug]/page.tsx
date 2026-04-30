@@ -2,12 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryPageTemplate } from "@/components/categories/category-page-template";
 import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
-import { getCategoryPageData } from "@/lib/catalog/category-page-data";
+import { resolveCategoryPageViewModel } from "@/lib/catalog/category-page-data";
 
 /**
- * `app/(site)/categories/[slug]/page.tsx`
- * Brand: `?brand=lias` | `?brand=crb` (else `NEXT_PUBLIC_DEFAULT_BRAND_SLUG` or default).
- * Header/footer: `SiteLayoutBrand` applies the same query on `/categories/*` (see site-layout-brand.tsx).
+ * Brand: `?brand=lias` | `?brand=crb` (else defaults per `resolveBrandSlugFromPageSearchParam`).
  */
 
 type Props = {
@@ -15,9 +13,14 @@ type Props = {
   searchParams: Promise<{ brand?: string | string[] }>;
 };
 
-export async function generateMetadata({ params }: Pick<Props, "params">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Pick<Props, "params" | "searchParams">): Promise<Metadata> {
   const { slug } = await params;
-  const data = getCategoryPageData(slug);
+  const sp = await searchParams;
+  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const data = await resolveCategoryPageViewModel(slug, brandSlug);
   if (!data) {
     return { title: "Category" };
   }
@@ -30,12 +33,12 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
 export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
-  const data = getCategoryPageData(slug);
+
+  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const data = await resolveCategoryPageViewModel(slug, brandSlug);
   if (!data) {
     notFound();
   }
-
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
 
   return <CategoryPageTemplate brand={brandSlug} data={data} />;
 }

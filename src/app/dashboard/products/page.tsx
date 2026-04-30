@@ -92,7 +92,7 @@ export default async function ProductsDashboardPage({
   const supabase = await createSupabaseServerClient();
   const [{ data, error }, canonicalCategories] = await Promise.all([
     supabase.rpc("get_all_rental_products_for_dashboard", { p_brand_slug: "lias" }),
-    getRentalCategories(),
+    getRentalCategories({ allBrands: true }),
   ]);
 
   if (error) {

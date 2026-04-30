@@ -11,8 +11,7 @@ import {
 import type { BrandSlug } from "@/lib/brand/config";
 import { BRANDS } from "@/lib/brand/config";
 import {
-  BUILD_GUIDED_CATEGORIES,
-  guidedCategoryLabelForSlug,
+  formatCategorySlugLabel,
   inventoryMatchesGuidedCategory,
   type GuidedCategoryDef,
 } from "@/lib/build/build-guided-categories";
@@ -23,6 +22,7 @@ import { createOnlineBooking } from "@/lib/booking/create-online-booking";
 import { BuildInventoryCardImage } from "@/components/build/build-inventory-card-image";
 import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
+import type { RentalCategoryUIModel } from "@/lib/catalog/get-rental-categories";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -34,8 +34,7 @@ type BuildBookingStartProps = {
   productSlug: string | null;
   categoryLine: string | null;
   inventoryOptions: BuildInventoryOption[];
-  /** Categories from Supabase (with hardcoded fallback); includes "Browse all" sentinel. */
-  guidedCategories: GuidedCategoryDef[];
+  guidedCategories: RentalCategoryUIModel[];
 };
 
 function inputClass(isCrb: boolean) {
@@ -508,6 +507,18 @@ export function BuildBookingStart({
     }
     getBookedDates(slug).then(setBookedDates).catch(() => setBookedDates([]));
   }, [selectedItem?.product_slug]);
+
+  const inventoryCategoryLabels = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of guidedCategories) {
+      if (c.slug === "*" || c.categorySlugs.includes("*")) continue;
+      m.set(c.slug.toLowerCase(), c.label);
+      for (const s of c.categorySlugs) {
+        if (s !== "*") m.set(String(s).toLowerCase(), c.label);
+      }
+    }
+    return m;
+  }, [guidedCategories]);
 
   function handlePaymentProofChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -1131,7 +1142,8 @@ export function BuildBookingStart({
                                       : "bg-stone-100 text-stone-500",
                                   )}
                                 >
-                                  {guidedCategoryLabelForSlug(item.category_slug)}
+                                  {inventoryCategoryLabels.get(item.category_slug.toLowerCase()) ??
+                                    formatCategorySlugLabel(item.category_slug)}
                                 </span>
                               )}
 

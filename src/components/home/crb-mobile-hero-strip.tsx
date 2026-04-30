@@ -1,4 +1,5 @@
 import type { Brand } from "@/lib/brand/config";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { cn } from "@/lib/utils/cn";
 import { HeroMobileStickerCarousel } from "@/components/home/hero-mobile-sticker-carousel";
 
@@ -46,7 +47,13 @@ function SmallIcon({ type }: { type: "calendar" | "pin" }) {
 }
 
 /** CRB-only `md:hidden` mobile hero: badges, copy, social proof, sticker carousel, urgency. CTA is in `MarketingHero` (match Lias). */
-export function CrbMobileHeroStrip({ brand }: { brand: Brand }) {
+export function CrbMobileHeroStrip({
+  brand,
+  carouselItems,
+}: {
+  brand: Brand;
+  carouselItems: SiteCategoryCarouselItem[];
+}) {
   const title = brand.copy.heroTitle.trim();
   const dot = title.indexOf(". ");
   const line1 = dot === -1 ? title : title.slice(0, dot + 1).trim();
@@ -95,7 +102,7 @@ export function CrbMobileHeroStrip({ brand }: { brand: Brand }) {
         </p>
       </div>
 
-      <HeroMobileStickerCarousel variant="crb" />
+      <HeroMobileStickerCarousel variant="crb" items={carouselItems} />
       <p className="mt-2 mb-2 text-center text-[12px] font-semibold text-orange-200/90">
         🔥 Only a few spots left this weekend
       </p>

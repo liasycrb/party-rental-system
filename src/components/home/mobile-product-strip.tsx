@@ -1,3 +1,4 @@
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { HeroMobileStickerCarousel } from "@/components/home/hero-mobile-sticker-carousel";
 
 const VALUE_BADGES: {
@@ -44,10 +45,13 @@ function SmallIcon({ type }: { type: "calendar" | "pin" }) {
 }
 
 /**
- * Lias mobile-only (max-md) hero: value badges, centered headline, sticker carousel.
- * Desktop is driven by `MarketingHero`; this component is `md:hidden` at the site of use.
+ * Lias mobile-only (max-md) hero.
  */
-export function MobileProductStrip() {
+export function MobileProductStrip({
+  carouselItems,
+}: {
+  carouselItems: SiteCategoryCarouselItem[];
+}) {
   return (
     <div className="md:hidden w-full min-w-0">
       <div
@@ -86,7 +90,7 @@ export function MobileProductStrip() {
         </p>
       </div>
 
-      <HeroMobileStickerCarousel variant="lias" />
+      <HeroMobileStickerCarousel variant="lias" items={carouselItems} />
       <p className="mt-2 mb-2 text-center text-[12px] font-semibold text-black/70">
         🔥 Only a few spots left this weekend
       </p>

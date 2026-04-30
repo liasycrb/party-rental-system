@@ -85,7 +85,7 @@ export const BRANDS = {
       heroTitle: "Your backyard. Their best day ever.",
       heroSubtitle:
         "The inflatable is the star — we just roll up, set up, and let the laughter take over.",
-      trustLine: "Real crew · insured setups · one shared calendar",
+      trustLine: "Real crew · insured setups · upfront pricing",
     },
     theme: {
       primary: "#0d9488",
@@ -150,7 +150,7 @@ export const BRANDS = {
       heroTitle: "Go huge. Bounce harder.",
       heroSubtitle:
         "Lock the jumper. Stack the upgrades. Feel the weekend start early.",
-      trustLine: "Same inventory as our sister brand · zero double-booking",
+      trustLine: "Real-time availability · upfront pricing · friendly crews",
     },
     theme: {
       primary: "#22d3ee",

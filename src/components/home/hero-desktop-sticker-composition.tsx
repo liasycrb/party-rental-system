@@ -6,29 +6,38 @@ import { useEffect, useState } from "react";
 import type { BrandSlug } from "@/lib/brand/config";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { CategoryHeroCtaPill } from "@/components/home/category-hero-cta-pill";
-import { CATEGORY_CAROUSEL_ITEMS } from "@/lib/catalog/category-carousel";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { cn } from "@/lib/utils/cn";
 
 const INTERVAL_MS = 3000;
 const FADE_MS = 500;
 
 /**
- * Single rotating category (md+ right column), same data for Lias and CRB.
- * Badge overlaps bottom of image; single Link for image + label.
+ * Rotating category spotlight (md+ right column).
  */
 export function HeroDesktopStickerComposition({
   isCrb,
   brandSlug,
+  items,
 }: {
   isCrb: boolean;
   brandSlug: BrandSlug;
+  items: SiteCategoryCarouselItem[];
 }) {
-  const n = CATEGORY_CAROUSEL_ITEMS.length;
+  const n = items.length;
 
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [imageOk, setImageOk] = useState(true);
+
+  useEffect(() => {
+    if (n === 0) {
+      setIndex(0);
+      return;
+    }
+    setIndex((i) => Math.min(i, n - 1));
+  }, [n]);
 
   useEffect(() => {
     setImageOk(true);
@@ -72,12 +81,33 @@ export function HeroDesktopStickerComposition({
     };
   }, [n, reducedMotion]);
 
-  const current = CATEGORY_CAROUSEL_ITEMS[index]!;
+  if (n === 0) {
+    return (
+      <div
+        className={cn(
+          "relative mx-auto flex h-[min(480px,60vh)] w-full min-h-[260px] max-w-[560px] items-center justify-center rounded-3xl border p-10 text-center",
+          isCrb
+            ? "border-cyan-400/30 bg-slate-950/50 text-cyan-100"
+            : "border-stone-200 bg-white/80 text-stone-700",
+        )}
+      >
+        <Link
+          href={withBrand("/products", brandSlug)}
+          className={cn(
+            "text-sm font-black underline decoration-2 underline-offset-4",
+            isCrb ? "decoration-cyan-300 hover:text-white" : "decoration-rose-400 hover:text-stone-900",
+          )}
+        >
+          Browse party rentals →
+        </Link>
+      </div>
+    );
+  }
+
+  const current = items[index]!;
 
   return (
-    <div
-      className="relative mx-auto flex h-[min(600px,78vh)] w-full min-h-[320px] max-w-[640px] flex-col items-center justify-center"
-    >
+    <div className="relative mx-auto flex h-[min(600px,78vh)] w-full min-h-[320px] max-w-[640px] flex-col items-center justify-center">
       <div
         className={cn(
           "flex w-full max-w-[600px] flex-col items-center justify-center p-1 transition-opacity ease-in-out",

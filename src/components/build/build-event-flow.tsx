@@ -504,8 +504,7 @@ export function BuildEventFlow({
                   isCrb ? "text-slate-400" : "text-stone-600",
                 )}
               >
-                Production will lock this in Supabase so both brands share one
-                source of truth — zero double booking.
+                Production will persist holds in Supabase so availability stays accurate for every booking.
               </p>
             </div>
           </StepPanel>

@@ -1,67 +1,85 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { CATEGORY_CAROUSEL_ITEMS } from "./category-carousel";
+import type { BrandSlug } from "@/lib/brand/config";
+import {
+  CATEGORY_CAROUSEL_ITEMS,
+  type CategoryCarouselItem,
+} from "@/lib/catalog/category-carousel";
 import {
   LEGACY_CATEGORY_SLUG_MAP,
   type GuidedCategoryDef,
 } from "@/lib/build/build-guided-categories";
 
-type RentalCategoryRow = {
-  slug: string;
-  name: string;
-  description: string | null;
-  image_src: string | null;
-  sort_order: number;
+/**
+ * Local catalog-driven category models (booking / PDP / marketing).
+ * Mirrors `GuidedCategoryDef` plus marketing fields — no DB fetch.
+ */
+export type RentalCategoryUIModel = GuidedCategoryDef & {
+  description: string;
+  isPopular: boolean;
 };
 
-function rowToGuidedDef(row: RentalCategoryRow): GuidedCategoryDef {
-  const legacySlugs = Object.entries(LEGACY_CATEGORY_SLUG_MAP)
-    .filter(([, canonical]) => canonical === row.slug)
+/** Minimal serializable shape for client carousels + category showcase (from server). */
+export type SiteCategoryCarouselItem = {
+  slug: string;
+  title: string;
+  description: string;
+  imageSrc: string;
+  href: string;
+  isPopular: boolean;
+};
+
+/** Canonical carousel slug plus legacy DB `rental_products.category_slug` aliases. */
+function categorySlugsForCanonical(canonicalSlug: string): readonly string[] {
+  const aliases = Object.entries(LEGACY_CATEGORY_SLUG_MAP)
+    .filter(([, canonical]) => canonical === canonicalSlug)
     .map(([legacy]) => legacy);
+  return [canonicalSlug, ...aliases];
+}
+
+function carouselRowToUIModel(row: CategoryCarouselItem): RentalCategoryUIModel {
+  const slugs = categorySlugsForCanonical(row.slug);
   return {
     slug: row.slug,
-    label: row.name,
-    image: row.image_src ?? `/party-rentals/categories/${row.slug}.png`,
-    categorySlugs: [row.slug, ...legacySlugs],
+    label: row.title,
+    image: row.imageSrc,
+    categorySlugs: slugs.length ? slugs : [row.slug],
+    description: row.description,
+    isPopular: Boolean(row.isPopular),
   };
 }
 
-/**
- * Hardcoded fallback — mirrors CATEGORY_CAROUSEL_ITEMS with legacy slug aliases.
- * Used when the Supabase `rental_categories` table is unreachable or empty.
- */
-export const HARDCODED_CATEGORIES: GuidedCategoryDef[] = CATEGORY_CAROUSEL_ITEMS.map(
-  (item) => {
-    const legacySlugs = Object.entries(LEGACY_CATEGORY_SLUG_MAP)
-      .filter(([, canonical]) => canonical === item.slug)
-      .map(([legacy]) => legacy);
-    return {
-      slug: item.slug,
-      label: item.title,
-      image: item.imageSrc,
-      categorySlugs: [item.slug, ...legacySlugs],
-    };
-  },
-);
+/** Static catalog: same lineup for both brands (pre–Supabase `rental_categories`). */
+export async function getRentalCategories(options?: {
+  brandSlug?: BrandSlug;
+  allBrands?: boolean;
+}): Promise<RentalCategoryUIModel[]> {
+  void options;
+  return CATEGORY_CAROUSEL_ITEMS.map(carouselRowToUIModel);
+}
 
-/**
- * Fetch active categories ordered by sort_order.
- * Falls back to HARDCODED_CATEGORIES if the table doesn't exist or RLS blocks access.
- */
-export async function getRentalCategories(): Promise<GuidedCategoryDef[]> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("rental_categories")
-      .select("slug, name, description, image_src, sort_order")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
+/** Map UI model → client carousel / showcase item (pathname-based href). */
+export function rentalCategoryToCarouselItem(
+  ui: RentalCategoryUIModel,
+): SiteCategoryCarouselItem {
+  return {
+    slug: ui.slug,
+    title: ui.label,
+    description: ui.description,
+    imageSrc: ui.image,
+    href: `/categories/${encodeURIComponent(ui.slug)}`,
+    isPopular: ui.isPopular,
+  };
+}
 
-    if (error || !data || data.length === 0) {
-      return HARDCODED_CATEGORIES;
-    }
-
-    return (data as RentalCategoryRow[]).map(rowToGuidedDef);
-  } catch {
-    return HARDCODED_CATEGORIES;
-  }
+/** Resolve `category` URL param / deep-link slug to a catalog category (+ legacy aliases). */
+export function resolveRentalCategoryForLookup(
+  slug: string | null | undefined,
+  list: RentalCategoryUIModel[],
+): RentalCategoryUIModel | undefined {
+  if (slug == null || slug.trim() === "" || slug === "*") return undefined;
+  const lower = slug.trim().toLowerCase();
+  return list.find(
+    (c) =>
+      c.slug.toLowerCase() === lower ||
+      c.categorySlugs.some((s) => s !== "*" && s.toLowerCase() === lower),
+  );
 }

@@ -1,12 +1,5 @@
 /**
- * Hero category carousel (mobile + desktop).
- *
- * Future CMS / CRM source: replace this static array with API-fetched category
- * records (admin ordering, per-brand visibility, draft state).
- *
- * Fields to align with a future CMS model: slug, title, imageSrc, description,
- * sortOrder, isActive, brandVisibility (lias | crb | both), categoryPageContent
- * (rich text / blocks), SEO title & description.
+ * Static category carousel (homepage, nav). Same catalog for both brands — styling differs in UI only.
  */
 
 export type CategoryCarouselItem = {
@@ -20,14 +13,6 @@ export type CategoryCarouselItem = {
   isPopular?: boolean;
 };
 
-/**
- * Same list for Lias and CRB heroes; brand-specific styling lives in UI only.
- *
- * Future DB: categories (or category_tenants) table with e.g.:
- * - id, tenant_id, brand_slug (nullable = all brands)
- * - slug, title, description, hero_image_url, gallery_images (json)
- * - sort_order, is_active, seo_title, seo_description
- */
 export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
   {
     slug: "regular-jumper-13x13",
@@ -116,7 +101,8 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
     title: "Combos",
     imageSrc: "/party-rentals/categories/combos.png",
     href: "/categories/combos",
-    description: "More features, more fun. The perfect upgrade for unforgettable parties.",
+    description:
+      "More features, more fun. The perfect upgrade for unforgettable parties.",
     isPopular: true,
   },
 ];

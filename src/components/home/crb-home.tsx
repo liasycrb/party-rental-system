@@ -21,6 +21,7 @@ function ArrowRight({ className }: { className?: string }) {
 }
 import type { SiteSettings } from "@/lib/site/get-site-settings";
 import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import {
   DEMO_PRODUCTS,
@@ -41,10 +42,12 @@ export function CrbHome({
   brand,
   siteSettings,
   packages,
+  carouselCategories,
 }: {
   brand: Brand;
   siteSettings: SiteSettings | null;
   packages?: RentalPackage[] | null;
+  carouselCategories: SiteCategoryCarouselItem[];
 }) {
   const [p1, p2, p3] = DEMO_PRODUCTS;
   const b = brand.slug;
@@ -58,7 +61,8 @@ export function CrbHome({
       <MarketingHero
         brand={brand}
         isCrb
-        mobileLead={<CrbMobileHeroStrip brand={brand} />}
+        mobileLead={<CrbMobileHeroStrip brand={brand} carouselItems={carouselCategories} />}
+        carouselCategories={carouselCategories}
         heroProduct={{
           imageSrc: HERO_BOUNCE_HOUSE.imageSrc,
           imageAlt: HERO_BOUNCE_HOUSE.imageAlt,
@@ -82,7 +86,7 @@ export function CrbHome({
         </Container>
       </section>
 
-      <CategoryShowcase isCrb brandSlug={b} />
+      <CategoryShowcase isCrb brandSlug={b} items={carouselCategories} />
 
       <PopularPackagesSection brand={brand} packages={packages} />
       <WhyChooseStrip brand={brand} />
@@ -423,7 +427,7 @@ export function CrbHome({
                   I.E. knows how to weekend.
                 </p>
                 <p className="mt-2 text-sm font-semibold text-cyan-100/90">
-                  CRB brings the visual volume — ops stay shared with Lias.
+                  Bright setups and punctual crews—built for planners who move fast.
                 </p>
               </div>
             </div>

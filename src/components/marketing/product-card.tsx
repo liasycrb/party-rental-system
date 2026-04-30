@@ -16,13 +16,83 @@ export function ProductCard({
 }: {
   brand: Brand;
   product: DemoProduct;
-  /** `showcase` = editorial, image-first, minimal “card chrome” */
-  visual?: "shelf" | "showcase";
+  /** `catalog` — public listing: uniform grid-friendly cards */
+  visual?: "shelf" | "showcase" | "catalog";
   className?: string;
 }) {
   const isCrb = brand.slug === "crb";
   const b = brand.slug;
   const objectPosition = product.imagePosition ?? "center center";
+
+  if (visual === "catalog") {
+    return (
+      <article
+        className={cn(
+          "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl",
+          className,
+        )}
+      >
+        <ProductShowcaseImagePanel
+          layout="catalog"
+          imageSrc={product.imageSrc}
+          imageAlt={product.imageAlt}
+          imagePosition={objectPosition}
+          title={product.title}
+          isCrb={isCrb}
+        />
+
+        <div className="relative flex flex-1 flex-col p-5">
+          <span
+            className={cn(
+              "w-fit max-w-full rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1",
+              isCrb
+                ? "bg-white/10 text-slate-200 ring-white/15"
+                : "bg-white/10 text-amber-100/95 ring-orange-400/25",
+            )}
+          >
+            {product.category}
+          </span>
+          <h3 className="mt-3 text-xl font-black leading-snug tracking-tight text-white sm:text-2xl">
+            <Link
+              href={withBrand(`/products/${product.slug}`, b)}
+              className={cn(
+                "hover:underline hover:decoration-2",
+                isCrb
+                  ? "hover:decoration-cyan-300"
+                  : "hover:decoration-amber-300",
+              )}
+            >
+              {product.title}
+            </Link>
+          </h3>
+          <p className="mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm font-medium leading-snug text-white/70">
+            {product.blurb}
+          </p>
+          <div className="mt-auto shrink-0 pt-4">
+          <p className="text-lg font-extrabold tabular-nums text-white">
+            <span className="text-xs font-semibold uppercase tracking-wide text-white/55">
+              from{" "}
+            </span>
+            ${product.priceFrom}
+          </p>
+          <Link
+            href={withBrand(`/build?product=${product.slug}`, b)}
+            className="mt-4 flex w-full items-center justify-center px-4 py-3 text-center text-sm font-black tracking-tight text-slate-950 shadow-lg transition-[filter,transform] hover:brightness-110 active:scale-[0.98]"
+            style={{
+              background: isCrb
+                ? "linear-gradient(90deg, var(--brand-primary), #a5f3fc)"
+                : "linear-gradient(90deg, var(--brand-accent), var(--brand-secondary))",
+              borderRadius: "var(--brand-radius-md)",
+              color: isCrb ? "var(--brand-on-primary)" : "#1c1917",
+            }}
+          >
+            Check availability
+          </Link>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   if (visual === "showcase") {
     return (
@@ -37,6 +107,7 @@ export function ProductCard({
           imageAlt={product.imageAlt}
           imagePosition={objectPosition}
           title={product.title}
+          layout="standard"
           isCrb={isCrb}
         />
 
