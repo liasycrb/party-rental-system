@@ -42,7 +42,15 @@ function formatCategory(slug: string | null): string {
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default async function ProductsDashboardPage() {
+export default async function ProductsDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; category?: string }>;
+}) {
+  const sp = await searchParams;
+  const searchQuery = sp.search?.toLowerCase().trim() ?? "";
+  const categoryFilter = sp.category?.trim() ?? "";
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc(
     "get_active_rental_products_for_brand",
@@ -58,53 +66,120 @@ export default async function ProductsDashboardPage() {
     );
   }
 
-  const products = (data ?? []) as ProductRow[];
+  const allProducts = (data ?? []) as ProductRow[];
+
+  // Unique categories for the filter dropdown
+  const categories = Array.from(
+    new Set(allProducts.map((p) => p.category_slug).filter(Boolean)),
+  ).sort() as string[];
+
+  // Apply filters
+  const products = allProducts.filter((p) => {
+    const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery);
+    const matchesCategory = !categoryFilter || p.category_slug === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      {/* Header */}
+      <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Products</h1>
           <p className="mt-0.5 text-sm text-zinc-400">
-            {products.length} active product{products.length !== 1 ? "s" : ""}
+            {products.length} of {allProducts.length} product{allProducts.length !== 1 ? "s" : ""}
           </p>
         </div>
       </div>
 
+      {/* Filter bar — GET form, no JS needed */}
+      <form method="GET" className="mb-5 flex flex-wrap gap-2">
+        <input
+          name="search"
+          type="search"
+          defaultValue={sp.search ?? ""}
+          placeholder="Search by name…"
+          className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+        />
+        <select
+          name="category"
+          defaultValue={sp.category ?? ""}
+          className="rounded-lg border border-white/15 bg-[#0c0c0f] px-3 py-2 text-sm text-zinc-200 outline-none focus:border-violet-400"
+        >
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {formatCategory(c)}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+        >
+          Filter
+        </button>
+        {(searchQuery || categoryFilter) && (
+          <a
+            href="/dashboard/products"
+            className="rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200"
+          >
+            Clear
+          </a>
+        )}
+      </form>
+
       {/* Column headers */}
-      <div className="mb-1 grid grid-cols-[2fr_1fr_80px_70px_2fr_72px] gap-3 px-4 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+      <div className="mb-1 grid grid-cols-[48px_2fr_1fr_80px_80px_2fr_72px] gap-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+        <span />
         <span>Name</span>
         <span>Category</span>
         <span>Price ($)</span>
-        <span>Active</span>
+        <span>Status</span>
         <span>Image path</span>
         <span />
       </div>
 
+      {/* Product rows */}
       <div className="space-y-1.5">
         {products.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-zinc-400">
-            No products found.
+            No products match your filters.
           </div>
         ) : (
           products.map((p) => (
             <form
               key={p.id}
               action={updateProduct}
-              className="grid grid-cols-[2fr_1fr_80px_70px_2fr_72px] items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 transition-colors hover:bg-white/[0.07]"
+              className="grid grid-cols-[48px_2fr_1fr_80px_80px_2fr_72px] items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 transition-colors hover:bg-white/[0.07]"
             >
               <input type="hidden" name="id" value={p.id} />
 
+              {/* Thumbnail */}
+              {p.image_src ? (
+                <img
+                  src={p.image_src}
+                  alt={p.name}
+                  className="h-10 w-10 rounded-md object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-md bg-white/10" />
+              )}
+
+              {/* Name */}
               <input
                 name="name"
                 defaultValue={p.name}
                 className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-sm text-white outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
               />
 
+              {/* Category (read-only) */}
               <span className="truncate text-xs text-zinc-400">
                 {formatCategory(p.category_slug)}
               </span>
 
+              {/* Price */}
               <input
                 name="price"
                 type="number"
@@ -114,16 +189,26 @@ export default async function ProductsDashboardPage() {
                 className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-sm text-white outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
               />
 
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-300">
+              {/* Active badge + checkbox */}
+              <label className="flex cursor-pointer flex-col items-start gap-1">
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    p.is_active
+                      ? "bg-emerald-500/15 text-emerald-400"
+                      : "bg-zinc-700/60 text-zinc-400"
+                  }`}
+                >
+                  {p.is_active ? "Active" : "Inactive"}
+                </span>
                 <input
                   name="is_active"
                   type="checkbox"
                   defaultChecked={p.is_active}
                   className="accent-violet-400"
                 />
-                Active
               </label>
 
+              {/* Image path */}
               <input
                 name="image_src"
                 defaultValue={p.image_src ?? ""}
@@ -131,6 +216,7 @@ export default async function ProductsDashboardPage() {
                 className="w-full rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-zinc-300 outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
               />
 
+              {/* Save */}
               <button
                 type="submit"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500 active:scale-[0.97]"
@@ -141,11 +227,6 @@ export default async function ProductsDashboardPage() {
           ))
         )}
       </div>
-
-      <p className="mt-4 text-[11px] text-zinc-600">
-        Note: updates require write access to rental_products. If you see a permission
-        error after saving, an RPC will be needed to bypass RLS.
-      </p>
     </div>
   );
 }
