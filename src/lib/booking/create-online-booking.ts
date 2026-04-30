@@ -2,6 +2,7 @@
 
 import type { BrandSlug } from "@/lib/brand/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { sendOwnerSms } from "@/lib/notifications/send-owner-sms";
 
 export type CreateOnlineBookingAddons = {
   tables: number;
@@ -32,7 +33,7 @@ export type CreateOnlineBookingInput = {
 };
 
 export type CreateOnlineBookingResult =
-  | { ok: true }
+  | { ok: true; bookingId: string | null }
   | { ok: false; error: string };
 
 function emptyToNull(s: string | null | undefined): string | null {
@@ -95,12 +96,35 @@ export async function createOnlineBooking(
     source: "online_reservation" as const,
   };
 
-  const { error } = await supabase.from("bookings").insert(payload);
+  const { data: inserted, error } = await supabase
+    .from("bookings")
+    .insert(payload)
+    .select("id")
+    .single();
 
   if (error) {
     console.error("[createOnlineBooking]", error.message);
     return { ok: false, error: error.message };
   }
 
-  return { ok: true };
+  const bookingId: string | null = inserted?.id ?? null;
+
+  const dashboardLine = bookingId
+    ? `Dashboard: ${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/dashboard/bookings/${bookingId}`
+    : "";
+
+  const smsLines = [
+    `🎉 New reservation — ${input.brandSlug.toUpperCase()}`,
+    `Product: ${input.productSlug ?? "—"}`,
+    `Date: ${input.eventDate ?? "—"}`,
+    `City: ${input.eventCity ?? "—"}`,
+    `Customer: ${customerName}`,
+    `Phone: ${phone}`,
+    `Deposit: $${input.depositAmount}`,
+    dashboardLine,
+  ].filter(Boolean).join("\n");
+
+  void sendOwnerSms(smsLines);
+
+  return { ok: true, bookingId };
 }
