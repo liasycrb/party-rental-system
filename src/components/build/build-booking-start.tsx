@@ -33,6 +33,8 @@ import {
 import { BuildProductDetailFields } from "@/components/build/build-product-detail-fields";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
+import { formatPhoneTel } from "@/lib/utils/format-phone";
+import { BRAND_CONTACT } from "@/lib/config/brand-contact";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type BuildBookingStartProps = {
@@ -198,18 +200,15 @@ function buildMainRentalNotesSection(itemLabel: string, quantity: number): strin
 
 function buildLeadNotesBlock(input: {
   eventTime: string;
-  preferredDelivery: string;
   preferredPickup: string;
   customerNotes: string;
 }): string | null {
   const lines: string[] = [];
   const et = input.eventTime.trim();
-  const pd = input.preferredDelivery.trim();
   const pp = input.preferredPickup.trim();
   const cn = input.customerNotes.trim();
-  if (et) lines.push(`Event time: ${et}`);
-  if (pd) lines.push(`Preferred delivery: ${pd}`);
-  if (pp) lines.push(`Preferred pickup: ${pp}`);
+  if (et) lines.push(`Event start preference: ${et}`);
+  if (pp) lines.push(`Pickup window preference: ${pp}`);
   if (cn) lines.push(`Customer notes: ${cn}`);
   return lines.length ? lines.join("\n") : null;
 }
@@ -320,6 +319,12 @@ const PREFERRED_TIME_WINDOW_OPTIONS = [
   { value: "evening", label: "Evening" },
   { value: "next_day", label: "Next day" },
 ] as const;
+
+/** Shown in build funnel only — customers do not pick delivery time. */
+const DELIVERY_EXPECTATION_HELPER =
+  "Delivery is scheduled within a time window. We will contact you to confirm the exact delivery time.";
+/** Stored on `bookings.delivery_window` when no customer preference is collected. */
+const INTERNAL_DELIVERY_WINDOW_DEFAULT = "To be confirmed";
 
 const BUILD_DEFAULT_BASE_ITEM_PRICE = 150;
 const BUILD_ADDON_UNIT_PRICES = {
@@ -484,7 +489,6 @@ export function BuildBookingStart({
   const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [formCity, setFormCity] = useState("");
   const [eventTime, setEventTime] = useState("");
-  const [preferredDeliveryTime, setPreferredDeliveryTime] = useState("");
   const [preferredPickupTime, setPreferredPickupTime] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -586,7 +590,6 @@ export function BuildBookingStart({
   const idDate = `${formId}-date`;
   const idCity = `${formId}-city`;
   const idEventTime = `${formId}-event-time`;
-  const idDelivery = `${formId}-delivery`;
   const idPickup = `${formId}-pickup`;
   const idName = `${formId}-name`;
   const idPhone = `${formId}-phone`;
@@ -671,7 +674,6 @@ export function BuildBookingStart({
             mainRentalBlock,
             buildLeadNotesBlock({
               eventTime,
-              preferredDelivery: preferredDeliveryTime,
               preferredPickup: preferredPickupTime,
               customerNotes: formNotes,
             }),
@@ -752,7 +754,7 @@ export function BuildBookingStart({
         quantity: selectedItemQuantity,
         addons: selectedAddons,
         eventTimeWindow: eventTime,
-        deliveryWindow: preferredDeliveryTime,
+        deliveryWindow: INTERNAL_DELIVERY_WINDOW_DEFAULT,
         pickupWindow: preferredPickupTime,
         subtotal: reservationPricing.subtotal,
         depositAmount: reservationPricing.depositAmount,
@@ -982,7 +984,7 @@ export function BuildBookingStart({
                 Message us on WhatsApp
               </a>
               <a
-                href={`tel:${brandContact.supportPhone}`}
+                href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
                 className={cn(
                   "flex flex-1 items-center justify-center rounded-xl border px-5 py-3 text-sm font-black transition",
                   isCrb
@@ -1049,7 +1051,7 @@ export function BuildBookingStart({
 
         <div className={contactActionsClass(isCrb)} style={{ borderRadius: "var(--brand-radius-md)" }}>
           <a
-            href={`tel:${brandContact.supportPhone}`}
+            href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
             className={contactButtonClass(isCrb, "primary")}
             style={{ borderRadius: "var(--brand-radius-md)" }}
           >
@@ -1417,7 +1419,7 @@ export function BuildBookingStart({
             </div>
             <div>
               <label htmlFor={idEventTime} className={labelClass(isCrb)}>
-                When is your event?
+                What time does your event start?
               </label>
               <select
                 id={idEventTime}
@@ -1435,28 +1437,17 @@ export function BuildBookingStart({
                 ))}
               </select>
             </div>
-            <div>
-              <label htmlFor={idDelivery} className={labelClass(isCrb)}>
-                Preferred delivery time
-              </label>
-              <select
-                id={idDelivery}
-                className={inputClass(isCrb)}
-                value={preferredDeliveryTime}
-                onChange={(e) => setPreferredDeliveryTime(e.target.value)}
-                disabled={isCheckingAvailability || isSubmitting}
-              >
-                <option value="">Select a window…</option>
-                {PREFERRED_TIME_WINDOW_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+            <div
+              className={cn(
+                "rounded-xl px-4 py-3 text-sm font-medium leading-snug",
+                isCrb ? "bg-slate-900/45 text-slate-200 ring-1 ring-slate-600/35" : "bg-stone-100 text-stone-800 ring-1 ring-stone-200",
+              )}
+            >
+              {DELIVERY_EXPECTATION_HELPER}
             </div>
             <div>
               <label htmlFor={idPickup} className={labelClass(isCrb)}>
-                Preferred pickup time
+                Desired pickup window
               </label>
               <select
                 id={idPickup}
@@ -1567,7 +1558,7 @@ export function BuildBookingStart({
                   ) : null}
                   <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                     <a
-                      href={`tel:${brandContact.supportPhone}`}
+                      href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
                       className={cn(
                         "flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-black transition",
                         isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white hover:bg-rose-700",
@@ -1980,15 +1971,24 @@ export function BuildBookingStart({
                 <dd>{formCity.trim() || "—"}</dd>
               </div>
               <div>
-                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Event time window</dt>
+                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Event start</dt>
                 <dd>{windowOptionLabel(eventTime, EVENT_TIME_WINDOW_OPTIONS)}</dd>
               </div>
               <div>
-                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Preferred delivery</dt>
-                <dd>{windowOptionLabel(preferredDeliveryTime, PREFERRED_TIME_WINDOW_OPTIONS)}</dd>
+                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>
+                  Delivery
+                </dt>
+                <dd
+                  className={cn(
+                    "mt-0.5 text-sm font-medium leading-relaxed",
+                    isCrb ? "text-slate-300" : "text-stone-700",
+                  )}
+                >
+                  {DELIVERY_EXPECTATION_HELPER}
+                </dd>
               </div>
               <div>
-                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Preferred pickup</dt>
+                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Pickup window preference</dt>
                 <dd>{windowOptionLabel(preferredPickupTime, PREFERRED_TIME_WINDOW_OPTIONS)}</dd>
               </div>
               {ADDON_CARD_CONFIG.some((def) => selectedAddons[def.key] > 0) ? (
@@ -2198,9 +2198,22 @@ export function BuildBookingStart({
                 isCrb ? "bg-slate-900/50 text-slate-200 ring-1 ring-slate-600/40" : "bg-stone-100 text-stone-800 ring-1 ring-stone-200",
               )}
             >
+              <p className={cn("font-bold", isCrb ? "text-cyan-100" : "text-stone-700")}>
+                Zelle payments
+              </p>
               <p>
-                <span className={cn("font-bold", isCrb ? "text-cyan-100" : "text-stone-700")}>Zelle to: </span>
-                (951) 555-0177
+                <span className={cn("font-semibold", isCrb ? "text-cyan-200/90" : "text-stone-600")}>
+                  Send to:{" "}
+                </span>
+                <a
+                  href={`tel:${formatPhoneTel(BRAND_CONTACT.payments.zelle)}`}
+                  className={cn(
+                    "font-semibold underline decoration-2 underline-offset-2",
+                    isCrb ? "text-cyan-100 hover:text-white" : "text-rose-950 hover:text-rose-800",
+                  )}
+                >
+                  {BRAND_CONTACT.payments.zelle}
+                </a>
               </p>
               <div>
                 <p className={cn("font-bold", isCrb ? "text-cyan-100" : "text-stone-700")}>Amount:</p>

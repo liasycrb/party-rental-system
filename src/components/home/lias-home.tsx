@@ -154,7 +154,7 @@ export function LiasHome({
           isCrb={false}
           brandSlug={b}
           title="Your date. Your yard. Their best day."
-          subtitle="Build your party now — we’ll confirm availability, walk safety, and lock delivery windows for Moreno Valley and nearby."
+          subtitle="Build your party now — we’ll confirm availability, walk safety, and lock delivery windows. Serving Moreno Valley, Perris, and Riverside."
         />
       </Container>
 
@@ -269,7 +269,7 @@ export function LiasHome({
                 id="local-heading"
                 tone="onDark"
                 eyebrow="Local love"
-                title="Moreno Valley & neighbors"
+                title="Serving Moreno Valley, Perris, and Riverside"
                 description="City pages, FAQs, and reviews plug into this panel later — today it’s pure feeling + trust."
               />
               <ul className="mt-6 space-y-3 text-sm font-bold text-amber-50">

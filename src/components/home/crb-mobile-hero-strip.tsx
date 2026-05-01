@@ -9,7 +9,7 @@ const VALUE_BADGES: {
   type: "calendar" | "pin";
 }[] = [
   { id: "slots", label: "Weekend slots tight", type: "calendar" },
-  { id: "ie", label: "I.E. delivery routes", type: "pin" },
+  { id: "areas", label: "MV, Perris & Riverside", type: "pin" },
 ];
 
 function SmallIcon({ type }: { type: "calendar" | "pin" }) {

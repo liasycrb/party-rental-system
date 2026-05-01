@@ -1,0 +1,41 @@
+warning: in the working copy of 'src/app/(site)/products/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/build/build-booking-start.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/build/build-event-flow.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/crb-home.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/crb-mobile-hero-strip.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/home-featured-product-section.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/lias-home.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/marketing-hero.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/home/mobile-product-strip.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layouts/site-footer.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layouts/site-header.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/marketing/product-card.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/brand/config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/build/build-guided-categories.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/catalog/category-carousel.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/catalog/category-page-data.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/catalog/product-display-helpers.ts', LF will be replaced by CRLF the next time Git touches it
+ src/app/(site)/package-inquiry/_inquiry-form.tsx   |  3 [32m+[m[31m-[m
+ src/app/(site)/products/[slug]/page.tsx            |  4 [32m+[m[31m-[m
+ src/app/(site)/products/page.tsx                   |  2 [32m+[m[31m-[m
+ src/app/dashboard/site/page.tsx                    |  8 [32m+[m[31m-[m
+ src/components/build/build-booking-start.tsx       | 89 [32m+++++++++++++[m[31m---------[m
+ src/components/build/build-event-flow.tsx          |  2 [32m+[m[31m-[m
+ src/components/conversion/why-choose-strip.tsx     |  5 [32m+[m[31m-[m
+ src/components/home/crb-home.tsx                   |  4 [32m+[m[31m-[m
+ src/components/home/crb-mobile-hero-strip.tsx      |  2 [32m+[m[31m-[m
+ .../home/home-featured-product-section.tsx         |  2 [32m+[m
+ src/components/home/lias-home.tsx                  |  4 [32m+[m[31m-[m
+ src/components/home/marketing-hero.tsx             |  8 [32m+[m[31m-[m
+ src/components/home/mobile-product-strip.tsx       |  2 [32m+[m[31m-[m
+ src/components/layouts/site-footer.tsx             | 21 [32m++++[m[31m-[m
+ src/components/layouts/site-header.tsx             |  2 [32m+[m[31m-[m
+ src/components/marketing/product-card.tsx          |  9 [32m++[m[31m-[m
+ src/lib/brand/config.ts                            | 22 [32m+++[m[31m---[m
+ src/lib/build/build-guided-categories.ts           |  1 [32m+[m
+ src/lib/catalog/category-carousel.ts               |  2 [32m+[m[31m-[m
+ src/lib/catalog/category-page-data.ts              |  3 [32m+[m[31m-[m
+ src/lib/catalog/product-display-helpers.ts         |  1 [32m+[m
+ src/lib/marketing/popular-packages.ts              |  2 [32m+[m[31m-[m
+ src/lib/utils/format-phone.ts                      |  2 [32m+[m[31m-[m
+ 23 files changed, 122 insertions(+), 78 deletions(-)

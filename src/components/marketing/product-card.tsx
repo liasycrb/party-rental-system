@@ -75,17 +75,24 @@ export function ProductCard({
   product,
   visual = "shelf",
   className,
+  /** Catalog visual only: looser blurb clamp for homepage featured row (default unchanged elsewhere). */
+  catalogBlurbClamp = "default",
 }: {
   brand: Brand;
   product: DemoProduct;
   /** `catalog` — public listing: uniform grid-friendly cards */
   visual?: "shelf" | "showcase" | "catalog";
   className?: string;
+  catalogBlurbClamp?: "default" | "homepageFeatured";
 }) {
   const isCrb = brand.slug === "crb";
   const b = brand.slug;
   const objectPosition = product.imagePosition ?? "center center";
   const shelfSpecRows = productCardSpecRows(product);
+  const catalogBlurbClass =
+    catalogBlurbClamp === "homepageFeatured"
+      ? "mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm font-medium leading-snug text-white/70 lg:line-clamp-3 lg:min-h-[4.35rem]"
+      : "mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm font-medium leading-snug text-white/70";
 
   if (visual === "catalog") {
     return (
@@ -128,7 +135,7 @@ export function ProductCard({
               {product.title}
             </Link>
           </h3>
-          <p className="mt-2 line-clamp-2 min-h-[2.75rem] flex-1 text-sm font-medium leading-snug text-white/70">
+          <p className={catalogBlurbClass}>
             {product.blurb}
           </p>
           <ProductCardSpecGrid product={product} variant="catalog" isCrb={isCrb} />

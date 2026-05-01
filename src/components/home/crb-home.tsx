@@ -171,7 +171,7 @@ export function CrbHome({
           isCrb
           brandSlug={b}
           title="Don’t lose your weekend to “we’ll call you back.”"
-          subtitle="Reserve the unit, lock the date, and let us handle delivery and setup across the I.E. — most hosts finish in a few minutes."
+          subtitle="Reserve the unit, lock the date, and let us handle delivery and setup in Moreno Valley, Perris & Riverside — most hosts finish in a few minutes."
         />
       </Container>
 
@@ -378,7 +378,7 @@ export function CrbHome({
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
                 <p className="text-3xl font-black text-white drop-shadow-xl">
-                  I.E. knows how to weekend.
+                  We know how to weekend in Moreno Valley, Perris &amp; Riverside.
                 </p>
                 <p className="mt-2 text-sm font-semibold text-cyan-100/90">
                   Bright setups and punctual crews—built for planners who move fast.

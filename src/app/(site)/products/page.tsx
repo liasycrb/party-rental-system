@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const brand = BRANDS[resolveHomeBrandSlug(null)];
   return {
     title: "Jumpers & party rentals",
-    description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Moreno Valley area — check live availability and pricing online.`,
+    description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Serving Moreno Valley, Perris, and Riverside — check live availability and pricing online.`,
   };
 }
 export default async function ProductsPage({

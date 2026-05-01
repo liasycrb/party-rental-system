@@ -15,7 +15,7 @@ export function SiteHeader({
   const isCrb = brand.slug === "crb";
   const phoneTel = phoneOverride
     ? formatPhoneTel(phoneOverride)
-    : brand.supportPhone;
+    : formatPhoneTel(brand.supportPhone);
   const phoneDisplay = phoneOverride
     ? formatPhoneDisplay(phoneOverride)
     : brand.supportPhoneDisplay;

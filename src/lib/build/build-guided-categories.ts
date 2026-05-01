@@ -44,6 +44,7 @@ export function inventoryMatchesGuidedCategory(
 /** Human-readable label derived from a product `category_slug` when needed in UI chips. */
 export function formatCategorySlugLabel(slugKey: string | null): string {
   if (slugKey == null || slugKey === "") return "Other";
+  if (slugKey.toLowerCase() === "disney-jumpers") return "Character Jumpers";
   const spaced = slugKey.replace(/-/g, " ");
   return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
 }

@@ -7,7 +7,7 @@ const VALUE_BADGES: {
   type: "calendar" | "pin";
 }[] = [
   { id: "slots", label: "Limited weekend slots", type: "calendar" },
-  { id: "ie", label: "Moreno Valley & the I.E.", type: "pin" },
+  { id: "areas", label: "Moreno Valley, Perris & Riverside", type: "pin" },
 ];
 
 function SmallIcon({ type }: { type: "calendar" | "pin" }) {

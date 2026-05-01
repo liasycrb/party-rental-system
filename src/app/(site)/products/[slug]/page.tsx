@@ -37,7 +37,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     "";
   return {
     title,
-    description: `${blurb} ${brand.displayName} — Moreno Valley area.`,
+    description: `${blurb} ${brand.displayName} — Serving Moreno Valley, Perris, and Riverside.`,
   };
 }
 
@@ -363,7 +363,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                     isCrb ? "text-slate-500" : "text-stone-500",
                   )}
                 >
-                  Moreno Valley area · taxes may apply
+                  Moreno Valley, Perris &amp; Riverside · taxes may apply
                 </p>
                 {qtyNote ? (
                   <p

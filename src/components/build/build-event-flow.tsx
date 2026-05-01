@@ -487,7 +487,7 @@ export function BuildEventFlow({
                       isCrb ? "text-slate-300" : "text-stone-700",
                     )}
                   >
-                    {product.title} · {eventDate} · Moreno Valley area
+                    {product.title} · {eventDate} · Moreno Valley, Perris & Riverside
                   </p>
                 </div>
                 <span

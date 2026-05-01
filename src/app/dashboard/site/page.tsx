@@ -19,7 +19,7 @@ const FIELDS: Field[] = [
   {
     name: "support_phone",
     label: "Phone / WhatsApp number",
-    placeholder: "E.164 format, e.g. +19515550000",
+    placeholder: "E.164 format, e.g. +19512594444",
   },
   {
     name: "hero_headline",
@@ -45,7 +45,7 @@ const FIELDS: Field[] = [
   {
     name: "service_areas_text",
     label: "Service areas text",
-    placeholder: "e.g. Serving Moreno Valley, Riverside & the Inland Empire",
+    placeholder: "e.g. Serving Moreno Valley, Perris, and Riverside",
     multiline: true,
   },
 ];
@@ -60,7 +60,7 @@ const FOOTER_FIELDS: Field[] = [
   {
     name: "footer_phone",
     label: "Footer phone",
-    placeholder: "E.164 format, e.g. +19515550000",
+    placeholder: "E.164 format, e.g. +19512594444",
   },
   {
     name: "footer_email",
@@ -70,7 +70,7 @@ const FOOTER_FIELDS: Field[] = [
   {
     name: "footer_service_area",
     label: "Service area / bottom note",
-    placeholder: "e.g. Serving Moreno Valley, Riverside & surrounding areas.",
+    placeholder: "e.g. Delivery included in Moreno Valley. Extended areas for an additional fee.",
     multiline: true,
   },
   {

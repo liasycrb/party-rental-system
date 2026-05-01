@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils/cn";
 import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
 import { FooterBrandTrigger } from "@/components/layouts/footer-brand-trigger";
 
+import { BRAND_CONTACT } from "@/lib/config/brand-contact";
+
 export type FooterOverride = {
   headline: string | null;
   phone: string | null;
@@ -50,14 +52,16 @@ export function SiteFooter({
       : [{ label: "Browse rentals", href: "/products" }];
 
   const activePhone = footerOverride?.phone || phoneOverride;
-  const phoneTel = activePhone ? formatPhoneTel(activePhone) : brand.supportPhone;
+  const showLiasAlternateLine = brand.slug === "lias" && !activePhone;
+
+  const phoneTel = activePhone ? formatPhoneTel(activePhone) : formatPhoneTel(brand.supportPhone);
   const phoneDisplay = activePhone
     ? formatPhoneDisplay(activePhone)
     : brand.supportPhoneDisplay;
 
   const serviceAreaPrimary =
     (footerOverride?.serviceArea ?? "").trim() ||
-    "Serving Moreno Valley and nearby communities.";
+    "Serving Moreno Valley, Perris, and Riverside. Delivery included in Moreno Valley. Extended areas available for an additional fee.";
 
   const attribution =
     footerOverride?.copyright?.trim() ||
@@ -147,6 +151,19 @@ export function SiteFooter({
                 {phoneDisplay}
               </a>
             </p>
+            {showLiasAlternateLine ? (
+              <p className="mt-2">
+                <span className="block text-[11px] font-bold uppercase tracking-wide text-white/55">
+                  Alternate · Zelle payments
+                </span>
+                <a
+                  href={`tel:${formatPhoneTel(BRAND_CONTACT.lias.secondaryPhone)}`}
+                  className="inline-block text-base font-semibold text-amber-100/95 underline-offset-4 hover:underline"
+                >
+                  {BRAND_CONTACT.lias.secondaryPhone}
+                </a>
+              </p>
+            ) : null}
             <p className="mt-3 text-sm font-medium leading-relaxed text-white/78">
               {serviceAreaPrimary}
             </p>

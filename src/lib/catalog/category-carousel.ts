@@ -54,7 +54,7 @@ export const CATEGORY_CAROUSEL_ITEMS: CategoryCarouselItem[] = [
   },
   {
     slug: "disney-jumpers",
-    title: "Disney Jumpers",
+    title: "Character Jumpers",
     imageSrc: "/party-rentals/categories/disney-jumpers.png",
     href: categoryBuildHref("disney-jumpers"),
     description:

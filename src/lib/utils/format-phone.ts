@@ -1,6 +1,6 @@
 /**
  * Format a raw phone string for display.
- * +19515550123 or 9515550123 → (951) 555-0123
+ * +19512594444 or 9512594444 → (951) 259-4444
  * Falls back to returning the raw string unchanged when it does not look like a 10/11-digit US number.
  */
 export function formatPhoneDisplay(raw: string): string {

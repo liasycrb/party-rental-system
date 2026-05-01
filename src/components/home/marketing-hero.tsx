@@ -374,11 +374,9 @@ export function MarketingHero({
               <IconMapPin
                 className={cn("h-4 w-4 shrink-0", isCrb ? "text-cyan-300" : "text-rose-600")}
               />
-              {isCrb ? (
-                <>Moreno Valley &amp; I.E. routes</>
-              ) : (
-                <>Moreno Valley &amp; the I.E.</>
-              )}
+              <>
+                Moreno Valley, Perris &amp; Riverside
+              </>
             </span>
           </div>
 

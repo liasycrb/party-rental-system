@@ -1,3 +1,5 @@
+import { BRAND_CONTACT, toSupportE164 } from "@/lib/config/brand-contact";
+
 export type BrandSlug = "lias" | "crb";
 
 export type BrandConfig = {
@@ -73,18 +75,18 @@ export const BRANDS = {
     shortName: "Lias",
     siteUrl: "https://www.liaspartyrentals.com",
     hostnames: ["www.liaspartyrentals.com", "liaspartyrentals.com"],
-    supportPhone: "+19515550123",
-    supportPhoneDisplay: "(951) 555-0123",
+    supportPhone: toSupportE164(BRAND_CONTACT.lias.primaryPhone),
+    supportPhoneDisplay: BRAND_CONTACT.lias.primaryPhone,
     seo: {
       siteName: "Lias Party Rentals",
       defaultDescription:
-        "Party and event rentals serving Moreno Valley and the Inland Empire. Jumpers, tables, chairs, and more.",
+        "Serving Moreno Valley, Perris, and Riverside. Party and event rentals — jumpers, tables, chairs, and more.",
     },
     copy: {
-      heroKicker: "Moreno Valley",
+      heroKicker: "Moreno Valley, Perris & Riverside",
       heroTitle: "Your backyard. Their best day ever.",
       heroSubtitle:
-        "The inflatable is the star — we just roll up, set up, and let the laughter take over.",
+        "The inflatable is the star — we just roll up, set up, and let the laughter take over. Delivery included in Moreno Valley. Extended areas available for an additional fee.",
       trustLine: "Real crew · insured setups · upfront pricing",
     },
     theme: {
@@ -138,18 +140,18 @@ export const BRANDS = {
     shortName: "CRB",
     siteUrl: "https://www.crbjumpers.com",
     hostnames: ["www.crbjumpers.com", "crbjumpers.com"],
-    supportPhone: "+19515550177",
-    supportPhoneDisplay: "(951) 555-0177",
+    supportPhone: toSupportE164(BRAND_CONTACT.crb.primaryPhone),
+    supportPhoneDisplay: BRAND_CONTACT.crb.primaryPhone,
     seo: {
       siteName: "CRB Jumpers",
       defaultDescription:
-        "Bounce houses and jumpers for your next event in Moreno Valley. Online booking and fast, friendly service.",
+        "Serving Moreno Valley, Perris, and Riverside. Online booking and fast, friendly jumper rentals.",
     },
     copy: {
-      heroKicker: "Inland Empire",
+      heroKicker: "Moreno Valley, Perris & Riverside",
       heroTitle: "Go huge. Bounce harder.",
       heroSubtitle:
-        "Lock the jumper. Stack the upgrades. Feel the weekend start early.",
+        "Lock the jumper. Stack the upgrades. Feel the weekend start early. Delivery included in Moreno Valley. Extended areas available for an additional fee.",
       trustLine: "Real-time availability · upfront pricing · friendly crews",
     },
     theme: {

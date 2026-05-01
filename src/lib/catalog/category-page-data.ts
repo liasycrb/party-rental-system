@@ -133,4 +133,5 @@ export const CATEGORY_PAGE_BENEFITS = [
   },
 ] as const;
 
-export const CATEGORY_PAGE_SERVICE_AREA = "Serving Moreno Valley & the Inland Empire";
+export const CATEGORY_PAGE_SERVICE_AREA =
+  "Serving Moreno Valley, Perris, and Riverside. Delivery included in Moreno Valley. Extended areas available for an additional fee.";

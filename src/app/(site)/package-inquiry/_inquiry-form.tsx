@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { submitPackageInquiry } from "@/lib/booking/submit-package-inquiry";
 import type { BrandSlug } from "@/lib/brand/config";
+import { BRANDS } from "@/lib/brand/config";
 
 type Props = {
   brandSlug: BrandSlug;
@@ -84,7 +85,7 @@ export function InquiryForm({ brandSlug, packageId, packageTitle, productSlug }:
           name="phone"
           required
           type="tel"
-          placeholder="(951) 555-0100"
+          placeholder={BRANDS[brandSlug].supportPhoneDisplay}
           className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
         />
       </div>

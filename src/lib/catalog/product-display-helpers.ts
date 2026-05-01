@@ -1,5 +1,6 @@
 export function formatCategoryLabelFromSlug(slug: string | null): string {
   if (!slug) return "Party Rental";
+  if (slug.toLowerCase() === "disney-jumpers") return "Character Jumpers";
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 

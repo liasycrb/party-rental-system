@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils/cn";
 const ITEMS = [
   {
     icon: "📍",
-    title: "Moreno Valley + I.E.",
-    body: "Local routes, local crew — not a call center.",
+    title: "Moreno Valley, Perris & Riverside",
+    body:
+      "Local crew — not a call center. Delivery included in Moreno Valley. Extended areas available for an additional fee.",
   },
   {
     icon: "🛠️",

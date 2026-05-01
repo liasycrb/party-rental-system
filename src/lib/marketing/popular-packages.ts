@@ -43,7 +43,7 @@ export const POPULAR_PACKAGES: PopularPackage[] = [
     includes: [
       "Combo slide unit for mixed ages",
       "Merch tables/chairs at checkout",
-      "Moreno Valley area — we know the yards",
+      "Moreno Valley, Perris & Riverside — we know the yards",
     ],
     fromPrice: 329,
     badge: "High wow factor",
