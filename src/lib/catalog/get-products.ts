@@ -47,7 +47,9 @@ export async function getProducts(brandSlug?: string): Promise<CatalogProduct[]>
 
   const rows = (data ?? []) as CatalogProduct[];
 
-  return rows.slice().sort((a, b) => {
+  const visible = rows.filter((p) => p.is_active !== false);
+
+  return visible.slice().sort((a, b) => {
     const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
     if (cat !== 0) return cat;
     return a.name.localeCompare(b.name);

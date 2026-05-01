@@ -40,8 +40,14 @@ export async function getInventoryAvailability(params: {
     console.error("[getInventoryAvailability] rental_products rpc", productError.message);
   }
 
-  type ProductRow = { slug: string; quantity_available: number | null; inventory_tracked: boolean | null };
-  const product = ((allProducts ?? []) as ProductRow[]).find((p) => p.slug === productSlug) ?? null;
+  type ProductRow = {
+    slug: string;
+    quantity_available: number | null;
+    inventory_tracked: boolean | null;
+    is_active?: boolean | null;
+  };
+  const visible = ((allProducts ?? []) as ProductRow[]).filter((p) => p.is_active !== false);
+  const product = visible.find((p) => p.slug === productSlug) ?? null;
 
   // If inventory is not tracked for this product, always report available.
   if (product && product.inventory_tracked === false) {

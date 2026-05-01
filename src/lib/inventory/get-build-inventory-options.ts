@@ -70,6 +70,7 @@ export async function getBuildInventoryOptions(
 
   return rows
     .filter((r) => {
+      if (r.is_active === false) return false;
       const slug = r.slug;
       return slug != null && String(slug).trim() !== "";
     })
