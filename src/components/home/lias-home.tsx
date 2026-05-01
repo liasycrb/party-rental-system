@@ -15,8 +15,8 @@ import { PopularPackagesSection } from "@/components/conversion/popular-packages
 import { WhyChooseStrip } from "@/components/conversion/why-choose-strip";
 import { MarketingHero } from "@/components/home/marketing-hero";
 import { MobileProductStrip } from "@/components/home/mobile-product-strip";
+import { HomeFeaturedProductSection } from "@/components/home/home-featured-product-section";
 import { Container } from "@/components/marketing/container";
-import { ProductCard } from "@/components/marketing/product-card";
 import { CategoryShowcase } from "@/components/marketing/category-showcase";
 import { SectionTitle } from "@/components/marketing/section-title";
 
@@ -158,33 +158,13 @@ export function LiasHome({
         />
       </Container>
 
-      {/* Featured rentals — uniform grid (homepage catalog) */}
-      <section
-        className="relative py-16 sm:py-24"
-        style={{ background: "var(--brand-stripe-fleet)" }}
-        aria-labelledby="fleet-heading"
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-20 h-72"
-          style={{ background: "var(--brand-fleet-ambient)" }}
-          aria-hidden
-        />
-        <div className="relative mx-auto w-full max-w-[1280px] px-6">
-          <SectionTitle
-            id="fleet-heading"
-            eyebrow="The fleet"
-            title="Fall in love before you check a single box"
-            description="One hero moment plus clear choices—see photos, footprints, and starting prices without guesswork."
-          />
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {DEMO_PRODUCTS.map((product) => (
-              <div key={product.slug} className="flex h-full min-h-0">
-                <ProductCard brand={brand} product={product} visual="catalog" className="h-full w-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeFeaturedProductSection
+        brand={brand}
+        headingId="fleet-heading"
+        eyebrow="The fleet"
+        title="Fall in love before you check a single box"
+        description="One hero moment plus clear choices — see photos, footprints, dimensions, and starting prices without guesswork."
+      />
 
       <section
         className="relative overflow-hidden py-16 sm:py-24"

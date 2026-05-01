@@ -8,11 +8,22 @@ export type CatalogProduct = {
   image_src: string | null;
   gallery_images: string[] | null;
   short_description: string | null;
+  full_description?: string | null;
   required_space: string | null;
   dimensions: string | null;
+  /** Preferred listing column when present (falls back to `price`). */
+  price_from?: number | null;
   price: number | null;
   is_active: boolean;
   brand_slugs: string[];
+  use_type?: string | null;
+  allowed_surfaces?: string[] | null;
+  quantity_available?: number | null;
+  delivery_fee?: number | null;
+  delivery_included?: boolean | null;
+  item_rules?: string | null;
+  /** Shown only when `customerSafeProductNote` accepts it. */
+  notes?: string | null;
 };
 
 const FALLBACK_BRAND = "lias";

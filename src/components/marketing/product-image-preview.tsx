@@ -116,7 +116,7 @@ type CardHeroImageProps = {
   /** Shelf: category + price chips on the image */
   shelfOverlays?: {
     category: string;
-    priceFrom: number;
+    priceFrom: number | null;
     isCrb: boolean;
   };
 };
@@ -192,10 +192,18 @@ function ProductCardHeroImage({
                       shelfOverlays.isCrb ? "text-white" : "text-amber-100",
                     )}
                   >
-                    <span className="text-sm font-bold opacity-90">
-                      from{" "}
-                    </span>
-                    ${shelfOverlays.priceFrom}
+                    {shelfOverlays.priceFrom != null &&
+                    Number.isFinite(shelfOverlays.priceFrom) &&
+                    shelfOverlays.priceFrom > 0 ? (
+                      <>
+                        <span className="text-sm font-bold opacity-90">from </span>$
+                        {Math.round(shelfOverlays.priceFrom)}
+                      </>
+                    ) : (
+                      <span className="text-sm font-bold opacity-90">
+                        Pricing on request
+                      </span>
+                    )}
                   </p>
                 </div>
               </>
@@ -241,7 +249,7 @@ export function ProductShelfImagePanel({
   title: string;
   isCrb: boolean;
   category: string;
-  priceFrom: number;
+  priceFrom: number | null;
 }) {
   return (
     <ProductCardHeroImage

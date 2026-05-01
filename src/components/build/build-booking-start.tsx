@@ -24,6 +24,13 @@ import { AvailabilityCalendar } from "@/components/build/_availability-calendar"
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import type { RentalCategoryUIModel } from "@/lib/catalog/get-rental-categories";
 import { resolveRentalCategoryForLookup } from "@/lib/catalog/get-rental-categories";
+import {
+  effectiveListingPrice,
+  formatDeliverySummary,
+  formatSurfacesList,
+  formatUseTypeLabel,
+} from "@/lib/catalog/product-display-helpers";
+import { BuildProductDetailFields } from "@/components/build/build-product-detail-fields";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -1144,6 +1151,31 @@ export function BuildBookingStart({
                       })
                       .map((item) => {
                         const isAvailable = item.quantity_active > 0;
+                        const listPrice = effectiveListingPrice(item);
+                        const useLabel = formatUseTypeLabel(item.use_type);
+                        const surfLine = formatSurfacesList(item.allowed_surfaces);
+                        const specRows = [
+                          (item.dimensions ?? "").trim()
+                            ? {
+                                label: "Dimensions",
+                                value: (item.dimensions ?? "").trim(),
+                              }
+                            : null,
+                          (item.required_space ?? "").trim()
+                            ? {
+                                label: "Setup space",
+                                value: (item.required_space ?? "").trim(),
+                              }
+                            : null,
+                          useLabel ? { label: "Use", value: useLabel } : null,
+                          surfLine ? { label: "Surfaces", value: surfLine } : null,
+                        ].filter(
+                          (r): r is { label: string; value: string } => r != null,
+                        );
+                        const deliveryBlurb = formatDeliverySummary({
+                          delivery_included: item.delivery_included,
+                          delivery_fee: item.delivery_fee,
+                        });
                         return (
                           <div
                             key={item.id}
@@ -1179,17 +1211,51 @@ export function BuildBookingStart({
                                 {item.name}
                               </p>
 
-                              {item.price != null && (
+                              {listPrice != null ? (
                                 <p className={cn("text-lg font-black tabular-nums leading-none", isCrb ? "text-white" : "text-stone-900")}>
                                   <span className={cn("text-[11px] font-semibold", isCrb ? "text-slate-400" : "text-stone-400")}>
                                     from{" "}
                                   </span>
-                                  ${item.price}
+                                  ${Math.round(listPrice)}
+                                </p>
+                              ) : (
+                                <p className={cn("text-xs font-semibold", isCrb ? "text-slate-400" : "text-stone-500")}>
+                                  Pricing on request
                                 </p>
                               )}
 
+                              {(item.short_description ?? "").trim() ? (
+                                <p className={cn("line-clamp-2 text-xs leading-snug", isCrb ? "text-slate-400" : "text-stone-600")}>
+                                  {(item.short_description ?? "").trim()}
+                                </p>
+                              ) : null}
+
+                              {specRows.length > 0 ? (
+                                <div
+                                  className={cn(
+                                    "grid grid-cols-1 gap-x-2 gap-y-0.5 text-[10px] font-semibold leading-snug sm:grid-cols-2",
+                                    isCrb ? "text-slate-400" : "text-stone-600",
+                                  )}
+                                >
+                                  {specRows.map((row) => (
+                                    <div key={row.label} className="min-w-0">
+                                      <span
+                                        className={cn(
+                                          "font-bold",
+                                          isCrb ? "text-cyan-200/90" : "text-stone-700",
+                                        )}
+                                      >
+                                        {row.label}:
+                                      </span>{" "}
+                                      <span className="break-words font-medium">{row.value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+
                               <p className={cn("text-[11px] leading-relaxed", isCrb ? "text-slate-500" : "text-stone-400")}>
-                                ✓ Setup &amp; delivery · Cleaned &amp; sanitized
+                                {deliveryBlurb ??
+                                  "Professional delivery & setup available · equipment cleaned & inspected"}
                               </p>
 
                               <button
@@ -1253,6 +1319,28 @@ export function BuildBookingStart({
                     (from your link)
                   </span>
                 ) : null}
+              </div>
+            ) : null}
+            {selectedItem ? (
+              <div
+                className={cn(
+                  "rounded-xl px-4 py-4 ring-1",
+                  isCrb
+                    ? "bg-slate-900/50 text-slate-200 ring-slate-600/40"
+                    : "bg-stone-50 text-stone-800 ring-stone-200/90",
+                )}
+              >
+                <p
+                  className={cn(
+                    "text-xs font-black uppercase tracking-widest",
+                    isCrb ? "text-cyan-200/90" : "text-stone-500",
+                  )}
+                >
+                  Rental details
+                </p>
+                <div className="mt-3">
+                  <BuildProductDetailFields item={selectedItem} isCrb={isCrb} />
+                </div>
               </div>
             ) : null}
             {productForFlow && selectedItem ? (
@@ -1875,6 +1963,11 @@ export function BuildBookingStart({
                     <span className={cn("block text-xs font-normal", isCrb ? "text-slate-400" : "text-stone-600")}>
                       Quantity: {selectedItemQuantity}
                     </span>
+                  ) : null}
+                  {selectedItem ? (
+                    <div className="mt-3 max-h-[min(420px,55vh)] overflow-y-auto pr-1">
+                      <BuildProductDetailFields item={selectedItem} isCrb={isCrb} />
+                    </div>
                   ) : null}
                 </dd>
               </div>

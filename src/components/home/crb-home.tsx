@@ -1,6 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Brand } from "@/lib/brand/config";
+import type { SiteSettings } from "@/lib/site/get-site-settings";
+import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
+import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
+import { withBrand } from "@/lib/brand/with-brand-href";
+import {
+  EXPERIENCE_MOMENTS,
+  HERO_BOUNCE_HOUSE,
+} from "@/lib/catalog/demo-products";
+import { CtaBanner } from "@/components/conversion/cta-banner";
+import { PopularPackagesSection } from "@/components/conversion/popular-packages";
+import { WhyChooseStrip } from "@/components/conversion/why-choose-strip";
+import { CrbMobileHeroStrip } from "@/components/home/crb-mobile-hero-strip";
+import { HomeFeaturedProductSection } from "@/components/home/home-featured-product-section";
+import { MarketingHero } from "@/components/home/marketing-hero";
+import { Container } from "@/components/marketing/container";
+import { CategoryShowcase } from "@/components/marketing/category-showcase";
+import { SectionTitle } from "@/components/marketing/section-title";
 
 function ArrowRight({ className }: { className?: string }) {
   return (
@@ -19,24 +36,6 @@ function ArrowRight({ className }: { className?: string }) {
     </svg>
   );
 }
-import type { SiteSettings } from "@/lib/site/get-site-settings";
-import type { RentalPackage } from "@/lib/marketing/get-rental-packages";
-import type { SiteCategoryCarouselItem } from "@/lib/catalog/get-rental-categories";
-import { withBrand } from "@/lib/brand/with-brand-href";
-import {
-  DEMO_PRODUCTS,
-  EXPERIENCE_MOMENTS,
-  HERO_BOUNCE_HOUSE,
-} from "@/lib/catalog/demo-products";
-import { CtaBanner } from "@/components/conversion/cta-banner";
-import { PopularPackagesSection } from "@/components/conversion/popular-packages";
-import { WhyChooseStrip } from "@/components/conversion/why-choose-strip";
-import { CrbMobileHeroStrip } from "@/components/home/crb-mobile-hero-strip";
-import { MarketingHero } from "@/components/home/marketing-hero";
-import { Container } from "@/components/marketing/container";
-import { ProductCard } from "@/components/marketing/product-card";
-import { CategoryShowcase } from "@/components/marketing/category-showcase";
-import { SectionTitle } from "@/components/marketing/section-title";
 
 export function CrbHome({
   brand,
@@ -49,7 +48,6 @@ export function CrbHome({
   packages?: RentalPackage[] | null;
   carouselCategories: SiteCategoryCarouselItem[];
 }) {
-  const [p1, p2, p3] = DEMO_PRODUCTS;
   const b = brand.slug;
 
   const tickerText =
@@ -177,58 +175,14 @@ export function CrbHome({
         />
       </Container>
 
-      <section
-        className="relative py-16 sm:py-24"
-        style={{ background: "var(--brand-stripe-fleet)" }}
-        aria-labelledby="crb-fleet"
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-80"
-          style={{ background: "var(--brand-fleet-ambient)" }}
-          aria-hidden
-        />
-        <Container className="relative">
-          <SectionTitle
-            id="crb-fleet"
-            tone="onDark"
-            eyebrow="Featured drops"
-            title="Premium units. Zero “rental catalog” energy."
-            description="Asymmetric layout on purpose — your eye lands where we want the desire to start."
-          />
-          <div className="mt-12 grid gap-5 lg:grid-cols-12 lg:grid-rows-2">
-            {p2 ? (
-              <div className="lg:col-span-5 lg:row-span-2">
-                <ProductCard
-                  brand={brand}
-                  product={p2}
-                  visual="showcase"
-                  className="min-h-[400px] lg:min-h-full"
-                />
-              </div>
-            ) : null}
-            {p1 ? (
-              <div className="lg:col-span-7">
-                <ProductCard
-                  brand={brand}
-                  product={p1}
-                  visual="showcase"
-                  className="min-h-[300px]"
-                />
-              </div>
-            ) : null}
-            {p3 ? (
-              <div className="lg:col-span-7">
-                <ProductCard
-                  brand={brand}
-                  product={p3}
-                  visual="showcase"
-                  className="min-h-[300px]"
-                />
-              </div>
-            ) : null}
-          </div>
-        </Container>
-      </section>
+      <HomeFeaturedProductSection
+        brand={brand}
+        headingId="crb-fleet"
+        tone="onDark"
+        eyebrow="Featured drops"
+        title="Premium units. Zero “rental catalog” energy."
+        description="Three hand-picked previews — identical layout to Classic Rentals: clear dimensions, setups, surfaces, and pricing before you build."
+      />
 
       {/* ── Process — how it works ──────────────────────────────── */}
       <section

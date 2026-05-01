@@ -9,7 +9,9 @@ export type DemoProduct = {
   category: string;
   sizeLabel: string;
   setupSpace: string;
-  priceFrom: number;
+  /** Use type label for cards, e.g. Dry / Wet */
+  useType?: string | null;
+  priceFrom: number | null;
   imageSrc: string;
   /** `object-position` for card/PDP images (e.g. center 40% to bias crop). */
   imagePosition?: string;
@@ -119,6 +121,10 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     ],
   },
 ];
+
+/** Homepage featured fleet only — three curated items (not live catalog). */
+export const HOME_PAGE_FEATURED_PRODUCTS: DemoProduct[] =
+  DEMO_PRODUCTS.slice(0, 3);
 
 export function getDemoProductBySlug(slug: string): DemoProduct | undefined {
   return DEMO_PRODUCTS.find((p) => p.slug === slug);

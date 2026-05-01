@@ -6,8 +6,6 @@ import {
   resolveHomeBrandSlug,
 } from "@/lib/brand/resolve-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
-import type { CatalogProduct } from "@/lib/catalog/get-products";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/get-build-inventory-options";
 import { getProducts } from "@/lib/catalog/get-products";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
 import { formatPhoneDisplay } from "@/lib/utils/format-phone";
@@ -17,33 +15,7 @@ import { SectionTitle } from "@/components/marketing/section-title";
 import { cn } from "@/lib/utils/cn";
 import { categoryBuildHref } from "@/lib/catalog/category-carousel";
 import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
-
-function formatCategoryLabel(slug: string | null): string {
-  if (!slug) return "Party Rental";
-  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function toCardProduct(p: CatalogProduct) {
-  const legacyImg = (p.image_src ?? "").trim();
-  const canonical =
-    canonicalRentalProductMainImage(p.category_slug, p.slug) ?? "";
-  const resolvedImage =
-    canonical || legacyImg || "/images/placeholder-party-rental.jpg";
-  return {
-    slug: p.slug,
-    title: p.name,
-    category: formatCategoryLabel(p.category_slug),
-    sizeLabel: p.dimensions ?? "",
-    setupSpace: p.required_space ?? "",
-    priceFrom: p.price ?? 0,
-    imageSrc: resolvedImage,
-    imageAlt: p.name,
-    blurb: p.short_description ?? "",
-    surfaceRequirements: "",
-    accessRequirements: "",
-    setupNotes: [] as string[],
-  };
-}
+import { catalogProductToProductCard } from "@/lib/catalog/map-catalog-product";
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = BRANDS[resolveHomeBrandSlug(null)];
@@ -66,7 +38,7 @@ export default async function ProductsPage({
     getSiteSettings(brandSlug),
     getRentalCategories({ brandSlug }),
   ]);
-  const products = rawProducts.map(toCardProduct);
+  const products = rawProducts.map(catalogProductToProductCard);
   const phoneDisplay = siteSettings?.support_phone
     ? formatPhoneDisplay(siteSettings.support_phone)
     : brand.supportPhoneDisplay;

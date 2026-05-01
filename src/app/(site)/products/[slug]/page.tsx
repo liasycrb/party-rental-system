@@ -4,10 +4,14 @@ import { notFound } from "next/navigation";
 import { BRANDS } from "@/lib/brand/config";
 import {
   resolveBrandSlugFromPageSearchParam,
-  resolveHomeBrandSlug,
 } from "@/lib/brand/resolve-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { getDemoProductBySlug } from "@/lib/catalog/demo-products";
+import { getProducts } from "@/lib/catalog/get-products";
+import {
+  catalogProductToProductCard,
+} from "@/lib/catalog/map-catalog-product";
+import { formatDeliverySummary } from "@/lib/catalog/product-display-helpers";
 import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
@@ -17,28 +21,68 @@ type Props = {
   searchParams: Promise<{ brand?: string | string[] }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const brand = BRANDS[resolveHomeBrandSlug(null)];
-  const product = getDemoProductBySlug(slug);
-  if (!product) {
-    return { title: "Product" };
-  }
+  const sp = await searchParams;
+  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brand = BRANDS[brandSlug];
+  const catalog = await getProducts(brandSlug);
+  const row = catalog.find((p) => p.slug === slug);
+  const demo = getDemoProductBySlug(slug);
+  const title = row?.name ?? demo?.title ?? "Product";
+  const blurb =
+    ((row?.short_description ?? "").trim() ||
+      (row?.full_description ?? "").trim().slice(0, 200) ||
+      demo?.blurb) ??
+    "";
   return {
-    title: product.title,
-    description: `${product.blurb} ${product.sizeLabel}. ${brand.displayName} — Moreno Valley area.`,
+    title,
+    description: `${blurb} ${brand.displayName} — Moreno Valley area.`,
   };
 }
 
 export default async function ProductDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
-  const product = getDemoProductBySlug(slug);
-  if (!product) notFound();
 
   const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
+
+  const catalog = await getProducts(brandSlug);
+  const row = catalog.find((p) => p.slug === slug);
+  const product = row ? catalogProductToProductCard(row) : getDemoProductBySlug(slug);
+  if (!product) notFound();
+
+  const deliveryNote = row
+    ? formatDeliverySummary({
+        delivery_included: row.delivery_included,
+        delivery_fee: row.delivery_fee,
+      })
+    : null;
+  const qtyNote =
+    row && typeof row.quantity_available === "number"
+      ? `${row.quantity_available} available.`
+      : null;
+
+  const surfacesText = product.surfaceRequirements?.trim() || null;
+  const specBoxes = [
+    product.sizeLabel?.trim()
+      ? { label: "Dimensions", value: product.sizeLabel.trim() }
+      : null,
+    product.setupSpace?.trim()
+      ? { label: "Setup space", value: product.setupSpace.trim() }
+      : null,
+    product.useType ? { label: "Use", value: product.useType } : null,
+    surfacesText ? { label: "Surfaces", value: surfacesText } : null,
+    deliveryNote ? { label: "Delivery", value: deliveryNote } : null,
+  ].filter((b): b is { label: string; value: string } => b != null);
+
+  const detailBlocks = [
+    product.accessRequirements?.trim()
+      ? { title: "Access & gate width", body: product.accessRequirements }
+      : null,
+  ].filter((b): b is { title: string; body: string } => b != null);
 
   return (
     <div className={cn("pb-16 sm:pb-24", isCrb && "text-slate-100")}>
@@ -142,8 +186,15 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                   {product.category}
                 </span>
                 <p className="text-2xl font-black text-white drop-shadow-lg">
-                  from ${product.priceFrom}{" "}
-                  <span className="text-sm font-bold opacity-90">/ event</span>
+                  {product.priceFrom != null && product.priceFrom > 0 ? (
+                    <>
+                      <span className="text-sm font-bold opacity-90">from </span>$
+                      {Math.round(product.priceFrom)}{" "}
+                      <span className="text-sm font-bold opacity-90">/ event</span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-bold">Pricing on request</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -153,7 +204,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                 isCrb ? "text-slate-400" : "text-stone-600",
               )}
             >
-              Art refreshes seasonally — footprint & specs stay accurate.
+              Footprint &amp; specs reflect what you&apos;ll get at delivery.
             </p>
           </div>
 
@@ -183,52 +234,42 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
               {product.blurb}
             </p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {[
-                { label: "Jumper size", value: product.sizeLabel },
-                { label: "Setup footprint", value: product.setupSpace },
-              ].map((box) => (
-                <div
-                  key={box.label}
-                  className={cn(
-                    "border p-5 shadow-lg",
-                    isCrb
-                      ? "border-cyan-400/28 bg-slate-950/65 backdrop-blur"
-                      : "border-orange-400/20 bg-white/88 backdrop-blur",
-                  )}
-                  style={{ borderRadius: "var(--brand-radius-lg)" }}
-                >
-                  <p
+            {specBoxes.length > 0 ? (
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {specBoxes.map((box) => (
+                  <div
+                    key={box.label}
                     className={cn(
-                      "text-[11px] font-black uppercase tracking-widest",
-                      isCrb ? "text-cyan-200/85" : "text-pink-600",
+                      "border p-5 shadow-lg",
+                      isCrb
+                        ? "border-cyan-400/28 bg-slate-950/65 backdrop-blur"
+                        : "border-orange-400/20 bg-white/88 backdrop-blur",
                     )}
+                    style={{ borderRadius: "var(--brand-radius-lg)" }}
                   >
-                    {box.label}
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-2 text-lg font-bold leading-snug",
-                      isCrb ? "text-white" : "text-stone-900",
-                    )}
-                  >
-                    {box.value}
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <p
+                      className={cn(
+                        "text-[11px] font-black uppercase tracking-widest",
+                        isCrb ? "text-cyan-200/85" : "text-pink-600",
+                      )}
+                    >
+                      {box.label}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-2 text-lg font-bold leading-snug",
+                        isCrb ? "text-white" : "text-stone-900",
+                      )}
+                    >
+                      {box.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             <div className="mt-10 space-y-8">
-              {[
-                {
-                  title: "Surface requirements",
-                  body: product.surfaceRequirements,
-                },
-                {
-                  title: "Access & gate width",
-                  body: product.accessRequirements,
-                },
-              ].map((block) => (
+              {detailBlocks.map((block) => (
                 <div key={block.title}>
                   <h2
                     className={cn(
@@ -248,34 +289,33 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                   </p>
                 </div>
               ))}
-              <div>
-                <h2
-                  className={cn(
-                    "text-sm font-black uppercase tracking-wide",
-                    isCrb ? "text-orange-200" : "text-orange-900",
-                  )}
-                >
-                  Setup notes
-                </h2>
-                <ul
-                  className={cn(
-                    "mt-3 space-y-2 text-sm font-medium leading-relaxed",
-                    isCrb ? "text-slate-300" : "text-stone-700",
-                  )}
-                >
-                  {product.setupNotes.map((note) => (
-                    <li
-                      key={note}
-                      className="flex gap-2"
-                    >
-                      <span className="text-orange-400" aria-hidden>
-                        ✦
-                      </span>
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {product.setupNotes.length > 0 ? (
+                <div>
+                  <h2
+                    className={cn(
+                      "text-sm font-black uppercase tracking-wide",
+                      isCrb ? "text-orange-200" : "text-orange-900",
+                    )}
+                  >
+                    Rules
+                  </h2>
+                  <ul
+                    className={cn(
+                      "mt-3 space-y-2 text-sm font-medium leading-relaxed",
+                      isCrb ? "text-slate-300" : "text-stone-700",
+                    )}
+                  >
+                    {product.setupNotes.map((note, idx) => (
+                      <li key={`${idx}-${note.slice(0, 24)}`} className="flex gap-2">
+                        <span className="text-orange-400" aria-hidden>
+                          ✦
+                        </span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
 
             <div
@@ -299,16 +339,23 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                     isCrb ? "text-white" : "text-stone-900",
                   )}
                 >
-                  ${product.priceFrom}
-                  <span
-                    className={cn(
-                      "text-lg font-bold",
-                      isCrb ? "text-slate-400" : "text-stone-500",
-                    )}
-                  >
-                    {" "}
-                    / event
-                  </span>
+                  {product.priceFrom != null && product.priceFrom > 0 ? (
+                    <>
+                      <span className="text-lg font-bold text-white/90">from </span>$
+                      {Math.round(product.priceFrom)}
+                      <span
+                        className={cn(
+                          "text-lg font-bold",
+                          isCrb ? "text-slate-400" : "text-stone-500",
+                        )}
+                      >
+                        {" "}
+                        / event
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold">Pricing on request</span>
+                  )}
                 </p>
                 <p
                   className={cn(
@@ -316,8 +363,18 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                     isCrb ? "text-slate-500" : "text-stone-500",
                   )}
                 >
-                  Moreno Valley area · taxes &amp; delivery may apply
+                  Moreno Valley area · taxes may apply
                 </p>
+                {qtyNote ? (
+                  <p
+                    className={cn(
+                      "mt-1 text-xs font-medium",
+                      isCrb ? "text-slate-400" : "text-stone-600",
+                    )}
+                  >
+                    {qtyNote}
+                  </p>
+                ) : null}
               </div>
               <Link
                 href={withBrand(`/build?product=${product.slug}`, brandSlug)}
@@ -329,7 +386,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                   borderRadius: "var(--brand-radius-md)",
                 }}
               >
-                Build your event with this jumper
+                Check availability for this rental
               </Link>
             </div>
           </div>

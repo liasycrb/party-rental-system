@@ -433,7 +433,10 @@ export function BuildEventFlow({
                             isCrb ? "text-slate-400" : "text-stone-600",
                           )}
                         >
-                          {p.sizeLabel} · from ${p.priceFrom}
+                          {p.sizeLabel}
+                          {p.priceFrom != null && p.priceFrom > 0
+                            ? ` · from $${Math.round(p.priceFrom)}`
+                            : " · Pricing on request"}
                         </span>
                       </span>
                       <span

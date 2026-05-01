@@ -10,8 +10,9 @@ import {
   resolveRentalCategoryForLookup,
   type RentalCategoryUIModel,
 } from "@/lib/catalog/get-rental-categories";
+import { effectiveListingPrice } from "@/lib/catalog/product-display-helpers";
 import { inventoryMatchesGuidedCategory } from "@/lib/build/build-guided-categories";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/get-build-inventory-options";
+import { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
 
 export type { CategoryCarouselItem } from "@/lib/catalog/category-carousel";
 
@@ -51,11 +52,13 @@ function catalogProductToPageProduct(p: CatalogProduct): CategoryPageProduct {
   const imageSrc =
     canonical || legacyImg || "/images/placeholder-party-rental.jpg";
 
-  const priceNum =
-    typeof p.price === "number" && Number.isFinite(p.price) ? p.price : null;
+  const priceNum = effectiveListingPrice({
+    price: p.price,
+    price_from: p.price_from,
+  });
   const priceLabel =
     priceNum != null && priceNum > 0
-      ? `from $${priceNum}`
+      ? `from $${Math.round(priceNum)}`
       : "Pricing on request";
 
   return {
