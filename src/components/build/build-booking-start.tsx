@@ -19,14 +19,18 @@ import { checkBuildAvailability } from "@/lib/booking/check-build-availability";
 import { getBookedDates } from "@/lib/booking/get-booked-dates";
 import { submitBookingLead } from "@/lib/booking/submit-booking-lead";
 import { createOnlineBooking } from "@/lib/booking/create-online-booking";
+import type { UpsellSelection } from "@/lib/booking/upsell-selection";
 import { BuildInventoryCardImage } from "@/components/build/build-inventory-card-image";
 import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
+import type { BuildUpsellOption } from "@/lib/inventory/build-upsell-shared";
+import { upsellUnitEstimate } from "@/lib/inventory/build-upsell-shared";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import type { RentalCategoryUIModel } from "@/lib/catalog/get-rental-categories";
 import { resolveRentalCategoryForLookup } from "@/lib/catalog/get-rental-categories";
 import {
   effectiveListingPrice,
   formatDeliverySummary,
+  formatFromPriceUsd,
   formatSurfacesList,
   formatUseTypeLabel,
 } from "@/lib/catalog/product-display-helpers";
@@ -45,6 +49,7 @@ type BuildBookingStartProps = {
   categoryLine: string | null;
   inventoryOptions: BuildInventoryOption[];
   guidedCategories: RentalCategoryUIModel[];
+  upsellOptions: BuildUpsellOption[];
 };
 
 function inputClass(isCrb: boolean) {
@@ -186,13 +191,13 @@ function CategoryTile({
   );
 }
 
-type SelectedAddonsState = {
-  tables: number;
-  chairs: number;
-  canopy: number;
-  generator: number;
-  extraJumper: number;
-};
+type UpsellQtyById = Record<string, number>;
+
+const UPSELL_QTY_MAX = 99;
+
+const BUILD_UPSELL_SECTION_HELPER =
+  "Add-ons are subject to availability. Final pricing will be confirmed after your request is reviewed.";
+const BUILD_UPSELL_REVIEW_NOTE = "Final availability and pricing will be confirmed.";
 
 function buildMainRentalNotesSection(itemLabel: string, quantity: number): string {
   return `Main rental:\n${itemLabel} x ${quantity}`;
@@ -200,28 +205,53 @@ function buildMainRentalNotesSection(itemLabel: string, quantity: number): strin
 
 function buildLeadNotesBlock(input: {
   eventTime: string;
-  preferredPickup: string;
+  deliveryAddress: string;
   customerNotes: string;
 }): string | null {
   const lines: string[] = [];
   const et = input.eventTime.trim();
-  const pp = input.preferredPickup.trim();
+  const addr = input.deliveryAddress.trim();
   const cn = input.customerNotes.trim();
   if (et) lines.push(`Event start preference: ${et}`);
-  if (pp) lines.push(`Pickup window preference: ${pp}`);
+  if (addr) lines.push(`Delivery address: ${addr}`);
   if (cn) lines.push(`Customer notes: ${cn}`);
   return lines.length ? lines.join("\n") : null;
 }
 
-function buildAddonsNotesSection(a: SelectedAddonsState): string | null {
+function buildUpsellNotesSection(
+  options: BuildUpsellOption[],
+  qtyById: UpsellQtyById,
+): string | null {
   const lines: string[] = [];
-  if (a.tables > 0) lines.push(`Tables: ${a.tables}`);
-  if (a.chairs > 0) lines.push(`Chairs: ${a.chairs}`);
-  if (a.canopy > 0) lines.push(`Canopy: ${a.canopy}`);
-  if (a.generator > 0) lines.push(`Generator: ${a.generator}`);
-  if (a.extraJumper > 0) lines.push(`Extra jumper: ${a.extraJumper}`);
+  for (const o of options) {
+    const q = Math.max(0, Math.floor(qtyById[o.id] ?? 0));
+    if (q <= 0) continue;
+    const unit = upsellUnitEstimate(o);
+    const pricePart =
+      unit != null && unit > 0 ? ` ~$${Math.round(unit)} ea (estimate)` : "";
+    lines.push(`${o.name}: ${q}${pricePart}`);
+  }
   if (!lines.length) return null;
-  return ["Add-ons:", ...lines].join("\n");
+  return ["Upsell add-ons:", ...lines].join("\n");
+}
+
+function summarizeUpsellsForBooking(
+  options: BuildUpsellOption[],
+  qtyById: UpsellQtyById,
+): UpsellSelection[] {
+  const out: UpsellSelection[] = [];
+  for (const o of options) {
+    const q = Math.max(0, Math.floor(qtyById[o.id] ?? 0));
+    if (q <= 0) continue;
+    out.push({
+      productId: o.id,
+      slug: o.slug,
+      name: o.name,
+      qty: q,
+      priceFrom: upsellUnitEstimate(o),
+    });
+  }
+  return out;
 }
 
 function combineLeadNotes(
@@ -257,54 +287,6 @@ function paymentProofDateFolder(eventDate: string | null): string {
   return `${y}-${m}-${day}`;
 }
 
-const INITIAL_ADDONS: SelectedAddonsState = {
-  tables: 0,
-  chairs: 0,
-  canopy: 0,
-  generator: 0,
-  extraJumper: 0,
-};
-const ADDON_QTY_MAX = 99;
-type AddonCardKey = keyof SelectedAddonsState;
-
-const ADDON_CARD_CONFIG: Array<{
-  key: AddonCardKey;
-  image: string;
-  name: string;
-  description: string;
-}> = [
-  {
-    key: "tables",
-    image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511",
-    name: "Tables",
-    description: "Sturdy tables for dining, gifts, or extra surface space.",
-  },
-  {
-    key: "chairs",
-    image: "https://images.unsplash.com/photo-1565538810643-b5bdb714032a",
-    name: "Chairs",
-    description: "Comfortable seating for guests alongside your main rental.",
-  },
-  {
-    key: "canopy",
-    image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e",
-    name: "Canopy",
-    description: "Shade and weather cover for outdoor parties.",
-  },
-  {
-    key: "generator",
-    image: "https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0",
-    name: "Generator",
-    description: "Reliable power for blowers or extras away from outlets.",
-  },
-  {
-    key: "extraJumper",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
-    name: "Extra jumper",
-    description: "Add another inflatable for bigger crowds or back-to-back fun.",
-  },
-];
-
 const EVENT_TIME_WINDOW_OPTIONS = [
   { value: "morning", label: "Morning" },
   { value: "midday", label: "Midday" },
@@ -312,28 +294,36 @@ const EVENT_TIME_WINDOW_OPTIONS = [
   { value: "evening", label: "Evening" },
 ] as const;
 
-const PREFERRED_TIME_WINDOW_OPTIONS = [
-  { value: "morning", label: "Morning" },
-  { value: "midday", label: "Midday" },
-  { value: "afternoon", label: "Afternoon" },
-  { value: "evening", label: "Evening" },
-  { value: "next_day", label: "Next day" },
+/** Step 5 event city dropdown — persisted as `event_city` / lead city. Values must match exactly. */
+const EVENT_CITY_FORM_OPTIONS = [
+  { value: "Moreno Valley", label: "Moreno Valley" },
+  { value: "Perris", label: "Perris" },
+  { value: "Riverside", label: "Riverside" },
+  { value: "Other / Not listed", label: "Other / Not listed" },
 ] as const;
 
-/** Shown in build funnel only — customers do not pick delivery time. */
-const DELIVERY_EXPECTATION_HELPER =
-  "Delivery is scheduled within a time window. We will contact you to confirm the exact delivery time.";
-/** Stored on `bookings.delivery_window` when no customer preference is collected. */
+const EVENT_CITY_FREE_DELIVERY_MESSAGE =
+  "Free delivery in this service area.";
+const EVENT_CITY_OTHER_DELIVERY_MESSAGE =
+  "Delivery fee will be calculated after your reservation request. Additional delivery may vary depending on distance.";
+
+function eventCityConditionalDeliveryCopy(selected: string): string | null {
+  const v = selected.trim();
+  if (!v) return null;
+  if (v === "Other / Not listed") return EVENT_CITY_OTHER_DELIVERY_MESSAGE;
+  if (v === "Moreno Valley" || v === "Perris" || v === "Riverside")
+    return EVENT_CITY_FREE_DELIVERY_MESSAGE;
+  return null;
+}
+
+/** Shown on event-details / availability step — no customer pickup/delivery window selection. */
+const BUILD_DELIVERY_PICKUP_TIMING_HELPER =
+  "Delivery and pickup timing will be confirmed after your request is reviewed.";
+/** Stored on `bookings.delivery_window` / `pickup_window` when no customer preference is collected. */
 const INTERNAL_DELIVERY_WINDOW_DEFAULT = "To be confirmed";
+const INTERNAL_PICKUP_WINDOW_DEFAULT = "To be confirmed";
 
 const BUILD_DEFAULT_BASE_ITEM_PRICE = 150;
-const BUILD_ADDON_UNIT_PRICES = {
-  tableEach: 10,
-  chairEach: 2,
-  canopy: 75,
-  generator: 50,
-  extraJumper: 100,
-} as const;
 const BUILD_DEPOSIT_MIN = 50;
 const BUILD_DEPOSIT_RATE = 0.5;
 
@@ -347,31 +337,41 @@ function formatUsd(amount: number): string {
 }
 
 function computeReservationPricing(input: {
-  selectedAddons: SelectedAddonsState;
-  mainItemQuantity: number;
+  mainUnitPrice: number;
+  selectedItemQuantity: number;
+  upsellOptions: BuildUpsellOption[];
+  upsellQtyById: UpsellQtyById;
 }): {
   mainItemTotal: number;
-  addonsTotal: number;
+  upsellEstimatedTotal: number;
   subtotal: number;
   depositAmount: number;
   balanceDue: number;
 } {
-  const qty = Math.max(1, Math.floor(input.mainItemQuantity) || 1);
-  const mainItemTotal = BUILD_DEFAULT_BASE_ITEM_PRICE * qty;
-  let addonsTotal = 0;
-  addonsTotal += input.selectedAddons.tables * BUILD_ADDON_UNIT_PRICES.tableEach;
-  addonsTotal += input.selectedAddons.chairs * BUILD_ADDON_UNIT_PRICES.chairEach;
-  addonsTotal += input.selectedAddons.canopy * BUILD_ADDON_UNIT_PRICES.canopy;
-  addonsTotal += input.selectedAddons.generator * BUILD_ADDON_UNIT_PRICES.generator;
-  addonsTotal += input.selectedAddons.extraJumper * BUILD_ADDON_UNIT_PRICES.extraJumper;
-  const subtotal = Math.round((mainItemTotal + addonsTotal) * 100) / 100;
+  const qty = Math.max(1, Math.floor(input.selectedItemQuantity) || 1);
+  const mainUnit =
+    typeof input.mainUnitPrice === "number" &&
+    Number.isFinite(input.mainUnitPrice) &&
+    input.mainUnitPrice > 0
+      ? input.mainUnitPrice
+      : BUILD_DEFAULT_BASE_ITEM_PRICE;
+  const mainItemTotal = Math.round(mainUnit * qty * 100) / 100;
+  let upsellEstimatedTotal = 0;
+  for (const o of input.upsellOptions) {
+    const n = Math.max(0, Math.floor(input.upsellQtyById[o.id] ?? 0));
+    if (n <= 0) continue;
+    const unit = upsellUnitEstimate(o);
+    if (unit != null && unit > 0) upsellEstimatedTotal += unit * n;
+  }
+  upsellEstimatedTotal = Math.round(upsellEstimatedTotal * 100) / 100;
+  const subtotal = Math.round((mainItemTotal + upsellEstimatedTotal) * 100) / 100;
   const depositHalf = Math.round(subtotal * BUILD_DEPOSIT_RATE * 100) / 100;
   const depositUncapped = Math.max(BUILD_DEPOSIT_MIN, depositHalf);
   const depositAmount = Math.round(Math.min(subtotal, depositUncapped) * 100) / 100;
   const balanceDue = Math.round((subtotal - depositAmount) * 100) / 100;
   return {
-    mainItemTotal: Math.round(mainItemTotal * 100) / 100,
-    addonsTotal: Math.round(addonsTotal * 100) / 100,
+    mainItemTotal,
+    upsellEstimatedTotal,
     subtotal,
     depositAmount,
     balanceDue,
@@ -451,6 +451,7 @@ export function BuildBookingStart({
   categoryLine,
   inventoryOptions,
   guidedCategories,
+  upsellOptions,
 }: BuildBookingStartProps) {
   const brandContact = BRANDS[brandSlug];
   const inventoryEmpty = inventoryOptions.length === 0;
@@ -488,14 +489,12 @@ export function BuildBookingStart({
   const [formDate, setFormDate] = useState("");
   const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [formCity, setFormCity] = useState("");
+  const [formDeliveryAddress, setFormDeliveryAddress] = useState("");
   const [eventTime, setEventTime] = useState("");
-  const [preferredPickupTime, setPreferredPickupTime] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formNotes, setFormNotes] = useState("");
-  const [selectedAddons, setSelectedAddons] = useState<SelectedAddonsState>(() => ({
-    ...INITIAL_ADDONS,
-  }));
+  const [upsellQtyById, setUpsellQtyById] = useState<UpsellQtyById>(() => ({}));
   const [selectedItemQuantity, setSelectedItemQuantity] = useState(1);
 
   const [availabilityOk, setAvailabilityOk] = useState<boolean | null>(null);
@@ -589,17 +588,12 @@ export function BuildBookingStart({
   const formId = useId();
   const idDate = `${formId}-date`;
   const idCity = `${formId}-city`;
+  const idDeliveryAddress = `${formId}-delivery-address`;
   const idEventTime = `${formId}-event-time`;
-  const idPickup = `${formId}-pickup`;
   const idName = `${formId}-name`;
   const idPhone = `${formId}-phone`;
   const idNotes = `${formId}-notes`;
-  const idAddonTablesQty = `${formId}-addon-tables-qty`;
-  const idAddonChairsQty = `${formId}-addon-chairs-qty`;
   const idMainQty = `${formId}-main-qty`;
-  const idAddonCanopyQty = `${formId}-addon-canopy-qty`;
-  const idAddonGeneratorQty = `${formId}-addon-generator-qty`;
-  const idAddonExtraJumperQty = `${formId}-addon-extra-jumper-qty`;
   const idRentalRulesAgree = `${formId}-rental-rules-agree`;
   const idAgreementSignature = `${formId}-agreement-signature`;
   const idPetsYes = `${formId}-pets-yes`;
@@ -617,14 +611,32 @@ export function BuildBookingStart({
     );
   }, [guidedDef, inventoryOptions]);
 
+  const mainUnitPrice = useMemo(() => {
+    if (!selectedItem) return BUILD_DEFAULT_BASE_ITEM_PRICE;
+    const v = effectiveListingPrice({
+      price: selectedItem.price,
+      price_from: selectedItem.price_from ?? null,
+    });
+    return v != null && v > 0 ? v : BUILD_DEFAULT_BASE_ITEM_PRICE;
+  }, [selectedItem]);
+
   const reservationPricing = useMemo(
     () =>
       computeReservationPricing({
-        selectedAddons,
-        mainItemQuantity: selectedItemQuantity,
+        mainUnitPrice,
+        selectedItemQuantity,
+        upsellOptions,
+        upsellQtyById,
       }),
-    [selectedAddons, selectedItemQuantity],
+    [mainUnitPrice, selectedItemQuantity, upsellOptions, upsellQtyById],
   );
+
+  const selectedUpsellsForBooking = useMemo(
+    () => summarizeUpsellsForBooking(upsellOptions, upsellQtyById),
+    [upsellOptions, upsellQtyById],
+  );
+
+  const eventCityDeliveryHelper = eventCityConditionalDeliveryCopy(formCity);
 
   async function submitReservationLead() {
     setErrorMessage(null);
@@ -674,11 +686,11 @@ export function BuildBookingStart({
             mainRentalBlock,
             buildLeadNotesBlock({
               eventTime,
-              preferredPickup: preferredPickupTime,
+              deliveryAddress: formDeliveryAddress,
               customerNotes: formNotes,
             }),
           ),
-          buildAddonsNotesSection(selectedAddons),
+          buildUpsellNotesSection(upsellOptions, upsellQtyById),
         ),
         buildPricingNotesSection({
           subtotal: reservationPricing.subtotal,
@@ -752,10 +764,17 @@ export function BuildBookingStart({
         phone,
         notes: notesWithProof,
         quantity: selectedItemQuantity,
-        addons: selectedAddons,
+        addons: {
+          tables: 0,
+          chairs: 0,
+          canopy: 0,
+          generator: 0,
+          extraJumper: 0,
+          upsellSelections: selectedUpsellsForBooking,
+        },
         eventTimeWindow: eventTime,
         deliveryWindow: INTERNAL_DELIVERY_WINDOW_DEFAULT,
-        pickupWindow: preferredPickupTime,
+        pickupWindow: INTERNAL_PICKUP_WINDOW_DEFAULT,
         subtotal: reservationPricing.subtotal,
         depositAmount: reservationPricing.depositAmount,
         balanceDue: reservationPricing.balanceDue,
@@ -1403,21 +1422,6 @@ export function BuildBookingStart({
               />
             </div>
             <div>
-              <label htmlFor={idCity} className={labelClass(isCrb)}>
-                Event city
-              </label>
-              <input
-                id={idCity}
-                name="city"
-                type="text"
-                className={inputClass(isCrb)}
-                placeholder="e.g. Moreno Valley"
-                value={formCity}
-                onChange={(e) => setFormCity(e.target.value)}
-                disabled={isCheckingAvailability || isSubmitting}
-              />
-            </div>
-            <div>
               <label htmlFor={idEventTime} className={labelClass(isCrb)}>
                 What time does your event start?
               </label>
@@ -1443,26 +1447,7 @@ export function BuildBookingStart({
                 isCrb ? "bg-slate-900/45 text-slate-200 ring-1 ring-slate-600/35" : "bg-stone-100 text-stone-800 ring-1 ring-stone-200",
               )}
             >
-              {DELIVERY_EXPECTATION_HELPER}
-            </div>
-            <div>
-              <label htmlFor={idPickup} className={labelClass(isCrb)}>
-                Desired pickup window
-              </label>
-              <select
-                id={idPickup}
-                className={inputClass(isCrb)}
-                value={preferredPickupTime}
-                onChange={(e) => setPreferredPickupTime(e.target.value)}
-                disabled={isCheckingAvailability || isSubmitting}
-              >
-                <option value="">Select a window…</option>
-                {PREFERRED_TIME_WINDOW_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              {BUILD_DELIVERY_PICKUP_TIMING_HELPER}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
               {!inventoryEmpty ? (
@@ -1612,215 +1597,115 @@ export function BuildBookingStart({
           >
             <h2 className={cn("text-lg font-bold", isCrb ? "text-white" : "text-stone-900")}>Enhance your event</h2>
             <p className={cn("text-sm", isCrb ? "text-slate-400" : "text-stone-600")}>
-              Optional add-ons — select anything you need and we’ll confirm with you.
+              Optional add-ons — select anything you need and we&apos;ll confirm with you.
             </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {ADDON_CARD_CONFIG.map((def) => {
-                const selected = selectedAddons[def.key] > 0;
-                return (
-                  <div
-                    key={def.key}
-                    className={cn(
-                      "flex flex-col overflow-hidden rounded-xl border shadow-sm transition",
-                      isCrb
-                        ? "border-slate-600/80 bg-slate-800/50 hover:border-cyan-400/55"
-                        : "border-stone-200 bg-white/90 hover:border-rose-300/90",
-                      selected &&
-                        (isCrb
-                          ? "border-cyan-400/70 ring-2 ring-cyan-400/40"
-                          : "border-rose-400/80 ring-2 ring-rose-200/90"),
-                    )}
-                  >
-                    <img src={def.image} alt="" className="h-36 w-full shrink-0 object-cover sm:h-40" />
-                    <div className="flex flex-1 flex-col gap-2 p-4">
-                      <h3 className={cn("text-base font-black", isCrb ? "text-white" : "text-stone-900")}>
-                        {def.name}
-                      </h3>
-                      <p className={cn("text-sm leading-relaxed", isCrb ? "text-slate-400" : "text-stone-600")}>
-                        {def.description}
-                      </p>
-                      {def.key === "tables" && selectedAddons.tables > 0 ? (
-                        <div>
-                          <label htmlFor={idAddonTablesQty} className={labelClass(isCrb)}>
-                            Quantity
-                          </label>
-                          <input
-                            id={idAddonTablesQty}
-                            type="number"
-                            min={1}
-                            max={ADDON_QTY_MAX}
-                            className={cn(inputClass(isCrb), "max-w-[8rem]")}
-                            value={selectedAddons.tables}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              setSelectedAddons((a) => ({
-                                ...a,
-                                tables:
-                                  raw === ""
-                                    ? 1
-                                    : Number.isFinite(n) && n >= 1
-                                      ? Math.min(ADDON_QTY_MAX, n)
-                                      : a.tables,
-                              }));
-                            }}
-                          />
-                        </div>
-                      ) : null}
-                      {def.key === "chairs" && selectedAddons.chairs > 0 ? (
-                        <div>
-                          <label htmlFor={idAddonChairsQty} className={labelClass(isCrb)}>
-                            Quantity
-                          </label>
-                          <input
-                            id={idAddonChairsQty}
-                            type="number"
-                            min={1}
-                            max={ADDON_QTY_MAX}
-                            className={cn(inputClass(isCrb), "max-w-[8rem]")}
-                            value={selectedAddons.chairs}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              setSelectedAddons((a) => ({
-                                ...a,
-                                chairs:
-                                  raw === ""
-                                    ? 1
-                                    : Number.isFinite(n) && n >= 1
-                                      ? Math.min(ADDON_QTY_MAX, n)
-                                      : a.chairs,
-                              }));
-                            }}
-                          />
-                        </div>
-                      ) : null}
-                      {def.key === "canopy" && selectedAddons.canopy > 0 ? (
-                        <div>
-                          <label htmlFor={idAddonCanopyQty} className={labelClass(isCrb)}>
-                            Quantity
-                          </label>
-                          <input
-                            id={idAddonCanopyQty}
-                            type="number"
-                            min={1}
-                            max={ADDON_QTY_MAX}
-                            className={cn(inputClass(isCrb), "max-w-[8rem]")}
-                            value={selectedAddons.canopy}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              setSelectedAddons((a) => ({
-                                ...a,
-                                canopy:
-                                  raw === ""
-                                    ? 1
-                                    : Number.isFinite(n) && n >= 1
-                                      ? Math.min(ADDON_QTY_MAX, n)
-                                      : a.canopy,
-                              }));
-                            }}
-                          />
-                        </div>
-                      ) : null}
-                      {def.key === "generator" && selectedAddons.generator > 0 ? (
-                        <div>
-                          <label htmlFor={idAddonGeneratorQty} className={labelClass(isCrb)}>
-                            Quantity
-                          </label>
-                          <input
-                            id={idAddonGeneratorQty}
-                            type="number"
-                            min={1}
-                            max={ADDON_QTY_MAX}
-                            className={cn(inputClass(isCrb), "max-w-[8rem]")}
-                            value={selectedAddons.generator}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              setSelectedAddons((a) => ({
-                                ...a,
-                                generator:
-                                  raw === ""
-                                    ? 1
-                                    : Number.isFinite(n) && n >= 1
-                                      ? Math.min(ADDON_QTY_MAX, n)
-                                      : a.generator,
-                              }));
-                            }}
-                          />
-                        </div>
-                      ) : null}
-                      {def.key === "extraJumper" && selectedAddons.extraJumper > 0 ? (
-                        <div>
-                          <label htmlFor={idAddonExtraJumperQty} className={labelClass(isCrb)}>
-                            Quantity
-                          </label>
-                          <input
-                            id={idAddonExtraJumperQty}
-                            type="number"
-                            min={1}
-                            max={ADDON_QTY_MAX}
-                            className={cn(inputClass(isCrb), "max-w-[8rem]")}
-                            value={selectedAddons.extraJumper}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              const n = parseInt(raw, 10);
-                              setSelectedAddons((a) => ({
-                                ...a,
-                                extraJumper:
-                                  raw === ""
-                                    ? 1
-                                    : Number.isFinite(n) && n >= 1
-                                      ? Math.min(ADDON_QTY_MAX, n)
-                                      : a.extraJumper,
-                              }));
-                            }}
-                          />
-                        </div>
-                      ) : null}
-                      <button
-                        type="button"
-                        className={cn(
-                          "mt-auto h-11 rounded-xl text-sm font-black transition active:scale-[0.99]",
-                          selected
-                            ? isCrb
-                              ? "bg-slate-700 text-white ring-1 ring-slate-500 hover:bg-slate-600"
-                              : "bg-stone-200 text-stone-900 hover:bg-stone-300"
-                            : isCrb
-                              ? "bg-cyan-500 text-black hover:bg-cyan-400"
-                              : "bg-rose-600 text-white hover:bg-rose-700",
-                        )}
-                        style={{ borderRadius: "var(--brand-radius-md)" }}
-                        onClick={() =>
-                          setSelectedAddons((a) => {
-                            if (def.key === "tables") {
-                              const on = a.tables > 0;
-                              return { ...a, tables: on ? 0 : 1 };
-                            }
-                            if (def.key === "chairs") {
-                              const on = a.chairs > 0;
-                              return { ...a, chairs: on ? 0 : 1 };
-                            }
-                            if (def.key === "canopy") {
-                              const on = a.canopy > 0;
-                              return { ...a, canopy: on ? 0 : 1 };
-                            }
-                            if (def.key === "generator") {
-                              const on = a.generator > 0;
-                              return { ...a, generator: on ? 0 : 1 };
-                            }
-                            return { ...a, extraJumper: a.extraJumper > 0 ? 0 : 1 };
-                          })
-                        }
-                      >
-                        {selected ? "Remove" : "Add"}
-                      </button>
+            <p
+              className={cn(
+                "rounded-xl px-4 py-3 text-sm font-medium leading-snug",
+                isCrb ? "bg-slate-900/45 text-slate-200 ring-1 ring-slate-600/35" : "bg-stone-100 text-stone-800 ring-1 ring-stone-200",
+              )}
+            >
+              {BUILD_UPSELL_SECTION_HELPER}
+            </p>
+            {upsellOptions.length === 0 ? (
+              <p className={cn("text-sm font-medium", isCrb ? "text-slate-400" : "text-stone-600")}>
+                No optional add-ons are available right now. You can continue to the next step.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {upsellOptions.map((o) => {
+                  const q = upsellQtyById[o.id] ?? 0;
+                  const selected = q > 0;
+                  const unitEst = upsellUnitEstimate(o);
+                  const qtyFieldId = `${formId}-upsell-qty-${o.id}`;
+                  return (
+                    <div
+                      key={o.id}
+                      className={cn(
+                        "flex flex-col overflow-hidden rounded-xl border shadow-sm transition",
+                        isCrb
+                          ? "border-slate-600/80 bg-slate-800/50 hover:border-cyan-400/55"
+                          : "border-stone-200 bg-white/90 hover:border-rose-300/90",
+                        selected &&
+                          (isCrb
+                            ? "border-cyan-400/70 ring-2 ring-cyan-400/40"
+                            : "border-rose-400/80 ring-2 ring-rose-200/90"),
+                      )}
+                    >
+                      <div className="relative h-[200px] w-full shrink-0 sm:h-[220px]">
+                        <BuildInventoryCardImage
+                          imageSrc={o.image_src}
+                          imageAlt={o.name}
+                          productName={o.name}
+                          isCrb={isCrb}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2 p-4">
+                        <h3 className={cn("text-base font-black", isCrb ? "text-white" : "text-stone-900")}>{o.name}</h3>
+                        {o.short_description ? (
+                          <p className={cn("text-sm leading-relaxed", isCrb ? "text-slate-400" : "text-stone-600")}>
+                            {o.short_description}
+                          </p>
+                        ) : null}
+                        <p className={cn("text-sm font-bold", isCrb ? "text-cyan-200/95" : "text-rose-800")}>
+                          {formatFromPriceUsd(unitEst)}
+                        </p>
+                        {selected ? (
+                          <div>
+                            <label htmlFor={qtyFieldId} className={labelClass(isCrb)}>
+                              Quantity
+                            </label>
+                            <input
+                              id={qtyFieldId}
+                              type="number"
+                              min={1}
+                              max={UPSELL_QTY_MAX}
+                              className={cn(inputClass(isCrb), "max-w-[8rem]")}
+                              value={q}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const n = parseInt(raw, 10);
+                                setUpsellQtyById((prev) => ({
+                                  ...prev,
+                                  [o.id]:
+                                    raw === ""
+                                      ? 1
+                                      : Number.isFinite(n) && n >= 1
+                                        ? Math.min(UPSELL_QTY_MAX, n)
+                                        : (prev[o.id] ?? 1),
+                                }));
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                        <button
+                          type="button"
+                          className={cn(
+                            "mt-auto h-11 rounded-xl text-sm font-black transition active:scale-[0.99]",
+                            selected
+                              ? isCrb
+                                ? "bg-slate-700 text-white ring-1 ring-slate-500 hover:bg-slate-600"
+                                : "bg-stone-200 text-stone-900 hover:bg-stone-300"
+                              : isCrb
+                                ? "bg-cyan-500 text-black hover:bg-cyan-400"
+                                : "bg-rose-600 text-white hover:bg-rose-700",
+                          )}
+                          style={{ borderRadius: "var(--brand-radius-md)" }}
+                          onClick={() =>
+                            setUpsellQtyById((prev) => ({
+                              ...prev,
+                              [o.id]: (prev[o.id] ?? 0) > 0 ? 0 : 1,
+                            }))
+                          }
+                        >
+                          {selected ? "Remove" : "Add"}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <button
                 type="button"
@@ -1890,6 +1775,50 @@ export function BuildBookingStart({
                 required
                 value={formPhone}
                 onChange={(e) => setFormPhone(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor={idCity} className={labelClass(isCrb)}>
+                Event city
+              </label>
+              <select
+                id={idCity}
+                name="city"
+                required
+                className={inputClass(isCrb)}
+                value={formCity}
+                onChange={(e) => setFormCity(e.target.value)}
+              >
+                <option value="">Select a city…</option>
+                {EVENT_CITY_FORM_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              {eventCityDeliveryHelper ? (
+                <p
+                  className={cn(
+                    "mt-1.5 text-xs font-medium leading-relaxed sm:text-sm sm:leading-snug",
+                    isCrb ? "text-slate-400" : "text-stone-600",
+                  )}
+                >
+                  {eventCityDeliveryHelper}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <label htmlFor={idDeliveryAddress} className={labelClass(isCrb)}>
+                Delivery address
+              </label>
+              <textarea
+                id={idDeliveryAddress}
+                name="delivery_address"
+                rows={3}
+                className={cn(inputClass(isCrb), "min-h-[88px] resize-y")}
+                placeholder="Street address, unit, ZIP — where we should deliver"
+                value={formDeliveryAddress}
+                onChange={(e) => setFormDeliveryAddress(e.target.value)}
               />
             </div>
             <div>
@@ -1971,12 +1900,16 @@ export function BuildBookingStart({
                 <dd>{formCity.trim() || "—"}</dd>
               </div>
               <div>
+                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Delivery address</dt>
+                <dd className="whitespace-pre-wrap">{formDeliveryAddress.trim() || "—"}</dd>
+              </div>
+              <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Event start</dt>
                 <dd>{windowOptionLabel(eventTime, EVENT_TIME_WINDOW_OPTIONS)}</dd>
               </div>
               <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>
-                  Delivery
+                  Delivery &amp; pickup
                 </dt>
                 <dd
                   className={cn(
@@ -1984,22 +1917,41 @@ export function BuildBookingStart({
                     isCrb ? "text-slate-300" : "text-stone-700",
                   )}
                 >
-                  {DELIVERY_EXPECTATION_HELPER}
+                  {BUILD_DELIVERY_PICKUP_TIMING_HELPER}
                 </dd>
               </div>
-              <div>
-                <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Pickup window preference</dt>
-                <dd>{windowOptionLabel(preferredPickupTime, PREFERRED_TIME_WINDOW_OPTIONS)}</dd>
-              </div>
-              {ADDON_CARD_CONFIG.some((def) => selectedAddons[def.key] > 0) ? (
+              {selectedUpsellsForBooking.length > 0 ? (
                 <div>
                   <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Add-ons</dt>
-                  <dd className="mt-1 space-y-0.5">
-                    {ADDON_CARD_CONFIG.filter((def) => selectedAddons[def.key] > 0).map((def) => (
-                      <p key={def.key}>
-                        {def.name}: {selectedAddons[def.key]}
-                      </p>
-                    ))}
+                  <dd className="mt-1 space-y-2">
+                    {selectedUpsellsForBooking.map((line) => {
+                      const unit = line.priceFrom;
+                      const lineTotal =
+                        unit != null && unit > 0 ? formatUsd(unit * line.qty) : null;
+                      return (
+                        <div key={line.productId}>
+                          <p className="font-medium">
+                            {line.name}{" "}
+                            <span className={cn("font-normal", isCrb ? "text-slate-400" : "text-stone-600")}>
+                              × {line.qty}
+                            </span>
+                          </p>
+                          {lineTotal ? (
+                            <p className={cn("text-xs", isCrb ? "text-slate-400" : "text-stone-600")}>
+                              Est. line total: {lineTotal}{" "}
+                              <span className="italic">(estimate)</span>
+                            </p>
+                          ) : (
+                            <p className={cn("text-xs", isCrb ? "text-slate-400" : "text-stone-600")}>
+                              Price on request
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <p className={cn("text-xs italic", isCrb ? "text-slate-500" : "text-stone-600")}>
+                      {BUILD_UPSELL_REVIEW_NOTE}
+                    </p>
                   </dd>
                 </div>
               ) : null}

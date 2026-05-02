@@ -8,6 +8,7 @@ import {
   type RentalCategoryUIModel,
 } from "@/lib/catalog/get-rental-categories";
 import { getBuildInventoryOptions } from "@/lib/inventory/get-build-inventory-options";
+import { getBuildUpsellOptions } from "@/lib/inventory/get-build-upsell-options";
 
 type BuildPageProps = {
   searchParams: Promise<{
@@ -52,9 +53,10 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
   const categorySlug = firstParam(sp.category) ?? null;
   const productSlug = firstParam(sp.product) ?? null;
 
-  const [inventoryOptions, canonicalCategories] = await Promise.all([
+  const [inventoryOptions, canonicalCategories, upsellOptions] = await Promise.all([
     getBuildInventoryOptions(brandSlug),
     getRentalCategories({ brandSlug }),
+    getBuildUpsellOptions(brandSlug),
   ]);
 
   const matched = resolveRentalCategoryForLookup(categorySlug, canonicalCategories);
@@ -74,6 +76,7 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
       categoryLine={categoryLine}
       inventoryOptions={inventoryOptions}
       guidedCategories={guidedCategories}
+      upsellOptions={upsellOptions}
     />
   );
 }

@@ -1,8 +1,11 @@
 "use server";
 
 import type { BrandSlug } from "@/lib/brand/config";
+import type { UpsellSelection } from "./upsell-selection";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendOwnerSms } from "@/lib/notifications/send-owner-sms";
+
+export type { UpsellSelection } from "./upsell-selection";
 
 export type CreateOnlineBookingAddons = {
   tables: number;
@@ -10,6 +13,7 @@ export type CreateOnlineBookingAddons = {
   canopy: number;
   generator: number;
   extraJumper: number;
+  upsellSelections?: UpsellSelection[];
 };
 
 export type CreateOnlineBookingInput = {

@@ -111,6 +111,26 @@ function getPositiveAddonLines(addons: Record<string, unknown> | null): string[]
       out.push(`${label} (${n})`);
     }
   }
+
+  const rawUpsells = addons.upsellSelections;
+  if (Array.isArray(rawUpsells)) {
+    for (const row of rawUpsells) {
+      if (!row || typeof row !== "object") continue;
+      const name =
+        typeof (row as { name?: unknown }).name === "string"
+          ? (row as { name: string }).name.trim()
+          : "";
+      const qty = Number((row as { qty?: unknown }).qty);
+      if (!Number.isFinite(qty) || qty <= 0 || !name) continue;
+      const pfRaw = Number((row as { priceFrom?: unknown }).priceFrom);
+      const priceNote =
+        Number.isFinite(pfRaw) && pfRaw > 0
+          ? ` — est. $${Math.round(pfRaw)} ea`
+          : "";
+      out.push(`${name} × ${qty}${priceNote}`);
+    }
+  }
+
   return out;
 }
 

@@ -29,6 +29,7 @@ const RENTAL_PRODUCT_DASHBOARD_COLUMNS =
     "item_rules",
     "delivery_included",
     "delivery_fee_note",
+    "is_upsell",
   ].join(",");
 
 const SURFACE_TOGGLE_KEYS = ["Grass", "Concrete", "Indoor", "Outdoor"] as const;
@@ -86,6 +87,7 @@ type ProductRow = {
   item_rules?: string | null;
   delivery_included?: boolean | null;
   delivery_fee_note?: string | null;
+  is_upsell?: boolean | null;
 };
 
 function listingPriceFallback(p: ProductRow): number {
@@ -182,6 +184,7 @@ async function updateProduct(formData: FormData) {
       item_rules: trimOrNull(formData, "item_rules"),
       delivery_included: formData.get("delivery_included") === "on",
       delivery_fee_note: trimOrNull(formData, "delivery_fee_note"),
+      is_upsell: formData.get("is_upsell") === "on",
     })
     .eq("id", id);
 
@@ -587,6 +590,16 @@ export default async function ProductsDashboardPage({
                     className="accent-violet-400"
                   />
                   Delivery &amp; setup included
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    name="is_upsell"
+                    type="checkbox"
+                    defaultChecked={p.is_upsell === true}
+                    className="accent-violet-400"
+                  />
+                  Show as upsell
                 </label>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
