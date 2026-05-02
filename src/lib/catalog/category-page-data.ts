@@ -10,9 +10,12 @@ import {
   resolveRentalCategoryForLookup,
   type RentalCategoryUIModel,
 } from "@/lib/catalog/get-rental-categories";
-import { effectiveListingPrice } from "@/lib/catalog/product-display-helpers";
+import {
+  coalesceTrimString,
+  effectiveListingPrice,
+} from "@/lib/catalog/product-display-helpers";
+import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
 import { inventoryMatchesGuidedCategory } from "@/lib/build/build-guided-categories";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
 
 export type { CategoryCarouselItem } from "@/lib/catalog/category-carousel";
 
@@ -46,11 +49,19 @@ function uiModelToCarouselItem(ui: RentalCategoryUIModel): CategoryCarouselItem 
 }
 
 function catalogProductToPageProduct(p: CatalogProduct): CategoryPageProduct {
-  const legacyImg = (p.image_src ?? "").trim();
-  const canonical =
-    canonicalRentalProductMainImage(p.category_slug, p.slug) ?? "";
+  const row = p as unknown as Record<string, unknown>;
+  const imagePath =
+    (typeof p.image_path === "string" && p.image_path.trim() !== ""
+      ? p.image_path.trim()
+      : coalesceTrimString(row, ["image_path", "imagePath"])) ?? null;
+
   const imageSrc =
-    canonical || legacyImg || "/images/placeholder-party-rental.jpg";
+    normalizeProductImageSrc({
+      slug: p.slug,
+      category_slug: p.category_slug ?? null,
+      image_path: imagePath,
+      image_src: p.image_src,
+    }) ?? "";
 
   const priceNum = effectiveListingPrice({
     price: p.price,

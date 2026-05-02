@@ -1,11 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
+import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
 import {
   coalesceSurfacesFromRow,
   coalesceTrimString,
 } from "@/lib/catalog/product-display-helpers";
 
-export { canonicalRentalProductMainImage };
+export { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
 
 export type BuildInventoryOption = {
   id: string;
@@ -78,14 +78,15 @@ export async function getBuildInventoryOptions(
       const productSlug = String(r.slug).trim();
       const categorySlug =
         typeof r.category_slug === "string" ? r.category_slug : null;
-      const canonicalImageSrc = canonicalRentalProductMainImage(
-        categorySlug,
-        productSlug,
-      );
-      const legacy =
-        typeof r.image_src === "string" && r.image_src.trim() !== ""
-          ? r.image_src.trim()
-          : null;
+      const imagePath = coalesceTrimString(r, ["image_path", "imagePath"]);
+      const legacyImg = asTrimString(r.image_src);
+
+      const resolvedImage = normalizeProductImageSrc({
+        slug: productSlug,
+        category_slug: categorySlug,
+        image_path: imagePath,
+        image_src: legacyImg,
+      });
 
       return {
         id: String(r.id ?? ""),
@@ -96,7 +97,7 @@ export async function getBuildInventoryOptions(
           asFiniteNumber(r.quantity_available) ??
           asFiniteNumber(r.quantity_active) ??
           0,
-        image_src: canonicalImageSrc ?? legacy,
+        image_src: resolvedImage,
         price: asFiniteNumber(r.price),
         price_from: asFiniteNumber(r.price_from),
         short_description: asTrimString(r.short_description),

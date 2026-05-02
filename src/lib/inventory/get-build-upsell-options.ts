@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
+import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
 import type { BuildUpsellOption } from "@/lib/inventory/build-upsell-shared";
 
 function asFiniteNumber(v: unknown): number | null {
@@ -40,21 +40,22 @@ export async function getBuildUpsellOptions(brandSlug: string): Promise<BuildUps
       const productSlug = String(r.slug).trim();
       const categorySlug =
         typeof r.category_slug === "string" ? r.category_slug : null;
-      const canonicalImageSrc = canonicalRentalProductMainImage(
-        categorySlug,
-        productSlug,
-      );
-      const legacy =
-        typeof r.image_src === "string" && r.image_src.trim() !== ""
-          ? r.image_src.trim()
-          : null;
+      const imagePath = typeof r.image_path === "string" ? r.image_path.trim() : "";
+      const imagePathNorm = imagePath ? imagePath : null;
+      const legacy = asTrimString(r.image_src);
 
       return {
         id: String(r.id ?? ""),
         name: String(r.name ?? ""),
         slug: productSlug,
         category_slug: categorySlug,
-        image_src: canonicalImageSrc ?? legacy,
+        image_src:
+          normalizeProductImageSrc({
+            slug: productSlug,
+            category_slug: categorySlug,
+            image_path: imagePathNorm,
+            image_src: legacy,
+          }) ?? null,
         price: asFiniteNumber(r.price),
         price_from: asFiniteNumber(r.price_from),
         short_description: asTrimString(r.short_description),

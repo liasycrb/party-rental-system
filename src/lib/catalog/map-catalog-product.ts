@@ -1,6 +1,6 @@
 import type { CatalogProduct } from "@/lib/catalog/get-products";
 import type { DemoProduct } from "@/lib/catalog/demo-products";
-import { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
+import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
 import {
   coalesceSurfacesFromRow,
   coalesceTrimString,
@@ -15,11 +15,18 @@ import {
 /** Map RPC / table row → card model (Supabase `name` and fields win). */
 export function catalogProductToProductCard(p: CatalogProduct): DemoProduct {
   const row = p as unknown as Record<string, unknown>;
-  const legacyImg = (p.image_src ?? "").trim();
-  const canonical =
-    canonicalRentalProductMainImage(p.category_slug, p.slug) ?? "";
+  const imagePath =
+    (typeof p.image_path === "string" && p.image_path.trim() !== ""
+      ? p.image_path.trim()
+      : coalesceTrimString(row, ["image_path", "imagePath"])) ?? null;
+
   const resolvedImage =
-    canonical || legacyImg || "/images/placeholder-party-rental.jpg";
+    normalizeProductImageSrc({
+      slug: p.slug,
+      category_slug: p.category_slug ?? null,
+      image_path: imagePath,
+      image_src: p.image_src,
+    }) ?? "";
 
   const dimStr =
     (p.dimensions ?? "").trim() ||

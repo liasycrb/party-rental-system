@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
 
 export type CatalogProduct = {
   id: string;
@@ -6,6 +7,8 @@ export type CatalogProduct = {
   slug: string;
   category_slug: string | null;
   image_src: string | null;
+  /** Supabase `rental_products.image_path`. */
+  image_path?: string | null;
   gallery_images: string[] | null;
   short_description: string | null;
   full_description?: string | null;
@@ -50,6 +53,27 @@ export async function getProducts(brandSlug?: string): Promise<CatalogProduct[]>
   const rows = (data ?? []) as CatalogProduct[];
 
   const visible = rows.filter((p) => p.is_active !== false);
+
+  if (process.env.NODE_ENV === "development") {
+    const products = visible;
+    console.log("[products-debug]", {
+      total: rows.length,
+      active: products.filter((p) => p.is_active).length,
+      upsells: products.filter((p) => p.is_active && p.is_upsell === true).length,
+      missingImagePath: products
+        .filter((p) => !p.image_path && !p.image_src)
+        .map((p) => p.slug),
+    });
+    for (const p of products.filter((x) => !x.image_path && !x.image_src)) {
+      const normalizedImageSrc = normalizeProductImageSrc({
+        slug: p.slug,
+        category_slug: p.category_slug,
+        image_path: p.image_path,
+        image_src: p.image_src,
+      });
+      console.log("[image-debug]", p.slug, normalizedImageSrc);
+    }
+  }
 
   return visible.slice().sort((a, b) => {
     const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
