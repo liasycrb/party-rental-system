@@ -15,7 +15,7 @@ export type CatalogProduct = {
   price_from?: number | null;
   price: number | null;
   is_active: boolean;
-  /** Upsell SKUs — listed only in /build add-ons when true. */
+  /** When true, also offered in /build add-ons (main catalog still includes the row when active). */
   is_upsell?: boolean | null;
   brand_slugs: string[];
   use_type?: string | null;
@@ -49,11 +49,7 @@ export async function getProducts(brandSlug?: string): Promise<CatalogProduct[]>
 
   const rows = (data ?? []) as CatalogProduct[];
 
-  const visible = rows.filter((p) => {
-    if (p.is_active === false) return false;
-    const row = p as CatalogProduct & { is_upsell?: boolean | null };
-    return row.is_upsell !== true;
-  });
+  const visible = rows.filter((p) => p.is_active !== false);
 
   return visible.slice().sort((a, b) => {
     const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
