@@ -22,7 +22,23 @@ function resolveDashboardBasicAuthCredentials(): {
   return { expectedUser, expectedPassword };
 }
 
+function isLocalLoopbackHostname(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  );
+}
+
 export function proxy(request: NextRequest) {
+  // Local `next dev` only — preview/production stay behind Basic Auth.
+  if (
+    process.env.NODE_ENV === "development" &&
+    isLocalLoopbackHostname(request.nextUrl.hostname)
+  ) {
+    return NextResponse.next();
+  }
+
   const { expectedUser, expectedPassword } = resolveDashboardBasicAuthCredentials();
 
   // Production: credentials must come from env. Dev: fallback admin / 1234.

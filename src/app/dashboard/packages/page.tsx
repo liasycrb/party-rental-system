@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getAllRentalPackagesDashboard, type RentalPackage } from "@/lib/marketing/get-rental-packages";
+import { DeletePackageForm } from "./delete-package-form";
 
 export const metadata: Metadata = { title: "Packages — Dashboard" };
 
@@ -62,6 +63,20 @@ async function upsertPackage(formData: FormData) {
   });
 
   if (error) throw new Error(`[upsertPackage] ${error.message}`);
+  revalidatePath("/dashboard/packages");
+}
+
+async function deletePackage(formData: FormData) {
+  "use server";
+  const raw = (formData.get("id") as string | null)?.trim();
+  if (!raw) throw new Error("[deletePackage] Package id is required");
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("delete_rental_package_dashboard", {
+    p_id: raw,
+  });
+
+  if (error) throw new Error(`[deletePackage] ${error.message}`);
   revalidatePath("/dashboard/packages");
 }
 
@@ -205,6 +220,9 @@ export default async function PackagesDashboardPage() {
                 </span>
               </div>
               <PackageForm pkg={pkg} />
+              <div className="mt-4 flex justify-end border-t border-white/10 pt-3">
+                <DeletePackageForm packageId={pkg.id} deleteAction={deletePackage} />
+              </div>
             </div>
           ))}
         </div>
