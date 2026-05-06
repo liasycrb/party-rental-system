@@ -173,7 +173,6 @@ function IconClock({ className }: { className?: string }) {
 
 const HERO_TRUST_ITEMS = [
   { label: "REAL CREW", Icon: IconUsers },
-  { label: "INSURED SETUPS", Icon: IconShieldCheck },
   { label: "ONE SHARED CALENDAR", Icon: IconCalendar },
   { label: "ON-TIME GUARANTEE", Icon: IconClock },
 ] as const;
