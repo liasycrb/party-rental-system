@@ -327,8 +327,8 @@ const INTERNAL_DELIVERY_WINDOW_DEFAULT = "To be confirmed";
 const INTERNAL_PICKUP_WINDOW_DEFAULT = "To be confirmed";
 
 const BUILD_DEFAULT_BASE_ITEM_PRICE = 150;
-const BUILD_DEPOSIT_MIN = 50;
-const BUILD_DEPOSIT_RATE = 0.5;
+const FIXED_DEPOSIT_AMOUNT = 50;
+const MINIMUM_ORDER_AMOUNT = 80;
 
 function formatUsd(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -368,9 +368,8 @@ function computeReservationPricing(input: {
   }
   upsellEstimatedTotal = Math.round(upsellEstimatedTotal * 100) / 100;
   const subtotal = Math.round((mainItemTotal + upsellEstimatedTotal) * 100) / 100;
-  const depositHalf = Math.round(subtotal * BUILD_DEPOSIT_RATE * 100) / 100;
-  const depositUncapped = Math.max(BUILD_DEPOSIT_MIN, depositHalf);
-  const depositAmount = Math.round(Math.min(subtotal, depositUncapped) * 100) / 100;
+  const depositAmount =
+    Math.round(Math.min(subtotal, FIXED_DEPOSIT_AMOUNT) * 100) / 100;
   const balanceDue = Math.round((subtotal - depositAmount) * 100) / 100;
   return {
     mainItemTotal,
@@ -1979,6 +1978,40 @@ export function BuildBookingStart({
               <p>Deposit due today: {formatUsd(reservationPricing.depositAmount)}</p>
               <p>Balance due at delivery: {formatUsd(reservationPricing.balanceDue)}</p>
             </div>
+            {reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT ? (
+              <div
+                className={cn(
+                  "space-y-3 rounded-xl px-4 py-3 text-sm",
+                  isCrb
+                    ? "bg-amber-500/10 text-amber-100 ring-1 ring-amber-400/30"
+                    : "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",
+                )}
+              >
+                <p className="font-semibold">
+                  Minimum order is {formatUsd(MINIMUM_ORDER_AMOUNT)}. For
+                  smaller orders or special requests, please contact us
+                  directly.
+                </p>
+                <div className={contactActionsClass(isCrb)}>
+                  <a
+                    href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
+                    className={contactButtonClass(isCrb, "primary")}
+                    style={{ borderRadius: "var(--brand-radius-md)" }}
+                  >
+                    Call {brandContact.supportPhoneDisplay}
+                  </a>
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={contactButtonClass(isCrb, "outline")}
+                    style={{ borderRadius: "var(--brand-radius-md)" }}
+                  >
+                    WhatsApp
+                  </a>
+                </div>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <button
                 type="button"
@@ -1992,8 +2025,10 @@ export function BuildBookingStart({
               </button>
               <button
                 type="button"
+                disabled={reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT}
                 className={cn(
                   "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
+                  "disabled:pointer-events-none disabled:opacity-60",
                   isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white shadow-lg shadow-rose-900/15 hover:bg-rose-700",
                 )}
                 style={{ borderRadius: "var(--brand-radius-md)" }}
@@ -2239,7 +2274,11 @@ export function BuildBookingStart({
               </button>
               <button
                 type="button"
-                disabled={isSubmitting || !paymentFile}
+                disabled={
+                  isSubmitting ||
+                  !paymentFile ||
+                  reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT
+                }
                 className={cn(
                   "h-12 rounded-xl px-6 text-base font-black transition active:scale-[0.99] sm:px-8",
                   "disabled:pointer-events-none disabled:opacity-70",
