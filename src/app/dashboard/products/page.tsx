@@ -30,6 +30,7 @@ const RENTAL_PRODUCT_DASHBOARD_COLUMNS =
     "delivery_included",
     "delivery_fee_note",
     "is_upsell",
+    "sort_order",
   ].join(",");
 
 const SURFACE_TOGGLE_KEYS = ["Grass", "Concrete", "Indoor", "Outdoor"] as const;
@@ -88,6 +89,7 @@ type ProductRow = {
   delivery_included?: boolean | null;
   delivery_fee_note?: string | null;
   is_upsell?: boolean | null;
+  sort_order?: number | null;
 };
 
 function listingPriceFallback(p: ProductRow): number {
@@ -159,6 +161,9 @@ async function updateProduct(formData: FormData) {
   const qtyRaw = Number(formData.get("quantity_available") ?? NaN);
   const quantityAvailable = Number.isFinite(qtyRaw) && qtyRaw >= 0 ? Math.floor(qtyRaw) : 0;
 
+  const sortRaw = Number(formData.get("sort_order") ?? NaN);
+  const sortOrder = Number.isFinite(sortRaw) ? Math.floor(sortRaw) : 0;
+
   const setupSpaceStr = trimOrNull(formData, "setup_space");
 
   const useTypeRaw = ((formData.get("use_type") as string) ?? "").trim().toLowerCase();
@@ -185,6 +190,7 @@ async function updateProduct(formData: FormData) {
       delivery_included: formData.get("delivery_included") === "on",
       delivery_fee_note: trimOrNull(formData, "delivery_fee_note"),
       is_upsell: formData.get("is_upsell") === "on",
+      sort_order: sortOrder,
     })
     .eq("id", id);
 
@@ -578,6 +584,18 @@ export default async function ProductsDashboardPage({
                       defaultValue={p.delivery_fee_note ?? ""}
                       placeholder="Optional"
                       className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Sort order
+                    </label>
+                    <input
+                      name="sort_order"
+                      type="number"
+                      step={1}
+                      defaultValue={p.sort_order ?? 0}
+                      className="rounded border border-white/15 bg-white/5 px-2 py-1.5 text-sm text-white outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400/30"
                     />
                   </div>
                 </div>
