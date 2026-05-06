@@ -4,6 +4,7 @@ import {
   coalesceSurfacesFromRow,
   coalesceTrimString,
 } from "@/lib/catalog/product-display-helpers";
+import { compareCatalogProduct } from "@/lib/catalog/get-rental-categories";
 
 export { canonicalRentalProductMainImage } from "@/lib/inventory/canonical-product-image";
 
@@ -25,6 +26,8 @@ export type BuildInventoryOption = {
   delivery_included?: boolean | null;
   item_rules?: string | null;
   notes?: string | null;
+  /** Per-product display order within a category (nulls sort last). */
+  sort_order?: number | null;
 };
 
 function asFiniteNumber(v: unknown): number | null {
@@ -68,7 +71,7 @@ export async function getBuildInventoryOptions(
 
   const rows = (data ?? []) as Record<string, unknown>[];
 
-  return rows
+  const mapped = rows
     .filter((r) => {
       if (r.is_active === false) return false;
       const slug = r.slug;
@@ -120,6 +123,9 @@ export async function getBuildInventoryOptions(
         delivery_included: asBool(r.delivery_included),
         item_rules: asTrimString(r.item_rules),
         notes: asTrimString(r.notes),
+        sort_order: asFiniteNumber(r.sort_order),
       };
     });
+
+  return mapped.slice().sort(compareCatalogProduct);
 }

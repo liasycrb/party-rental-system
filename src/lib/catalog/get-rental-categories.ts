@@ -62,6 +62,54 @@ function categoryPriority(slug: string): number {
   return CATEGORY_PRIORITY[slug] ?? Number.POSITIVE_INFINITY;
 }
 
+/**
+ * Resolve a product's `category_slug` (which may use legacy values) to the
+ * canonical priority bucket. Unprioritized categories sort to the bottom.
+ */
+export function categoryPriorityForProduct(
+  categorySlug: string | null | undefined,
+): number {
+  if (categorySlug == null) return Number.POSITIVE_INFINITY;
+  const raw = categorySlug.trim().toLowerCase();
+  if (!raw) return Number.POSITIVE_INFINITY;
+  const canonical = LEGACY_CATEGORY_SLUG_MAP[raw] ?? raw;
+  return categoryPriority(canonical);
+}
+
+function sortOrderKey(v: unknown): number {
+  return typeof v === "number" && Number.isFinite(v)
+    ? v
+    : Number.POSITIVE_INFINITY;
+}
+
+export type CatalogSortable = {
+  category_slug?: string | null;
+  sort_order?: number | null;
+  name?: string | null;
+};
+
+/**
+ * Shared product comparator: priority category → category_slug grouping →
+ * `sort_order` ASC (nulls last) → name ASC. Used by catalog and build flows.
+ */
+export function compareCatalogProduct<T extends CatalogSortable>(
+  a: T,
+  b: T,
+): number {
+  const pa = categoryPriorityForProduct(a.category_slug ?? null);
+  const pb = categoryPriorityForProduct(b.category_slug ?? null);
+  if (pa !== pb) return pa - pb;
+
+  const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
+  if (cat !== 0) return cat;
+
+  const sa = sortOrderKey(a.sort_order);
+  const sb = sortOrderKey(b.sort_order);
+  if (sa !== sb) return sa - sb;
+
+  return (a.name ?? "").localeCompare(b.name ?? "");
+}
+
 /** Static catalog: same lineup for both brands (pre–Supabase `rental_categories`). */
 export async function getRentalCategories(options?: {
   brandSlug?: BrandSlug;

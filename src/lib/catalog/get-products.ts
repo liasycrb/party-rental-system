@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeProductImageSrc } from "@/lib/catalog/rental-products";
+import { compareCatalogProduct } from "@/lib/catalog/get-rental-categories";
 
 export type CatalogProduct = {
   id: string;
@@ -29,6 +30,8 @@ export type CatalogProduct = {
   item_rules?: string | null;
   /** Shown only when `customerSafeProductNote` accepts it. */
   notes?: string | null;
+  /** Per-product display order within a category (nulls sort last). */
+  sort_order?: number | null;
 };
 
 const FALLBACK_BRAND = "lias";
@@ -75,9 +78,5 @@ export async function getProducts(brandSlug?: string): Promise<CatalogProduct[]>
     }
   }
 
-  return visible.slice().sort((a, b) => {
-    const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
-    if (cat !== 0) return cat;
-    return a.name.localeCompare(b.name);
-  });
+  return visible.slice().sort(compareCatalogProduct);
 }

@@ -26,7 +26,10 @@ import type { BuildUpsellOption } from "@/lib/inventory/build-upsell-shared";
 import { upsellUnitEstimate } from "@/lib/inventory/build-upsell-shared";
 import type { BuildInventoryOption } from "@/lib/inventory/get-build-inventory-options";
 import type { RentalCategoryUIModel } from "@/lib/catalog/get-rental-categories";
-import { resolveRentalCategoryForLookup } from "@/lib/catalog/get-rental-categories";
+import {
+  compareCatalogProduct,
+  resolveRentalCategoryForLookup,
+} from "@/lib/catalog/get-rental-categories";
 import {
   effectiveListingPrice,
   formatDeliverySummary,
@@ -1165,11 +1168,7 @@ export function BuildBookingStart({
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {itemsInGuidedCategory
                       .slice()
-                      .sort((a, b) => {
-                        const cat = (a.category_slug ?? "").localeCompare(b.category_slug ?? "");
-                        if (cat !== 0) return cat;
-                        return a.name.localeCompare(b.name);
-                      })
+                      .sort(compareCatalogProduct)
                       .map((item) => {
                         const isAvailable = item.quantity_active > 0;
                         const listPrice = effectiveListingPrice(item);
