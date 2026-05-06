@@ -375,7 +375,7 @@ export function MarketingHero({
                 className={cn("h-4 w-4 shrink-0", isCrb ? "text-cyan-300" : "text-rose-600")}
               />
               <>
-                Moreno Valley, Perris &amp; Riverside
+                Moreno Valley &amp; Surrounding Areas
               </>
             </span>
           </div>
@@ -390,12 +390,10 @@ export function MarketingHero({
             {(
               isCrb
                 ? [
-                    { Icon: IconTruck, label: "Setup included" },
                     { Icon: IconShield, label: "Kid-safe checks" },
                     { Icon: IconZap, label: "Book online fast" },
                   ]
                 : [
-                    { Icon: IconTruck, label: "Setup included" },
                     { Icon: IconShield, label: "Kid-safe process" },
                     { Icon: IconZap, label: "Book in minutes" },
                   ]
@@ -403,7 +401,7 @@ export function MarketingHero({
               <span
                 key={label}
                 className={cn(
-                  "inline-flex h-[40px] shrink-0 items-center gap-2 rounded-full border px-5 text-[14px] font-bold shadow-sm transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
+                  "inline-flex h-[40px] min-w-[200px] shrink-0 items-center justify-center gap-2 rounded-full border px-5 text-[14px] font-bold shadow-sm transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
                   isCrb
                     ? "border-cyan-400/40 bg-slate-950/70 text-white backdrop-blur-md"
                     : "border-orange-200/90 bg-white text-stone-800",
