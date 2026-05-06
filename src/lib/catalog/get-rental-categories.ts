@@ -48,13 +48,29 @@ function carouselRowToUIModel(row: CategoryCarouselItem): RentalCategoryUIModel 
   };
 }
 
+/**
+ * Temporary priority overlay (stabilization). These canonical slugs surface
+ * first in catalog/build/footer; everything else keeps its existing order.
+ */
+const CATEGORY_PRIORITY: Record<string, number> = {
+  waterslide: 1,
+  "obstacle-course": 2,
+  "five-in-one-jumpers": 3,
+};
+
+function categoryPriority(slug: string): number {
+  return CATEGORY_PRIORITY[slug] ?? Number.POSITIVE_INFINITY;
+}
+
 /** Static catalog: same lineup for both brands (pre–Supabase `rental_categories`). */
 export async function getRentalCategories(options?: {
   brandSlug?: BrandSlug;
   allBrands?: boolean;
 }): Promise<RentalCategoryUIModel[]> {
   void options;
-  return CATEGORY_CAROUSEL_ITEMS.map(carouselRowToUIModel);
+  return CATEGORY_CAROUSEL_ITEMS.map(carouselRowToUIModel).sort(
+    (a, b) => categoryPriority(a.slug) - categoryPriority(b.slug),
+  );
 }
 
 /** Map UI model → client carousel / showcase item (`href` → `/build?category=`). */
