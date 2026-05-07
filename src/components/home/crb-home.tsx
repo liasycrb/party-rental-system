@@ -13,7 +13,6 @@ import { CtaBanner } from "@/components/conversion/cta-banner";
 import { PopularPackagesSection } from "@/components/conversion/popular-packages";
 import { WhyChooseStrip } from "@/components/conversion/why-choose-strip";
 import { CrbMobileHeroStrip } from "@/components/home/crb-mobile-hero-strip";
-import { HomeFeaturedProductSection } from "@/components/home/home-featured-product-section";
 import { MarketingHero } from "@/components/home/marketing-hero";
 import { Container } from "@/components/marketing/container";
 import { CategoryShowcase } from "@/components/marketing/category-showcase";
@@ -174,15 +173,6 @@ export function CrbHome({
           subtitle="Reserve the unit, lock the date, and let us handle delivery and setup in Moreno Valley, Perris & Riverside — most hosts finish in a few minutes."
         />
       </Container>
-
-      <HomeFeaturedProductSection
-        brand={brand}
-        headingId="crb-fleet"
-        tone="onDark"
-        eyebrow="Featured drops"
-        title="Premium units. Zero “rental catalog” energy."
-        description="Three hand-picked previews — identical layout to Classic Rentals: clear dimensions, setups, surfaces, and pricing before you build."
-      />
 
       {/* ── Process — how it works ──────────────────────────────── */}
       <section
