@@ -297,25 +297,21 @@ const EVENT_TIME_WINDOW_OPTIONS = [
   { value: "evening", label: "Evening" },
 ] as const;
 
+const EVENT_CITY_OTHER_VALUE = "Other City";
+
 /** Step 5 event city dropdown — persisted as `event_city` / lead city. Values must match exactly. */
 const EVENT_CITY_FORM_OPTIONS = [
   { value: "Moreno Valley", label: "Moreno Valley" },
-  { value: "Perris", label: "Perris" },
-  { value: "Riverside", label: "Riverside" },
-  { value: "Other / Not listed", label: "Other / Not listed" },
+  { value: EVENT_CITY_OTHER_VALUE, label: "Other City" },
 ] as const;
 
-const EVENT_CITY_FREE_DELIVERY_MESSAGE =
-  "Free delivery in this service area.";
-const EVENT_CITY_OTHER_DELIVERY_MESSAGE =
-  "Delivery fee will be calculated after your reservation request. Additional delivery may vary depending on distance.";
+const EVENT_CITY_FREE_DELIVERY_MESSAGE = "Free delivery in this service area.";
+const EVENT_CITY_OTHER_CONTACT_MESSAGE =
+  "For pricing and delivery availability in your city, please contact us directly.";
 
 function eventCityConditionalDeliveryCopy(selected: string): string | null {
   const v = selected.trim();
-  if (!v) return null;
-  if (v === "Other / Not listed") return EVENT_CITY_OTHER_DELIVERY_MESSAGE;
-  if (v === "Moreno Valley" || v === "Perris" || v === "Riverside")
-    return EVENT_CITY_FREE_DELIVERY_MESSAGE;
+  if (v === "Moreno Valley") return EVENT_CITY_FREE_DELIVERY_MESSAGE;
   return null;
 }
 
@@ -1739,6 +1735,7 @@ export function BuildBookingStart({
             style={{ borderRadius: "var(--brand-radius-lg)" }}
             onSubmit={(e) => {
               e.preventDefault();
+              if (formCity === EVENT_CITY_OTHER_VALUE) return;
               setErrorMessage(null);
               setStep(6);
             }}
@@ -1804,6 +1801,44 @@ export function BuildBookingStart({
                   {eventCityDeliveryHelper}
                 </p>
               ) : null}
+              {formCity === EVENT_CITY_OTHER_VALUE ? (
+                <div
+                  className={cn(
+                    "mt-3 rounded-xl p-4 ring-1",
+                    isCrb
+                      ? "bg-slate-900/60 ring-cyan-500/25"
+                      : "bg-rose-50/80 ring-rose-200/70",
+                  )}
+                  style={{ borderRadius: "var(--brand-radius-md)" }}
+                >
+                  <p
+                    className={cn(
+                      "text-sm font-semibold leading-relaxed",
+                      isCrb ? "text-slate-100" : "text-stone-800",
+                    )}
+                  >
+                    {EVENT_CITY_OTHER_CONTACT_MESSAGE}
+                  </p>
+                  <div className={contactActionsClass(isCrb)} style={{ borderRadius: "var(--brand-radius-md)" }}>
+                    <a
+                      href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
+                      className={contactButtonClass(isCrb, "primary")}
+                      style={{ borderRadius: "var(--brand-radius-md)" }}
+                    >
+                      Call {brandContact.supportPhoneDisplay}
+                    </a>
+                    <a
+                      href={waHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={contactButtonClass(isCrb, "outline")}
+                      style={{ borderRadius: "var(--brand-radius-md)" }}
+                    >
+                      WhatsApp
+                    </a>
+                  </div>
+                </div>
+              ) : null}
             </div>
             <div>
               <label htmlFor={idDeliveryAddress} className={labelClass(isCrb)}>
@@ -1844,16 +1879,18 @@ export function BuildBookingStart({
               >
                 ← Back
               </button>
-              <button
-                type="submit"
-                className={cn(
-                  "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
-                  isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white shadow-lg shadow-rose-900/15 hover:bg-rose-700",
-                )}
-                style={{ borderRadius: "var(--brand-radius-md)" }}
-              >
-                Continue to review
-              </button>
+              {formCity === EVENT_CITY_OTHER_VALUE ? null : (
+                <button
+                  type="submit"
+                  className={cn(
+                    "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
+                    isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white shadow-lg shadow-rose-900/15 hover:bg-rose-700",
+                  )}
+                  style={{ borderRadius: "var(--brand-radius-md)" }}
+                >
+                  Continue to review
+                </button>
+              )}
             </div>
           </form>
         ) : null}
