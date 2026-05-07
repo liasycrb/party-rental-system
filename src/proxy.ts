@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { slugFromHost } from "@/lib/brand/resolve-brand";
 
 const UNAUTHORIZED = new Response("Unauthorized", {
   status: 401,
@@ -30,7 +31,17 @@ function isLocalLoopbackHostname(hostname: string): boolean {
   );
 }
 
-export function proxy(request: NextRequest) {
+function nextWithBrandHeader(request: NextRequest): NextResponse {
+  const slug = slugFromHost(request.headers.get("host"));
+  if (!slug) {
+    return NextResponse.next();
+  }
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-brand-slug", slug);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
+function handleDashboard(request: NextRequest): NextResponse | Response {
   // Local `next dev` only — preview/production stay behind Basic Auth.
   if (
     process.env.NODE_ENV === "development" &&
@@ -67,6 +78,18 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+export function proxy(request: NextRequest) {
+  // Dashboard keeps Basic Auth + the existing `?brand=` switcher (no host override).
+  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    return handleDashboard(request);
+  }
+  // Public site: inject `x-brand-slug` from the request hostname so that
+  // crbjumpers.com → "crb" and liaspartyrentals.com → "lias" without `?brand=`.
+  return nextWithBrandHeader(request);
+}
+
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
 };

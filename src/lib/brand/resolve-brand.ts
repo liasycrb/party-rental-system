@@ -14,6 +14,28 @@ function slugFromEnv(value: string | undefined): BrandSlug | null {
   return null;
 }
 
+const HOSTNAME_TO_SLUG: Readonly<Record<string, BrandSlug>> = (() => {
+  const map: Record<string, BrandSlug> = {};
+  for (const brand of Object.values(BRANDS)) {
+    for (const hostname of brand.hostnames) {
+      map[hostname.toLowerCase()] = brand.slug;
+    }
+  }
+  return map;
+})();
+
+/**
+ * Returns the brand slug for a known production hostname, or `null` for unknown hosts
+ * (localhost, preview URLs, etc.). Safe for both client and server use.
+ */
+export function slugFromHost(
+  hostHeader: string | null | undefined,
+): BrandSlug | null {
+  if (!hostHeader) return null;
+  const host = normalizeHost(hostHeader);
+  return HOSTNAME_TO_SLUG[host] ?? null;
+}
+
 /**
  * Maps the incoming Host header to a brand. Localhost uses NEXT_PUBLIC_DEFAULT_BRAND_SLUG
  * when set; otherwise DEFAULT_BRAND_SLUG.
@@ -28,13 +50,8 @@ export function resolveBrandFromHost(hostHeader: string | null): Brand {
     return BRANDS[devSlug];
   }
 
-  for (const brand of Object.values(BRANDS)) {
-    for (const hostname of brand.hostnames) {
-      if (hostname === host) {
-        return brand;
-      }
-    }
-  }
+  const matched = HOSTNAME_TO_SLUG[host];
+  if (matched) return BRANDS[matched];
 
   return BRANDS[DEFAULT_BRAND_SLUG];
 }

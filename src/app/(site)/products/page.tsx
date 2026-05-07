@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BRANDS } from "@/lib/brand/config";
-import {
-  resolveBrandSlugFromPageSearchParam,
-  resolveHomeBrandSlug,
-} from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { getProducts } from "@/lib/catalog/get-products";
 import { getSiteSettings } from "@/lib/site/get-site-settings";
@@ -18,7 +15,7 @@ import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 import { catalogProductToProductCard } from "@/lib/catalog/map-catalog-product";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = BRANDS[resolveHomeBrandSlug(null)];
+  const brand = BRANDS[await getBrandSlug(undefined)];
   return {
     title: "Jumpers & party rentals",
     description: `Browse jumpers, combos, and add-ons from ${brand.displayName}. Serving Moreno Valley, Perris, and Riverside — check live availability and pricing online.`,
@@ -30,7 +27,7 @@ export default async function ProductsPage({
   searchParams: Promise<{ brand?: string | string[] }>;
 }) {
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
   const [rawProducts, siteSettings, categoryRows] = await Promise.all([

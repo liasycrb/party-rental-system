@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BRANDS } from "@/lib/brand/config";
-import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import { getRentalPackageById } from "@/lib/marketing/get-rental-packages";
 import { InquiryForm } from "./_inquiry-form";
 
@@ -21,7 +21,7 @@ function firstParam(v: string | string[] | undefined): string | undefined {
 
 export default async function PackageInquiryPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const packageId = firstParam(sp.package) ?? null;
 
   const pkg = packageId ? await getRentalPackageById(packageId) : null;

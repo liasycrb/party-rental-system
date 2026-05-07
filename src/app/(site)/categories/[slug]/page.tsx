@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryPageTemplate } from "@/components/categories/category-page-template";
-import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import { resolveCategoryPageViewModel } from "@/lib/catalog/category-page-data";
 
 /**
- * Brand: `?brand=lias` | `?brand=crb` (else defaults per `resolveBrandSlugFromPageSearchParam`).
+ * Brand resolves from hostname (e.g. `crbjumpers.com` → `crb`); `?brand=` is the dev/preview fallback.
  */
 
 type Props = {
@@ -19,7 +19,7 @@ export async function generateMetadata({
 }: Pick<Props, "params" | "searchParams">): Promise<Metadata> {
   const { slug } = await params;
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const data = await resolveCategoryPageViewModel(slug, brandSlug);
   if (!data) {
     return { title: "Category" };
@@ -34,7 +34,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
 
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const data = await resolveCategoryPageViewModel(slug, brandSlug);
   if (!data) {
     notFound();

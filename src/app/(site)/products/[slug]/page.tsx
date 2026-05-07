@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BRANDS } from "@/lib/brand/config";
-import {
-  resolveBrandSlugFromPageSearchParam,
-} from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import { withBrand } from "@/lib/brand/with-brand-href";
 import { getDemoProductBySlug } from "@/lib/catalog/demo-products";
 import { getProducts } from "@/lib/catalog/get-products";
@@ -24,7 +22,7 @@ type Props = {
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const brand = BRANDS[brandSlug];
   const catalog = await getProducts(brandSlug);
   const row = catalog.find((p) => p.slug === slug);
@@ -45,7 +43,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   const { slug } = await params;
   const sp = await searchParams;
 
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const brand = BRANDS[brandSlug];
   const isCrb = brandSlug === "crb";
 

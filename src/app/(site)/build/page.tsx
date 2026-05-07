@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { BuildBookingStart } from "@/components/build/build-booking-start";
 import { BRANDS } from "@/lib/brand/config";
-import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import {
   getRentalCategories,
   resolveRentalCategoryForLookup,
@@ -28,7 +28,7 @@ function firstParam(v: string | string[] | undefined): string | undefined {
 
 export async function generateMetadata({ searchParams }: BuildPageProps): Promise<Metadata> {
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const brand = BRANDS[brandSlug];
   return {
     title: "Build your event",
@@ -47,7 +47,7 @@ const BROWSE_ALL: RentalCategoryUIModel = {
 
 export default async function BuildPage({ searchParams }: BuildPageProps) {
   const sp = await searchParams;
-  const brandSlug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const brandSlug = await getBrandSlug(sp.brand);
   const isCrb = brandSlug === "crb";
 
   const categorySlug = firstParam(sp.category) ?? null;

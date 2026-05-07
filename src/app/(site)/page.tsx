@@ -1,5 +1,5 @@
 import { BRANDS } from "@/lib/brand/config";
-import { resolveBrandSlugFromPageSearchParam } from "@/lib/brand/resolve-brand";
+import { getBrandSlug } from "@/lib/brand/get-brand";
 import {
   getRentalCategories,
   rentalCategoryToCarouselItem,
@@ -15,7 +15,7 @@ type HomePageProps = {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const sp = await searchParams;
-  const slug = resolveBrandSlugFromPageSearchParam(sp.brand);
+  const slug = await getBrandSlug(sp.brand);
 
   const [siteSettings, packages, categoryModels] = await Promise.all([
     getSiteSettings(slug),

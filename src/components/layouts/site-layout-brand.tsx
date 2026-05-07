@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, type ReactNode } from "react";
 import { BRANDS, type Brand, type BrandSlug } from "@/lib/brand/config";
-import { resolveHomeBrandSlug } from "@/lib/brand/resolve-brand";
+import { resolveHomeBrandSlug, slugFromHost } from "@/lib/brand/resolve-brand";
 import type { FooterCategoryLink } from "./site-footer";
 import { SiteShell } from "./site-shell";
 import type { FooterOverride } from "./site-footer";
@@ -27,6 +27,14 @@ function SiteShellWithUrlSearchParams({
   const searchParams = useSearchParams();
 
   const brand = useMemo((): Brand => {
+    // Hostname takes priority on production domains (crbjumpers.com, liaspartyrentals.com).
+    const hostSlug =
+      typeof window !== "undefined"
+        ? slugFromHost(window.location.hostname)
+        : null;
+    if (hostSlug) {
+      return BRANDS[hostSlug];
+    }
     const q = searchParams.get("brand");
     if (q === "lias" || q === "crb") {
       return BRANDS[q];
