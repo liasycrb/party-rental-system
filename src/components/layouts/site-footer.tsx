@@ -21,7 +21,7 @@ export type FooterOverride = {
 export type FooterCategoryLink = Readonly<{ label: string; href: string }>;
 
 const TRUST_TAGLINE =
-  "Clean, fun, and reliable party rentals for birthdays, school events, family gatherings, and community celebrations.";
+  "Clean, fun, and reliable party rentals for birthdays, family gatherings, and community celebrations.";
 
 function FooterSectionTitle({ children }: { children: ReactNode }) {
   return (

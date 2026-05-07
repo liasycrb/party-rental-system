@@ -273,7 +273,7 @@ export function LiasHome({
                 description="City pages, FAQs, and reviews plug into this panel later — today it’s pure feeling + trust."
               />
               <ul className="mt-6 space-y-3 text-sm font-bold text-amber-50">
-                <li>· Delivery that respects school nights + HOAs</li>
+                <li>· Delivery that respects quiet hours and neighborhood rules</li>
                 <li>· Dogs, gates, sprinklers — captured before we roll up</li>
                 <li>· One calendar — no double booking between brands</li>
               </ul>

@@ -43,7 +43,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     imageAlt:
       "Rainbow inflatable bounce house set up for a backyard children’s party",
     blurb:
-      "Bright castle profile with tall turrets — a crowd favorite for birthdays and school events in Moreno Valley.",
+      "Bright castle profile with tall turrets — a crowd favorite for birthdays and family parties in Moreno Valley.",
     surfaceRequirements:
       "Grass preferred. Concrete is OK with sandbags (may apply). Dirt surfaces need photos in advance — we will confirm feasibility.",
     accessRequirements:
@@ -88,7 +88,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     imagePosition: "center bottom",
     imageAlt: "Elegant outdoor wedding reception tent and lawn",
     blurb:
-      "Versatile neutral panels — great for family reunions, school fairs, and corporate picnics.",
+      "Versatile neutral panels — great for family reunions, community events, and corporate picnics.",
     surfaceRequirements:
       "Grass, concrete, or asphalt acceptable where anchoring is approved. Dirt requires pre-approval.",
     accessRequirements:
