@@ -2105,6 +2105,22 @@ export function BuildBookingStart({
                 ))}
               </ul>
             </div>
+            <div>
+              <p className={cn("mb-2 text-sm font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Setup location notes</p>
+              <div className={cn("space-y-3 text-sm leading-relaxed", isCrb ? "text-slate-200" : "text-stone-800")}>
+                <p>
+                  <span className="font-semibold">Apartment deliveries:</span>{" "}
+                  For apartment deliveries, equipment is delivered curbside or street-side only. Customers are responsible for moving the equipment into the apartment area and returning it in the same condition at pickup time.
+                </p>
+                <p>
+                  <span className="font-semibold">Park policy:</span>{" "}
+                  Rental equipment is not permitted for use in public parks.
+                </p>
+                <p className={cn(isCrb ? "text-slate-400" : "text-stone-600")}>
+                  Please contact us before booking if you have questions about setup location requirements.
+                </p>
+              </div>
+            </div>
             <fieldset className="space-y-2">
               <legend className={cn("text-sm font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>
                 Do you have pets at the event location?
