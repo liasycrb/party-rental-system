@@ -206,6 +206,18 @@ export function SiteFooter({
 
         <div className="mt-12 border-t border-white/14 pt-7 text-xs text-white/68">
           <p className="text-center leading-relaxed sm:text-left">{attribution}</p>
+          <p className="mt-2 text-center text-[11px] leading-relaxed text-white/45 sm:text-left">
+            Website developed by{" "}
+            <a
+              href="https://vuelvetedigital.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-white/70 underline-offset-4 hover:text-white hover:underline"
+            >
+              VuelveteDigital.com
+            </a>{" "}
+            — GrowthOS Systems
+          </p>
         </div>
       </div>
     </footer>
