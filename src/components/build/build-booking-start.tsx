@@ -1268,10 +1268,11 @@ export function BuildBookingStart({
                                 </div>
                               ) : null}
 
-                              <p className={cn("text-[11px] leading-relaxed", isCrb ? "text-slate-500" : "text-stone-400")}>
-                                {deliveryBlurb ??
-                                  "Professional delivery & setup available · equipment cleaned & inspected"}
-                              </p>
+                              {deliveryBlurb ? (
+                                <p className={cn("text-[11px] leading-relaxed", isCrb ? "text-slate-500" : "text-stone-400")}>
+                                  {deliveryBlurb}
+                                </p>
+                              ) : null}
 
                               <button
                                 type="button"
