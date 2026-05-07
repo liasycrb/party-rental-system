@@ -217,6 +217,65 @@ async function toggleProductActive(formData: FormData) {
   revalidatePath("/categories", "layout");
 }
 
+const PRODUCT_IMAGE_BUCKET = "product-images";
+const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const PRODUCT_IMAGE_EXT_BY_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+async function replaceProductImage(formData: FormData) {
+  "use server";
+  const id = (formData.get("id") as string | null)?.trim();
+  if (!id) throw new Error("Missing product id");
+
+  const slug = ((formData.get("slug") as string) ?? "").trim();
+  if (!slug) throw new Error("Missing product slug");
+
+  const categorySlug =
+    ((formData.get("category_slug") as string) ?? "").trim() || "uncategorized";
+
+  const file = formData.get("image_file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Choose an image file to upload");
+  }
+
+  const ext = PRODUCT_IMAGE_EXT_BY_TYPE[file.type];
+  if (!ext) throw new Error("Image must be JPEG, PNG, or WEBP");
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+    throw new Error("Image must be 5MB or smaller");
+  }
+
+  const admin = createSupabaseServiceRoleClient();
+  const objectPath = `${categorySlug}/${slug}/main-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await admin.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(objectPath, file, {
+      contentType: file.type,
+      cacheControl: "3600",
+      upsert: false,
+    });
+  if (uploadError) throw new Error(`[replaceProductImage] upload: ${uploadError.message}`);
+
+  const { data: pub } = admin.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(objectPath);
+  const publicUrl = pub?.publicUrl;
+  if (!publicUrl) throw new Error("[replaceProductImage] could not resolve public URL");
+
+  const { error: updateError } = await admin
+    .from("rental_products")
+    .update({ image_src: publicUrl })
+    .eq("id", id);
+  if (updateError) throw new Error(`[replaceProductImage] update: ${updateError.message}`);
+
+  revalidatePath("/dashboard/products");
+  revalidatePath("/", "layout");
+  revalidatePath("/build");
+  revalidatePath("/products");
+  revalidatePath("/categories", "layout");
+}
+
 function formatCategory(slug: string | null): string {
   if (!slug) return "—";
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -441,15 +500,18 @@ export default async function ProductsDashboardPage({
               <form
                 key={p.id}
                 action={updateProduct}
+                encType="multipart/form-data"
                 className={cn(
                   "space-y-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3 transition-colors hover:bg-white/[0.07]",
                   !p.is_active && "opacity-65 ring-1 ring-zinc-600/35",
                 )}
               >
                 <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="slug" value={p.slug} />
+                <input type="hidden" name="category_slug" value={p.category_slug ?? ""} />
 
                 <div className="flex flex-wrap items-start gap-3">
-                  <div className="shrink-0">
+                  <div className="flex shrink-0 flex-col items-start gap-2">
                     {p.image_src ? (
                       <img
                         src={p.image_src}
@@ -460,6 +522,22 @@ export default async function ProductsDashboardPage({
                     ) : (
                       <div className="h-14 w-14 rounded-md bg-white/10" />
                     )}
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Replace Product Image
+                    </label>
+                    <input
+                      name="image_file"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="block w-44 text-[11px] text-zinc-300 file:mr-2 file:rounded file:border file:border-white/15 file:bg-white/5 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-zinc-200 hover:file:bg-white/10"
+                    />
+                    <button
+                      type="submit"
+                      formAction={replaceProductImage}
+                      className="rounded-lg border border-emerald-500/45 bg-transparent px-3 py-1 text-xs font-semibold text-emerald-300 transition-colors hover:border-emerald-400/70 hover:bg-emerald-500/10 hover:text-emerald-200 active:scale-[0.97]"
+                    >
+                      Upload
+                    </button>
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2 gap-y-2">

@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    // Dashboard product image uploads accept up to 5MB; default is 1MB.
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   async redirects() {
     return [
       {
