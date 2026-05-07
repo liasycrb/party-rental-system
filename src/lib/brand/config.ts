@@ -83,7 +83,7 @@ export const BRANDS = {
         "Serving Moreno Valley, Perris, and Riverside. Party and event rentals — jumpers, tables, chairs, and more.",
     },
     copy: {
-      heroKicker: "Moreno Valley, Perris & Riverside",
+      heroKicker: "Moreno Valley & Surrounding Areas",
       heroTitle: "Your backyard. Their best day ever.",
       heroSubtitle:
         "The inflatable is the star — we just roll up, set up, and let the laughter take over. Delivery included in Moreno Valley. Extended areas available for an additional fee.",
@@ -148,7 +148,7 @@ export const BRANDS = {
         "Serving Moreno Valley, Perris, and Riverside. Online booking and fast, friendly jumper rentals.",
     },
     copy: {
-      heroKicker: "Moreno Valley, Perris & Riverside",
+      heroKicker: "Moreno Valley & Surrounding Areas",
       heroTitle: "Go huge. Bounce harder.",
       heroSubtitle:
         "Lock the jumper. Stack the upgrades. Feel the weekend start early. Delivery included in Moreno Valley. Extended areas available for an additional fee.",

@@ -24,24 +24,6 @@ function IconCalendar({ className }: { className?: string }) {
   );
 }
 
-function IconMapPin({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
-}
-
 function IconTruck({ className }: { className?: string }) {
   return (
     <svg
@@ -361,21 +343,6 @@ export function MarketingHero({
                 className={cn("h-4 w-4 shrink-0", isCrb ? "text-slate-950" : "text-white")}
               />
               {isCrb ? "Weekend slots limited" : "Limited weekend slots"}
-            </span>
-            <span
-              className={cn(
-                "inline-flex h-[42px] shrink-0 items-center gap-2 rounded-full border-2 px-5 text-[13px] font-black uppercase tracking-[0.08em] transition-all duration-300 motion-reduce:transition-none hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0",
-                isCrb
-                  ? "border-cyan-400/55 bg-slate-950/70 text-cyan-50 shadow-[0_6px_22px_rgba(2,6,23,0.45)] backdrop-blur-md"
-                  : "min-w-0 border-rose-400 bg-white text-orange-950",
-              )}
-            >
-              <IconMapPin
-                className={cn("h-4 w-4 shrink-0", isCrb ? "text-cyan-300" : "text-rose-600")}
-              />
-              <>
-                Moreno Valley &amp; Surrounding Areas
-              </>
             </span>
           </div>
 
