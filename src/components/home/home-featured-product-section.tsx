@@ -75,6 +75,7 @@ export function HomeFeaturedProductSection({
                     product={product}
                     visual="catalog"
                     catalogBlurbClamp="homepageFeatured"
+                    hidePrice
                     className="h-full min-h-0 w-full flex-1"
                   />
                 </div>
@@ -92,6 +93,7 @@ export function HomeFeaturedProductSection({
                 product={product}
                 visual="catalog"
                 catalogBlurbClamp="homepageFeatured"
+                hidePrice
                 className="min-h-0 h-full w-full flex-1"
               />
             </div>

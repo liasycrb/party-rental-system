@@ -5,14 +5,9 @@ import { cn } from "@/lib/utils/cn";
 const ITEMS = [
   {
     icon: "📍",
-    title: "Moreno Valley, Perris & Riverside",
+    title: "Moreno Valley & Surrounding Areas",
     body:
       "Local crew — not a call center. Delivery included in Moreno Valley. Extended areas available for an additional fee.",
-  },
-  {
-    icon: "🛠️",
-    title: "Setup included",
-    body: "We place, anchor, and safety-check so you host.",
   },
   {
     icon: "🧒",
@@ -51,7 +46,7 @@ export function WhyChooseStrip({
         >
           Why families book with us
         </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
           {ITEMS.map((item) => (
             <div
               key={item.title}

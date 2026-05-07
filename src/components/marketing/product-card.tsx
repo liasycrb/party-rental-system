@@ -77,6 +77,7 @@ export function ProductCard({
   className,
   /** Catalog visual only: looser blurb clamp for homepage featured row (default unchanged elsewhere). */
   catalogBlurbClamp = "default",
+  hidePrice = false,
 }: {
   brand: Brand;
   product: DemoProduct;
@@ -84,6 +85,7 @@ export function ProductCard({
   visual?: "shelf" | "showcase" | "catalog";
   className?: string;
   catalogBlurbClamp?: "default" | "homepageFeatured";
+  hidePrice?: boolean;
 }) {
   const isCrb = brand.slug === "crb";
   const b = brand.slug;
@@ -140,22 +142,24 @@ export function ProductCard({
           </p>
           <ProductCardSpecGrid product={product} variant="catalog" isCrb={isCrb} />
           <div className="mt-auto shrink-0 pt-4">
-          <p className="text-lg font-extrabold tabular-nums text-white">
-            {product.priceFrom != null &&
-            Number.isFinite(product.priceFrom) &&
-            product.priceFrom > 0 ? (
-              <>
-                <span className="text-xs font-semibold uppercase tracking-wide text-white/55">
-                  from{" "}
+          {hidePrice ? null : (
+            <p className="text-lg font-extrabold tabular-nums text-white">
+              {product.priceFrom != null &&
+              Number.isFinite(product.priceFrom) &&
+              product.priceFrom > 0 ? (
+                <>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-white/55">
+                    from{" "}
+                  </span>
+                  ${Math.round(product.priceFrom)}
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-white/70">
+                  Pricing on request
                 </span>
-                ${Math.round(product.priceFrom)}
-              </>
-            ) : (
-              <span className="text-sm font-semibold text-white/70">
-                Pricing on request
-              </span>
-            )}
-          </p>
+              )}
+            </p>
+          )}
           <Link
             href={withBrand(`/build?product=${product.slug}`, b)}
             className="mt-4 flex w-full items-center justify-center px-4 py-3 text-center text-sm font-black tracking-tight text-slate-950 shadow-lg transition-[filter,transform] hover:brightness-110 active:scale-[0.98]"
