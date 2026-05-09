@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { addDaysUTC } from "@/lib/utils/date";
 
 export type InventoryAvailabilityResult =
   | { available: null; reason: "missing_product_or_date" }
@@ -63,12 +64,17 @@ export async function getInventoryAvailability(params: {
     ? product.quantity_available
     : 0;
 
+  // 3-day window: a booking on D blocks D-1, D, D+1.
+  const windowStart = addDaysUTC(eventDate, -1);
+  const windowEnd = addDaysUTC(eventDate, 1);
+
   const { data: bookingRows, error: bookingsError } = await supabase
     .from("bookings")
     .select("quantity, status")
     .eq("brand_slug", brandSlug)
     .eq("product_slug", productSlug)
-    .eq("event_date", eventDate);
+    .gte("event_date", windowStart)
+    .lte("event_date", windowEnd);
 
   if (bookingsError) {
     console.error("[getInventoryAvailability] bookings", bookingsError.message);
