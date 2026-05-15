@@ -312,10 +312,10 @@ export function CrbHome({
             />
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                { t: "Shade + storytime corner", d: "Canopy for cake, gifts, elders.", p: "from $45" },
-                { t: "Seating that scales", d: "Tables + chairs for the whole list.", p: "from $8 / table" },
-                { t: "Quiet power", d: "Generator when outlets are mean.", p: "from $65" },
-                { t: "Stretch the bounce", d: "More minutes, more memories.", p: "from $35" },
+                { t: "Regular Jumper Rentals", d: "Perfect for birthdays, school events, church gatherings, and backyard parties across Moreno Valley. Clean, colorful, and ready for hours of fun.", p: "from $125 each" },
+                { t: "Tables & Chairs Rentals for Any Event in Moreno Valley, CA", d: "Complete your party setup with clean, affordable tables and chairs rentals for birthdays, family parties, school events, and large gatherings.", p: "from $2 each" },
+                { t: "Backyard Party Fun with Inflatable Games", d: "Interactive inflatable games that keep kids active, laughing, and entertained during the entire event.", p: "from $120" },
+                { t: "Water Slide Rentals Fun for Every Event", d: "Cool off your party with exciting inflatable water slides perfect for hot Moreno Valley weekends and summer celebrations.", p: "from $200" },
               ].map((x) => (
                 <div
                   key={x.t}
