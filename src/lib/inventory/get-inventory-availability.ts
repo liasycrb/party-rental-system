@@ -1,5 +1,9 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addDaysUTC } from "@/lib/utils/date";
+import {
+  getBookingBlackouts,
+  isDateInBlackout,
+} from "@/lib/booking/get-booking-blackouts";
 
 export type InventoryAvailabilityResult =
   | { available: null; reason: "missing_product_or_date" }
@@ -8,6 +12,7 @@ export type InventoryAvailabilityResult =
       quantityActive: number;
       bookedCount: number;
       availableQuantity: number;
+      reason?: "blackout";
     };
 
 export async function getInventoryAvailability(params: {
@@ -29,6 +34,19 @@ export async function getInventoryAvailability(params: {
       quantityActive: 0,
       bookedCount: 0,
       availableQuantity: 0,
+    };
+  }
+
+  // Brand-wide blackout overrides product inventory and the inventory_tracked flag.
+  // Short-circuit before the bookings query so closed days never leak through.
+  const blackouts = await getBookingBlackouts(brandSlug);
+  if (isDateInBlackout(eventDate, blackouts)) {
+    return {
+      available: false,
+      quantityActive: 0,
+      bookedCount: 0,
+      availableQuantity: 0,
+      reason: "blackout",
     };
   }
 

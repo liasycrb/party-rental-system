@@ -2,6 +2,10 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addDaysUTC } from "@/lib/utils/date";
+import {
+  enumerateBlackoutDates,
+  getBookingBlackouts,
+} from "@/lib/booking/get-booking-blackouts";
 
 export async function getBookedDates(
   productSlug: string,
@@ -9,8 +13,11 @@ export async function getBookedDates(
 ): Promise<string[]> {
   const supabase = await createSupabaseServerClient();
 
-  // Mirror getInventoryAvailability: look up the product so we know its
-  // tracked capacity. Skip blocking entirely when inventory isn't tracked.
+  // Brand-wide blackouts apply regardless of product, including untracked items.
+  // Fetch them up-front so every return path below honors them.
+  const blackouts = await getBookingBlackouts(brandSlug);
+  const blackoutDates = enumerateBlackoutDates(blackouts);
+
   const { data: allProducts, error: productError } = await supabase
     .rpc("get_active_rental_products_for_brand", { p_brand_slug: brandSlug });
 
@@ -29,8 +36,9 @@ export async function getBookedDates(
   );
   const product = visible.find((p) => p.slug === productSlug) ?? null;
 
+  // Untracked products skip the quantity rollup but still honor brand blackouts.
   if (product && product.inventory_tracked === false) {
-    return [];
+    return blackoutDates;
   }
 
   const quantityAvailable =
@@ -47,10 +55,10 @@ export async function getBookedDates(
 
   if (error) {
     console.error("[getBookedDates]", error.message);
-    return [];
+    // Fail-open for bookings, but blackouts still surface so closed days never leak through.
+    return blackoutDates;
   }
 
-  // Total booked quantity per event_date.
   const qtyByDate = new Map<string, number>();
   for (const row of data ?? []) {
     const d = (row.event_date as string | null) ?? null;
@@ -59,8 +67,6 @@ export async function getBookedDates(
     qtyByDate.set(d, (qtyByDate.get(d) ?? 0) + qty);
   }
 
-  // Candidate dates touched by the 3-day window: each event_date contributes
-  // [D-1, D, D+1]. Same windowing used by getInventoryAvailability.
   const candidates = new Set<string>();
   for (const d of qtyByDate.keys()) {
     candidates.add(addDaysUTC(d, -1));
@@ -68,17 +74,18 @@ export async function getBookedDates(
     candidates.add(addDaysUTC(d, 1));
   }
 
-  // Block D only when summed quantity across [D-1, D, D+1] reaches capacity.
-  const blocked: string[] = [];
+  // Seed with blackouts so the merged set carries them through.
+  // Quantity-aware blocks still use the 3-day window; blackouts do not.
+  const blocked = new Set<string>(blackoutDates);
   for (const d of candidates) {
     const windowSum =
       (qtyByDate.get(addDaysUTC(d, -1)) ?? 0) +
       (qtyByDate.get(d) ?? 0) +
       (qtyByDate.get(addDaysUTC(d, 1)) ?? 0);
     if (windowSum >= quantityAvailable) {
-      blocked.push(d);
+      blocked.add(d);
     }
   }
 
-  return blocked;
+  return Array.from(blocked);
 }
