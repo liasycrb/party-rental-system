@@ -525,8 +525,10 @@ export function BuildBookingStart({
       setBookedDates([]);
       return;
     }
-    getBookedDates(slug).then(setBookedDates).catch(() => setBookedDates([]));
-  }, [selectedItem?.product_slug]);
+    getBookedDates(slug, brandSlug)
+      .then(setBookedDates)
+      .catch(() => setBookedDates([]));
+  }, [selectedItem?.product_slug, brandSlug]);
 
   useEffect(() => {
     if (productSlugTrimmed) {
