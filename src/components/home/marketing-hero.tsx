@@ -450,7 +450,7 @@ export function MarketingHero({
                   isCrb ? "text-slate-800/70" : "text-white/70",
                 )}
               >
-                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment required today
+                Takes less than 60 seconds
               </span>
             </Link>
           </div>

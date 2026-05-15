@@ -115,9 +115,10 @@ export function CrbHome({
                 className="object-cover transition duration-700 hover:scale-[1.06]"
                 sizes="(max-width: 1024px) 100vw, 42vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/15 to-transparent" />
               <div className="absolute bottom-0 p-6">
-                <p className="text-xl font-black text-white">
+                <p className="text-balance text-lg font-black leading-tight text-white drop-shadow-md sm:text-xl">
                   {EXPERIENCE_MOMENTS[1]!.headline}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-cyan-100/88">
@@ -133,9 +134,10 @@ export function CrbHome({
                 className="object-cover transition duration-700 hover:scale-[1.04]"
                 sizes="(max-width: 1024px) 100vw, 58vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/80 via-transparent to-orange-500/15" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-slate-950/35 to-orange-500/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
               <div className="absolute bottom-0 p-8">
-                <p className="max-w-lg text-3xl font-black leading-tight text-white drop-shadow-xl">
+                <p className="max-w-lg text-balance text-xl font-black leading-tight text-white drop-shadow-xl sm:text-2xl lg:text-3xl">
                   {EXPERIENCE_MOMENTS[0]!.headline}
                 </p>
                 <p className="mt-3 max-w-md text-sm font-semibold text-white/90">
@@ -151,14 +153,20 @@ export function CrbHome({
                 className="object-cover object-center transition duration-700 hover:scale-[1.03]"
                 sizes="100vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-orange-500/25" />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-orange-900/70" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-2 p-8 sm:flex-row sm:items-end sm:justify-between">
                 <p className="max-w-xl text-2xl font-black text-white sm:text-3xl">
                   {EXPERIENCE_MOMENTS[2]!.headline}
                 </p>
-                <p className="max-w-sm text-sm font-semibold text-white/85">
-                  {EXPERIENCE_MOMENTS[2]!.sub}
-                </p>
+                <div className="flex max-w-sm flex-col gap-1">
+                  <p className="text-sm font-semibold text-white/85">
+                    {EXPERIENCE_MOMENTS[2]!.sub}
+                  </p>
+                  <p className="text-sm font-semibold text-white/85">
+                    {EXPERIENCE_MOMENTS[2]!.cta}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -274,8 +282,7 @@ export function CrbHome({
                 <ArrowRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
               <span className="relative mt-1.5 text-[12px] font-medium text-slate-800/70">
-                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment
-                required today
+                Takes less than 60 seconds
               </span>
             </Link>
           </div>
@@ -343,8 +350,7 @@ export function CrbHome({
                 <ArrowRight className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
               <span className="relative mt-1.5 text-[12px] font-medium text-slate-800/70">
-                Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment
-                required today
+                Takes less than 60 seconds
               </span>
             </Link>
           </div>
@@ -406,7 +412,7 @@ export function CrbHome({
                   <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
                 <span className="relative mt-1 text-[11px] font-medium text-slate-800/65">
-                  No payment required today
+                  Takes less than 60 seconds
                 </span>
               </Link>
             </div>

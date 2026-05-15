@@ -135,19 +135,21 @@ export const EXPERIENCE_MOMENTS = [
   {
     src: "/party-rentals/shared/experience-main.jpg",
     alt: "Kids laughing and playing together outdoors at a party",
-    headline: "That moment the jumper starts to rise",
-    sub: "Squeals, sprinting cousins, phones forgotten in pockets.",
+    headline:
+      "Backyard Party Rentals in Moreno Valley, CA | Bounce House & Water Slide Rentals",
+    sub: "Make your next event unforgettable with premium bounce house rentals, inflatable water slides, tables, chairs, and full party setups.",
   },
   {
     src: "/party-rentals/shared/experience-side-1.jpg",
     alt: "Friends celebrating outside with sunshine and drinks",
-    headline: "Backyard energy you can feel through the fence",
-    sub: "Tables, shade, music — the whole scene, not just the bounce.",
+    headline: "Backyard party energy your guests will never forget.",
+    sub: "From bounce houses and water slides to tables, chairs, tents, ready setups — we create the full party experience for birthdays, family events, and celebrations of all sizes.",
   },
   {
     src: "/party-rentals/shared/experience-side-2.jpg",
     alt: "Colorful balloons and festive party decorations",
-    headline: "This is what “we went all out” looks like",
-    sub: "Your guests won’t talk about the spreadsheet — they’ll talk about the day.",
+    headline: "Not just a party… a full backyard experience.",
+    sub: "From bounce house rentals to tables, chairs, and water slides, we bring everything you need to host stress-free and unforgettable events.",
+    cta: "Search “party rentals near me” and reserve your date before it’s gone.",
   },
 ] as const;

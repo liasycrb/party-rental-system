@@ -102,8 +102,7 @@ export function CtaBanner({
                 isCrb ? "text-slate-800/70" : "text-white/70",
               )}
             >
-              Takes less than 60 seconds&nbsp;&nbsp;·&nbsp;&nbsp;No payment
-              required
+              Takes less than 60 seconds
             </span>
           </Link>
         </div>

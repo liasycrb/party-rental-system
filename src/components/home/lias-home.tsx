@@ -98,9 +98,10 @@ export function LiasHome({
                 className="object-cover transition duration-700 hover:scale-[1.04]"
                 sizes="(max-width: 1024px) 100vw, 66vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-900/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-900/55 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                <p className="text-2xl font-black leading-tight text-white drop-shadow-lg sm:text-3xl">
+                <p className="max-w-xl text-balance text-xl font-black leading-tight text-white drop-shadow-lg sm:text-2xl lg:text-3xl">
                   {EXPERIENCE_MOMENTS[0]!.headline}
                 </p>
                 <p className="mt-2 max-w-lg text-sm font-semibold text-white/85">
@@ -116,9 +117,10 @@ export function LiasHome({
                 className="object-cover transition duration-700 hover:scale-[1.05]"
                 sizes="(max-width: 1024px) 100vw, 33vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-900/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/12 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-lg font-black text-white drop-shadow-md">
+                <p className="text-balance text-base font-black leading-tight text-white drop-shadow-md sm:text-lg">
                   {EXPERIENCE_MOMENTS[1]!.headline}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-white/80">
@@ -134,13 +136,17 @@ export function LiasHome({
                 className="object-cover object-top transition duration-700 hover:scale-[1.05]"
                 sizes="(max-width: 1024px) 100vw, 33vw"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-rose-950/85 via-transparent to-amber-200/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-rose-950/95 via-rose-950/70 to-amber-200/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-lg font-black text-white drop-shadow-md">
                   {EXPERIENCE_MOMENTS[2]!.headline}
                 </p>
                 <p className="mt-1 text-xs font-semibold text-white/80">
                   {EXPERIENCE_MOMENTS[2]!.sub}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-white/80">
+                  {EXPERIENCE_MOMENTS[2]!.cta}
                 </p>
               </div>
             </div>
