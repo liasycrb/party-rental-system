@@ -391,9 +391,41 @@ export default async function DashboardBookingDetailPage(props: {
           </div>
         </Section>
 
+        <Section title="Delivery">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Delivery Fee"
+              value={
+                row.delivery_fee != null && Number(row.delivery_fee) === 0
+                  ? "Free"
+                  : formatUsd(row.delivery_fee)
+              }
+            />
+            <Field
+              label="Driving Distance"
+              value={
+                row.delivery_distance_miles != null
+                  ? `${Number(row.delivery_distance_miles).toFixed(1)} mi`
+                  : "—"
+              }
+            />
+            <Field
+              label="Normalized Address"
+              value={row.delivery_normalized_address?.trim() || "—"}
+            />
+          </div>
+        </Section>
+
         <Section title="Payment">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Subtotal" value={formatUsd(row.subtotal)} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Items Subtotal" value={formatUsd(row.subtotal)} />
+            <Field label="Delivery Fee" value={formatUsd(row.delivery_fee)} />
+            <Field
+              label="Total"
+              value={formatUsd(
+                Number(row.subtotal ?? 0) + Number(row.delivery_fee ?? 0),
+              )}
+            />
             <Field label="Deposit" value={formatUsd(row.deposit_amount)} />
             <Field label="Balance Due" value={formatUsd(row.balance_due)} />
           </div>

@@ -19,8 +19,11 @@ import { checkBuildAvailability } from "@/lib/booking/check-build-availability";
 import { getBookedDates } from "@/lib/booking/get-booked-dates";
 import { submitBookingLead } from "@/lib/booking/submit-booking-lead";
 import { createOnlineBooking } from "@/lib/booking/create-online-booking";
+import { getDeliveryQuote } from "@/lib/delivery/get-delivery-quote";
+import type { CalculateDeliveryFeeResult } from "@/lib/delivery/types";
 import type { UpsellSelection } from "@/lib/booking/upsell-selection";
 import { BuildInventoryCardImage } from "@/components/build/build-inventory-card-image";
+import { DeliveryAddressAutocomplete } from "@/components/build/_delivery-address-autocomplete";
 import { AvailabilityCalendar } from "@/components/build/_availability-calendar";
 import type { BuildUpsellOption } from "@/lib/inventory/build-upsell-shared";
 import { upsellUnitEstimate } from "@/lib/inventory/build-upsell-shared";
@@ -209,14 +212,17 @@ function buildMainRentalNotesSection(itemLabel: string, quantity: number): strin
 function buildLeadNotesBlock(input: {
   eventTime: string;
   deliveryAddress: string;
+  deliveryUnit?: string;
   customerNotes: string;
 }): string | null {
   const lines: string[] = [];
   const et = input.eventTime.trim();
   const addr = input.deliveryAddress.trim();
+  const unit = (input.deliveryUnit ?? "").trim();
   const cn = input.customerNotes.trim();
   if (et) lines.push(`Event start preference: ${et}`);
   if (addr) lines.push(`Delivery address: ${addr}`);
+  if (unit) lines.push(`Apt/Suite/Unit: ${unit}`);
   if (cn) lines.push(`Customer notes: ${cn}`);
   return lines.length ? lines.join("\n") : null;
 }
@@ -297,23 +303,13 @@ const EVENT_TIME_WINDOW_OPTIONS = [
   { value: "evening", label: "Evening" },
 ] as const;
 
-const EVENT_CITY_OTHER_VALUE = "Other City";
-
-/** Step 5 event city dropdown — persisted as `event_city` / lead city. Values must match exactly. */
-const EVENT_CITY_FORM_OPTIONS = [
-  { value: "Moreno Valley", label: "Moreno Valley" },
-  { value: EVENT_CITY_OTHER_VALUE, label: "Other City" },
-] as const;
-
-const EVENT_CITY_FREE_DELIVERY_MESSAGE = "Free delivery in this service area.";
-const EVENT_CITY_OTHER_CONTACT_MESSAGE =
-  "For pricing and delivery availability in your city, please contact us directly.";
-
-function eventCityConditionalDeliveryCopy(selected: string): string | null {
-  const v = selected.trim();
-  if (v === "Moreno Valley") return EVENT_CITY_FREE_DELIVERY_MESSAGE;
-  return null;
-}
+/**
+ * event_city used to come from a customer dropdown — that produced
+ * city/address mismatches (e.g. dropdown=Hemet but address in Corona). The
+ * authoritative value now comes from the Google Geocoding locality of the
+ * delivery address (see calculate-delivery-fee.ts).
+ */
+const EVENT_CITY_FALLBACK = "To be confirmed";
 
 /** Shown on event-details / availability step — no customer pickup/delivery window selection. */
 const BUILD_DELIVERY_PICKUP_TIMING_HELPER =
@@ -378,15 +374,28 @@ function computeReservationPricing(input: {
 
 function buildPricingNotesSection(p: {
   subtotal: number;
+  deliveryFee: number | null;
+  total: number;
   depositAmount: number;
   balanceDue: number;
 }): string {
-  return [
+  const lines = [
     "Pricing:",
-    `Subtotal: ${formatUsd(p.subtotal)}`,
+    `Items subtotal: ${formatUsd(p.subtotal)}`,
+  ];
+  if (p.deliveryFee != null) {
+    lines.push(
+      `Estimated delivery fee: ${
+        p.deliveryFee === 0 ? "Free" : formatUsd(p.deliveryFee)
+      }`,
+    );
+  }
+  lines.push(
+    `Total: ${formatUsd(p.total)}`,
     `Deposit due today: ${formatUsd(p.depositAmount)}`,
-    `Balance due at delivery: ${formatUsd(p.balanceDue)}`,
-  ].join("\n");
+    `Remaining balance: ${formatUsd(p.balanceDue)}`,
+  );
+  return lines.join("\n");
 }
 
 const GENERAL_RENTAL_RULES: readonly string[] = [
@@ -486,8 +495,11 @@ export function BuildBookingStart({
 
   const [formDate, setFormDate] = useState("");
   const [bookedDates, setBookedDates] = useState<string[]>([]);
-  const [formCity, setFormCity] = useState("");
   const [formDeliveryAddress, setFormDeliveryAddress] = useState("");
+  const [formDeliveryPlaceId, setFormDeliveryPlaceId] = useState<string | null>(
+    null,
+  );
+  const [formDeliveryUnit, setFormDeliveryUnit] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -505,6 +517,11 @@ export function BuildBookingStart({
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [deliveryQuote, setDeliveryQuote] =
+    useState<CalculateDeliveryFeeResult | null>(null);
+  const [quotedAddress, setQuotedAddress] = useState<string | null>(null);
+  const [isCalculatingDelivery, setIsCalculatingDelivery] = useState(false);
 
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const [paymentProofPreviewUrl, setPaymentProofPreviewUrl] = useState<string | null>(null);
@@ -587,8 +604,8 @@ export function BuildBookingStart({
 
   const formId = useId();
   const idDate = `${formId}-date`;
-  const idCity = `${formId}-city`;
   const idDeliveryAddress = `${formId}-delivery-address`;
+  const idDeliveryUnit = `${formId}-delivery-unit`;
   const idEventTime = `${formId}-event-time`;
   const idName = `${formId}-name`;
   const idPhone = `${formId}-phone`;
@@ -636,7 +653,66 @@ export function BuildBookingStart({
     [upsellOptions, upsellQtyById],
   );
 
-  const eventCityDeliveryHelper = eventCityConditionalDeliveryCopy(formCity);
+  const trimmedDeliveryAddress = formDeliveryAddress.trim();
+  const deliveryQuoteIsStale =
+    quotedAddress != null && quotedAddress !== trimmedDeliveryAddress;
+  const activeDeliveryQuote = deliveryQuoteIsStale ? null : deliveryQuote;
+  const deliveryBlockedByDistance =
+    activeDeliveryQuote != null &&
+    !activeDeliveryQuote.ok &&
+    activeDeliveryQuote.reason === "outside_service_area";
+
+  // Authoritative event_city is the locality the geocoder returned. Empty
+  // until a successful quote exists.
+  const inferredCity =
+    activeDeliveryQuote && activeDeliveryQuote.ok
+      ? (activeDeliveryQuote.locality?.trim() || "")
+      : "";
+
+  // Display pricing — server-side calculateDeliveryFee re-runs at submission and
+  // is the authority. These values exist solely to keep Step 6/Step 8 totals in
+  // sync with what the server will charge.
+  const displayDeliveryFee =
+    activeDeliveryQuote && activeDeliveryQuote.ok
+      ? activeDeliveryQuote.deliveryFee
+      : null;
+  const displayTotal =
+    Math.round(
+      (reservationPricing.subtotal + (displayDeliveryFee ?? 0)) * 100,
+    ) / 100;
+  const displayDeposit =
+    Math.round(Math.min(displayTotal, FIXED_DEPOSIT_AMOUNT) * 100) / 100;
+  const displayBalance =
+    Math.round((displayTotal - displayDeposit) * 100) / 100;
+
+  async function runDeliveryCalculation(): Promise<CalculateDeliveryFeeResult | null> {
+    if (!trimmedDeliveryAddress) return null;
+    setIsCalculatingDelivery(true);
+    try {
+      const result = await getDeliveryQuote({
+        customerAddress: trimmedDeliveryAddress,
+      });
+      setDeliveryQuote(result);
+      setQuotedAddress(trimmedDeliveryAddress);
+      return result;
+    } catch {
+      const fallback: CalculateDeliveryFeeResult = {
+        ok: false,
+        reason: "google_error",
+        message:
+          "We couldn't reach the delivery service right now. Please try again or call us.",
+      };
+      setDeliveryQuote(fallback);
+      setQuotedAddress(trimmedDeliveryAddress);
+      return fallback;
+    } finally {
+      setIsCalculatingDelivery(false);
+    }
+  }
+
+  async function handleCalculateDelivery() {
+    await runDeliveryCalculation();
+  }
 
   async function submitReservationLead() {
     setErrorMessage(null);
@@ -670,7 +746,7 @@ export function BuildBookingStart({
     const eventDate = formDate.trim() ? formDate.trim() : null;
     const customerName = formName;
     const phone = formPhone;
-    const eventCity = formCity.trim() ? formCity.trim() : null;
+    const eventCity = inferredCity || null;
     const itemLabel =
       selectedItem?.name ?? (productForFlow ? `Product (${productForFlow})` : "Rental item");
     const mainRentalBlock = buildMainRentalNotesSection(itemLabel, selectedItemQuantity);
@@ -687,6 +763,7 @@ export function BuildBookingStart({
             buildLeadNotesBlock({
               eventTime,
               deliveryAddress: formDeliveryAddress,
+              deliveryUnit: formDeliveryUnit,
               customerNotes: formNotes,
             }),
           ),
@@ -694,8 +771,10 @@ export function BuildBookingStart({
         ),
         buildPricingNotesSection({
           subtotal: reservationPricing.subtotal,
-          depositAmount: reservationPricing.depositAmount,
-          balanceDue: reservationPricing.balanceDue,
+          deliveryFee: displayDeliveryFee,
+          total: displayTotal,
+          depositAmount: displayDeposit,
+          balanceDue: displayBalance,
         }),
       ),
       rentalAgreementBlock,
@@ -776,8 +855,7 @@ export function BuildBookingStart({
         deliveryWindow: INTERNAL_DELIVERY_WINDOW_DEFAULT,
         pickupWindow: INTERNAL_PICKUP_WINDOW_DEFAULT,
         subtotal: reservationPricing.subtotal,
-        depositAmount: reservationPricing.depositAmount,
-        balanceDue: reservationPricing.balanceDue,
+        deliveryAddress: formDeliveryAddress,
         paymentProofPath: paymentProofFullPath,
       });
       if (!bookingResult.ok) {
@@ -903,9 +981,9 @@ export function BuildBookingStart({
       "Hi, I just submitted a reservation request.",
       `Product: ${selectedItem?.name ?? productSlugTrimmed ?? "—"}`,
       `Date: ${readableDate}`,
-      `City: ${formCity.trim() || "—"}`,
+      `City: ${inferredCity || "—"}`,
       `Name: ${formName.trim()}`,
-      `Deposit paid: ${formatUsd(reservationPricing.depositAmount)}`,
+      `Deposit paid: ${formatUsd(displayDeposit)}`,
       `Reference: ${refCode}`,
     ].join("\n");
 
@@ -914,10 +992,10 @@ export function BuildBookingStart({
     const summaryRows: [string, string][] = [
       ["Product", selectedItem?.name ?? productSlugTrimmed ?? "—"],
       ["Date", readableDate],
-      ["City", formCity.trim() || "—"],
+      ["City", inferredCity || "—"],
       ["Customer", formName.trim()],
-      ["Deposit paid", formatUsd(reservationPricing.depositAmount)],
-      ["Balance due", formatUsd(reservationPricing.balanceDue)],
+      ["Deposit paid", formatUsd(displayDeposit)],
+      ["Balance due", formatUsd(displayBalance)],
     ];
 
     return (
@@ -1736,11 +1814,24 @@ export function BuildBookingStart({
               isCrb ? "bg-slate-800/70 ring-cyan-500/20 backdrop-blur-md" : "bg-white/80 ring-stone-200/90 backdrop-blur-sm",
             )}
             style={{ borderRadius: "var(--brand-radius-lg)" }}
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              if (formCity === EVENT_CITY_OTHER_VALUE) return;
+              if (deliveryBlockedByDistance) return;
+              if (isCalculatingDelivery) return;
+              if (!trimmedDeliveryAddress) {
+                setErrorMessage("Please enter your delivery address.");
+                return;
+              }
               setErrorMessage(null);
-              setStep(6);
+
+              let quote: CalculateDeliveryFeeResult | null =
+                activeDeliveryQuote;
+              if (!quote || !quote.ok) {
+                quote = await runDeliveryCalculation();
+              }
+              if (quote && quote.ok) {
+                setStep(6);
+              }
             }}
           >
             <div>
@@ -1776,86 +1867,216 @@ export function BuildBookingStart({
               />
             </div>
             <div>
-              <label htmlFor={idCity} className={labelClass(isCrb)}>
-                Event city
-              </label>
-              <select
-                id={idCity}
-                name="city"
-                required
-                className={inputClass(isCrb)}
-                value={formCity}
-                onChange={(e) => setFormCity(e.target.value)}
-              >
-                <option value="">Select a city…</option>
-                {EVENT_CITY_FORM_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              {eventCityDeliveryHelper ? (
-                <p
-                  className={cn(
-                    "mt-1.5 text-xs font-medium leading-relaxed sm:text-sm sm:leading-snug",
-                    isCrb ? "text-slate-400" : "text-stone-600",
-                  )}
-                >
-                  {eventCityDeliveryHelper}
-                </p>
-              ) : null}
-              {formCity === EVENT_CITY_OTHER_VALUE ? (
-                <div
-                  className={cn(
-                    "mt-3 rounded-xl p-4 ring-1",
-                    isCrb
-                      ? "bg-slate-900/60 ring-cyan-500/25"
-                      : "bg-rose-50/80 ring-rose-200/70",
-                  )}
-                  style={{ borderRadius: "var(--brand-radius-md)" }}
-                >
-                  <p
-                    className={cn(
-                      "text-sm font-semibold leading-relaxed",
-                      isCrb ? "text-slate-100" : "text-stone-800",
-                    )}
-                  >
-                    {EVENT_CITY_OTHER_CONTACT_MESSAGE}
-                  </p>
-                  <div className={contactActionsClass(isCrb)} style={{ borderRadius: "var(--brand-radius-md)" }}>
-                    <a
-                      href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
-                      className={contactButtonClass(isCrb, "primary")}
-                      style={{ borderRadius: "var(--brand-radius-md)" }}
-                    >
-                      Call {brandContact.supportPhoneDisplay}
-                    </a>
-                    <a
-                      href={waHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={contactButtonClass(isCrb, "outline")}
-                      style={{ borderRadius: "var(--brand-radius-md)" }}
-                    >
-                      WhatsApp
-                    </a>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            <div>
               <label htmlFor={idDeliveryAddress} className={labelClass(isCrb)}>
                 Delivery address
               </label>
-              <textarea
+              <DeliveryAddressAutocomplete
                 id={idDeliveryAddress}
-                name="delivery_address"
-                rows={3}
-                className={cn(inputClass(isCrb), "min-h-[88px] resize-y")}
-                placeholder="Street address, unit, ZIP — where we should deliver"
                 value={formDeliveryAddress}
-                onChange={(e) => setFormDeliveryAddress(e.target.value)}
+                inputClassName={inputClass(isCrb)}
+                onTextChange={(v) => {
+                  setFormDeliveryAddress(v);
+                  // User typed past their selection — selection no longer
+                  // represents what's in the input. Quote staleness is
+                  // already handled by quotedAddress != trimmedDeliveryAddress.
+                  if (formDeliveryPlaceId) setFormDeliveryPlaceId(null);
+                }}
+                onSelect={({ formattedAddress, placeId }) => {
+                  setFormDeliveryAddress(formattedAddress);
+                  setFormDeliveryPlaceId(placeId);
+                }}
               />
+              {formDeliveryPlaceId ? (
+                <p
+                  className={cn(
+                    "mt-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold",
+                    isCrb
+                      ? "bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-400/30"
+                      : "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80",
+                  )}
+                >
+                  <span aria-hidden="true">✓</span>
+                  <span>
+                    Verified address: {formDeliveryAddress}
+                  </span>
+                </p>
+              ) : trimmedDeliveryAddress ? (
+                <p
+                  className={cn(
+                    "mt-1.5 text-xs leading-snug",
+                    isCrb ? "text-slate-400" : "text-stone-600",
+                  )}
+                >
+                  Select a suggested address for the most accurate delivery
+                  price.
+                </p>
+              ) : null}
+              <div className="mt-3">
+                <label
+                  htmlFor={idDeliveryUnit}
+                  className={cn(labelClass(isCrb), "mb-1")}
+                >
+                  Apt / Suite / Unit{" "}
+                  <span
+                    className={cn(
+                      "font-normal",
+                      isCrb ? "text-slate-400" : "text-stone-500",
+                    )}
+                  >
+                    (optional)
+                  </span>
+                </label>
+                <input
+                  id={idDeliveryUnit}
+                  name="delivery_unit"
+                  type="text"
+                  autoComplete="address-line2"
+                  className={inputClass(isCrb)}
+                  placeholder="Apt 5B, Suite 200, etc."
+                  value={formDeliveryUnit}
+                  onChange={(e) => setFormDeliveryUnit(e.target.value)}
+                />
+              </div>
+              <div className="mt-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleCalculateDelivery}
+                    disabled={
+                      !trimmedDeliveryAddress || isCalculatingDelivery
+                    }
+                    className={cn(
+                      "h-11 rounded-xl px-4 text-sm font-bold transition active:scale-[0.99]",
+                      "disabled:pointer-events-none disabled:opacity-60",
+                      isCrb
+                        ? "bg-slate-700 text-cyan-100 ring-1 ring-cyan-500/30 hover:bg-slate-600"
+                        : "bg-stone-100 text-stone-900 ring-1 ring-stone-300 hover:bg-stone-200",
+                    )}
+                    style={{ borderRadius: "var(--brand-radius-md)" }}
+                  >
+                    {isCalculatingDelivery
+                      ? "Calculating…"
+                      : activeDeliveryQuote
+                        ? "Recalculate delivery fee"
+                        : "Calculate delivery fee"}
+                  </button>
+
+                  {deliveryQuoteIsStale && deliveryQuote ? (
+                    <p
+                      className={cn(
+                        "text-xs font-medium",
+                        isCrb ? "text-amber-300" : "text-amber-700",
+                      )}
+                    >
+                      Address changed — recalculate to update the estimate.
+                    </p>
+                  ) : null}
+
+                  {activeDeliveryQuote ? (
+                    activeDeliveryQuote.ok ? (
+                      <div
+                        className={cn(
+                          "rounded-xl px-3 py-2.5 text-sm ring-1",
+                          activeDeliveryQuote.isFreeCity
+                            ? isCrb
+                              ? "bg-emerald-500/10 text-emerald-100 ring-emerald-400/30"
+                              : "bg-emerald-50 text-emerald-900 ring-emerald-200/80"
+                            : isCrb
+                              ? "bg-cyan-500/10 text-cyan-50 ring-cyan-500/25"
+                              : "bg-rose-50 text-rose-950 ring-rose-200/80",
+                        )}
+                        style={{ borderRadius: "var(--brand-radius-md)" }}
+                      >
+                        {activeDeliveryQuote.isFreeCity ? (
+                          <p className="font-bold">Free delivery</p>
+                        ) : (
+                          <>
+                            <p className="font-bold">
+                              Estimated delivery fee:{" "}
+                              {formatUsd(activeDeliveryQuote.deliveryFee)}
+                            </p>
+                            <p
+                              className={cn(
+                                "mt-0.5 text-xs",
+                                isCrb ? "text-slate-300" : "text-stone-600",
+                              )}
+                            >
+                              {activeDeliveryQuote.distanceMiles.toFixed(1)}{" "}
+                              driving miles × ${activeDeliveryQuote.ratePerMile}
+                              /mi
+                            </p>
+                          </>
+                        )}
+                        <p
+                          className={cn(
+                            "mt-1 text-[11px] italic",
+                            isCrb ? "text-slate-400" : "text-stone-600",
+                          )}
+                        >
+                          Estimate — final fee confirmed when we review your
+                          reservation.
+                        </p>
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          "rounded-xl px-3 py-2.5 text-sm ring-1",
+                          isCrb
+                            ? "bg-amber-500/10 text-amber-100 ring-amber-400/30"
+                            : "bg-amber-50 text-amber-900 ring-amber-200/80",
+                        )}
+                        style={{ borderRadius: "var(--brand-radius-md)" }}
+                      >
+                        <p className="font-semibold">
+                          {activeDeliveryQuote.reason ===
+                          "outside_service_area"
+                            ? "Address is outside our delivery area."
+                            : "We couldn't verify that address."}
+                        </p>
+                        <p
+                          className={cn(
+                            "mt-0.5 text-xs",
+                            isCrb ? "text-amber-200/90" : "text-amber-800",
+                          )}
+                        >
+                          {activeDeliveryQuote.reason ===
+                          "outside_service_area"
+                            ? `Please call ${brandContact.supportPhoneDisplay} to discuss delivery options.`
+                            : `Please double-check the address or call ${brandContact.supportPhoneDisplay} to confirm delivery.`}
+                        </p>
+                        {activeDeliveryQuote.reason ===
+                        "outside_service_area" ? (
+                          <div
+                            className={contactActionsClass(isCrb)}
+                            style={{
+                              borderRadius: "var(--brand-radius-md)",
+                            }}
+                          >
+                            <a
+                              href={`tel:${formatPhoneTel(brandContact.supportPhone)}`}
+                              className={contactButtonClass(isCrb, "primary")}
+                              style={{
+                                borderRadius: "var(--brand-radius-md)",
+                              }}
+                            >
+                              Call {brandContact.supportPhoneDisplay}
+                            </a>
+                            <a
+                              href={waHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={contactButtonClass(isCrb, "outline")}
+                              style={{
+                                borderRadius: "var(--brand-radius-md)",
+                              }}
+                            >
+                              WhatsApp
+                            </a>
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  ) : null}
+              </div>
             </div>
             <div>
               <label htmlFor={idNotes} className={labelClass(isCrb)}>
@@ -1882,18 +2103,22 @@ export function BuildBookingStart({
               >
                 ← Back
               </button>
-              {formCity === EVENT_CITY_OTHER_VALUE ? null : (
-                <button
-                  type="submit"
-                  className={cn(
-                    "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
-                    isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white shadow-lg shadow-rose-900/15 hover:bg-rose-700",
-                  )}
-                  style={{ borderRadius: "var(--brand-radius-md)" }}
-                >
-                  Continue to review
-                </button>
-              )}
+              <button
+                type="submit"
+                disabled={
+                  deliveryBlockedByDistance || isCalculatingDelivery
+                }
+                className={cn(
+                  "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
+                  "disabled:pointer-events-none disabled:opacity-60",
+                  isCrb ? "bg-cyan-500 text-black hover:bg-cyan-400" : "bg-rose-600 text-white shadow-lg shadow-rose-900/15 hover:bg-rose-700",
+                )}
+                style={{ borderRadius: "var(--brand-radius-md)" }}
+              >
+                {isCalculatingDelivery
+                  ? "Calculating…"
+                  : "Continue to review"}
+              </button>
             </div>
           </form>
         ) : null}
@@ -1935,11 +2160,30 @@ export function BuildBookingStart({
               </div>
               <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Event city</dt>
-                <dd>{formCity.trim() || "—"}</dd>
+                <dd>{inferredCity || "Detected from address"}</dd>
               </div>
               <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Delivery address</dt>
-                <dd className="whitespace-pre-wrap">{formDeliveryAddress.trim() || "—"}</dd>
+                <dd className="whitespace-pre-wrap">
+                  {formDeliveryAddress.trim() || "—"}
+                  {formDeliveryUnit.trim() ? (
+                    <span className="block">
+                      Apt/Suite/Unit: {formDeliveryUnit.trim()}
+                    </span>
+                  ) : null}
+                  {formDeliveryPlaceId ? (
+                    <span
+                      className={cn(
+                        "mt-1 inline-block rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+                        isCrb
+                          ? "bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-400/30"
+                          : "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/80",
+                      )}
+                    >
+                      ✓ Google verified
+                    </span>
+                  ) : null}
+                </dd>
               </div>
               <div>
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Event start</dt>
@@ -2014,9 +2258,34 @@ export function BuildBookingStart({
                 isCrb ? "bg-cyan-500/10 text-cyan-50 ring-1 ring-cyan-500/25" : "bg-rose-50 text-rose-950 ring-1 ring-rose-200/80",
               )}
             >
-              <p>Reservation subtotal: {formatUsd(reservationPricing.subtotal)}</p>
-              <p>Deposit due today: {formatUsd(reservationPricing.depositAmount)}</p>
-              <p>Balance due at delivery: {formatUsd(reservationPricing.balanceDue)}</p>
+              <p>Items subtotal: {formatUsd(reservationPricing.subtotal)}</p>
+              <p>
+                Estimated delivery fee:{" "}
+                {displayDeliveryFee == null
+                  ? "—"
+                  : activeDeliveryQuote && activeDeliveryQuote.ok &&
+                      activeDeliveryQuote.isFreeCity
+                    ? "Free"
+                    : formatUsd(displayDeliveryFee)}
+              </p>
+              <p
+                className={cn(
+                  "border-t pt-1",
+                  isCrb ? "border-cyan-500/20" : "border-rose-200/80",
+                )}
+              >
+                Total: {formatUsd(displayTotal)}
+              </p>
+              <p>Deposit due today: {formatUsd(displayDeposit)}</p>
+              <p>Remaining balance: {formatUsd(displayBalance)}</p>
+              <p
+                className={cn(
+                  "pt-1 text-xs italic font-normal",
+                  isCrb ? "text-slate-400" : "text-stone-600",
+                )}
+              >
+                Delivery fee re-confirmed at submission from the address above.
+              </p>
             </div>
             {reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT ? (
               <div
@@ -2230,9 +2499,26 @@ export function BuildBookingStart({
                 isCrb ? "bg-cyan-500/10 text-cyan-50 ring-1 ring-cyan-500/25" : "bg-rose-50 text-rose-950 ring-1 ring-rose-200/80",
               )}
             >
-              <p>Reservation subtotal: {formatUsd(reservationPricing.subtotal)}</p>
-              <p>Deposit due today: {formatUsd(reservationPricing.depositAmount)}</p>
-              <p>Balance due at delivery: {formatUsd(reservationPricing.balanceDue)}</p>
+              <p>Items subtotal: {formatUsd(reservationPricing.subtotal)}</p>
+              <p>
+                Estimated delivery fee:{" "}
+                {displayDeliveryFee == null
+                  ? "—"
+                  : activeDeliveryQuote && activeDeliveryQuote.ok &&
+                      activeDeliveryQuote.isFreeCity
+                    ? "Free"
+                    : formatUsd(displayDeliveryFee)}
+              </p>
+              <p
+                className={cn(
+                  "border-t pt-1",
+                  isCrb ? "border-cyan-500/20" : "border-rose-200/80",
+                )}
+              >
+                Total: {formatUsd(displayTotal)}
+              </p>
+              <p>Deposit due today: {formatUsd(displayDeposit)}</p>
+              <p>Remaining balance: {formatUsd(displayBalance)}</p>
             </div>
             <div
               className={cn(
@@ -2259,7 +2545,7 @@ export function BuildBookingStart({
               </p>
               <div>
                 <p className={cn("font-bold", isCrb ? "text-cyan-100" : "text-stone-700")}>Amount:</p>
-                <p>Deposit due today: {formatUsd(reservationPricing.depositAmount)}</p>
+                <p>Deposit due today: {formatUsd(displayDeposit)}</p>
               </div>
             </div>
             <ol
