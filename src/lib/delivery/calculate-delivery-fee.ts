@@ -4,6 +4,11 @@
  * Reads non-NEXT_PUBLIC env (GOOGLE_MAPS_API_KEY, BUSINESS_ORIGIN_ADDRESS,
  * DELIVERY_MAX_MILES) — Next will refuse to bundle this for the client.
  * Do not import from a Client Component.
+ *
+ * Tier rates, free-city name, and the service-area cap are loaded per-brand
+ * from delivery_pricing_settings (RPC get_delivery_pricing_settings), with
+ * DEFAULT_DELIVERY_PRICING as a safety fallback. DELIVERY_MAX_MILES env is
+ * honored only when settings/defaults would yield no value.
  */
 
 import type {
@@ -11,13 +16,17 @@ import type {
   CalculateDeliveryFeeResult,
   DeliveryFeeTier,
 } from "./types";
+import { getDeliveryPricingSettings } from "./get-delivery-pricing-settings";
+import {
+  DEFAULT_DELIVERY_PRICING,
+  type DeliveryPricingSettings,
+} from "./default-delivery-pricing";
 
 const GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
 const DISTANCE_MATRIX_URL =
   "https://maps.googleapis.com/maps/api/distancematrix/json";
 const REQUEST_TIMEOUT_MS = 5000;
 const METERS_PER_MILE = 1609.344;
-const DEFAULT_MAX_MILES = 40;
 
 type AddressComponent = {
   long_name: string;
@@ -51,22 +60,21 @@ type DistanceMatrixApiResponse = {
 
 function feeForMiles(
   miles: number,
+  pricing: DeliveryPricingSettings,
 ): { fee: number; tier: DeliveryFeeTier; ratePerMile: number } {
-  // Per-mile rate by total-distance tier. Spec:
-  //   1–9 miles  → $5/mi
-  //   10–20 miles → $8/mi
-  //   21+ miles   → $15/mi
-  // Final fee = round(miles × rate). Whole dollars.
+  // Per-mile rate by total-distance tier. Thresholds and rates are
+  // dashboard-configurable per brand; defaults preserve the original spec
+  // (9 / 20 / 40 mi at $5 / $8 / $15 per mile). Final fee = round(miles × rate).
   let ratePerMile: number;
   let tier: DeliveryFeeTier;
-  if (miles <= 9) {
-    ratePerMile = 5;
+  if (miles <= pricing.nearMaxMiles) {
+    ratePerMile = pricing.nearRatePerMile;
     tier = "near";
-  } else if (miles <= 20) {
-    ratePerMile = 8;
+  } else if (miles <= pricing.midMaxMiles) {
+    ratePerMile = pricing.midRatePerMile;
     tier = "mid";
   } else {
-    ratePerMile = 15;
+    ratePerMile = pricing.farRatePerMile;
     tier = "far";
   }
   const fee = Math.round(miles * ratePerMile);
@@ -76,21 +84,27 @@ function feeForMiles(
 type LocalityInfo = {
   locality: string | null;
   state: string;
-  isMorenoValleyCA: boolean;
+  isFreeCity: boolean;
 };
 
-function extractLocality(components: AddressComponent[]): LocalityInfo {
+function extractLocality(
+  components: AddressComponent[],
+  freeCity: string,
+): LocalityInfo {
   let localityLong = "";
   let state = "";
   for (const c of components) {
     if (c.types.includes("locality")) localityLong = c.long_name;
     if (c.types.includes("administrative_area_level_1")) state = c.short_name;
   }
+  const normalizedFreeCity = freeCity.trim().toLowerCase();
   return {
     locality: localityLong ? localityLong : null,
     state,
-    isMorenoValleyCA:
-      localityLong.toLowerCase() === "moreno valley" && state === "CA",
+    isFreeCity:
+      normalizedFreeCity.length > 0 &&
+      localityLong.toLowerCase() === normalizedFreeCity &&
+      state === "CA",
   };
 }
 
@@ -107,11 +121,22 @@ export async function calculateDeliveryFee(
 ): Promise<CalculateDeliveryFeeResult> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   const origin = process.env.BUSINESS_ORIGIN_ADDRESS;
+
+  // Per-brand pricing from the dashboard (with hardcoded fallback baked in).
+  // Loaded once up front so geocoding and distance lookups share a single
+  // snapshot of the rate table.
+  const pricing = await getDeliveryPricingSettings(input.brandSlug);
+
+  // Env override is honored only if the resolved settings would yield no cap
+  // (kept for backwards compat with deployments that still set this var).
   const maxMilesRaw = Number(process.env.DELIVERY_MAX_MILES);
-  const maxMiles =
-    Number.isFinite(maxMilesRaw) && maxMilesRaw > 0
-      ? maxMilesRaw
-      : DEFAULT_MAX_MILES;
+  const settingsMaxMiles =
+    Number.isFinite(pricing.maxServiceMiles) && pricing.maxServiceMiles > 0
+      ? pricing.maxServiceMiles
+      : Number.isFinite(maxMilesRaw) && maxMilesRaw > 0
+        ? maxMilesRaw
+        : DEFAULT_DELIVERY_PRICING.maxServiceMiles;
+  const maxMiles = settingsMaxMiles;
 
   if (!apiKey || !origin) {
     return {
@@ -183,14 +208,14 @@ export async function calculateDeliveryFee(
   const normalizedAddress = top.formatted_address;
   const placeId = top.place_id;
 
-  const localityInfo = extractLocality(top.address_components);
+  const localityInfo = extractLocality(top.address_components, pricing.freeCity);
 
-  if (localityInfo.isMorenoValleyCA) {
+  if (localityInfo.isFreeCity) {
     return {
       ok: true,
       normalizedAddress,
       placeId,
-      locality: localityInfo.locality ?? "Moreno Valley",
+      locality: localityInfo.locality ?? pricing.freeCity,
       distanceMiles: 0,
       deliveryFee: 0,
       ratePerMile: 0,
@@ -256,7 +281,7 @@ export async function calculateDeliveryFee(
     };
   }
 
-  const { fee, tier, ratePerMile } = feeForMiles(distanceMiles);
+  const { fee, tier, ratePerMile } = feeForMiles(distanceMiles, pricing);
 
   return {
     ok: true,

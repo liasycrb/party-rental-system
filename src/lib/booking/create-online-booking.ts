@@ -94,6 +94,7 @@ export async function createOnlineBooking(
   // pricing. The customer is friendlier-served by a clear "please call" than
   // by a silent $0 fee that surfaces at delivery.
   const deliveryQuote = await calculateDeliveryFee({
+    brandSlug: input.brandSlug,
     customerAddress: deliveryAddress,
     customerCity: input.eventCity,
   });

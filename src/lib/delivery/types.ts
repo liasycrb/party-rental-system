@@ -1,6 +1,9 @@
+import type { BrandSlug } from "@/lib/brand/config";
+
 export type DeliveryFeeTier = "free" | "near" | "mid" | "far";
 
 export type CalculateDeliveryFeeInput = {
+  brandSlug: BrandSlug;
   customerAddress: string;
   customerCity?: string | null;
 };

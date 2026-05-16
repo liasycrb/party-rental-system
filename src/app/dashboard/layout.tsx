@@ -61,6 +61,12 @@ export default function DashboardLayout({
               Blackout Dates
             </Link>
             <Link
+              href="/dashboard/delivery"
+              className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:bg-white/10 sm:text-sm"
+            >
+              Delivery Pricing
+            </Link>
+            <Link
               href="/dashboard/site"
               className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:bg-white/10 sm:text-sm"
             >

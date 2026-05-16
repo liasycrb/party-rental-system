@@ -690,6 +690,7 @@ export function BuildBookingStart({
     setIsCalculatingDelivery(true);
     try {
       const result = await getDeliveryQuote({
+        brandSlug,
         customerAddress: trimmedDeliveryAddress,
       });
       setDeliveryQuote(result);

@@ -7,8 +7,10 @@
 
 import { calculateDeliveryFee } from "./calculate-delivery-fee";
 import type { CalculateDeliveryFeeResult } from "./types";
+import type { BrandSlug } from "@/lib/brand/config";
 
 export async function getDeliveryQuote(input: {
+  brandSlug: BrandSlug;
   customerAddress: string;
   customerCity?: string | null;
 }): Promise<CalculateDeliveryFeeResult> {
@@ -22,6 +24,7 @@ export async function getDeliveryQuote(input: {
   }
   const city = (input?.customerCity ?? "").trim() || null;
   return calculateDeliveryFee({
+    brandSlug: input.brandSlug,
     customerAddress: address,
     customerCity: city,
   });
