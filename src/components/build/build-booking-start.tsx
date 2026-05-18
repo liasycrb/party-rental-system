@@ -212,17 +212,14 @@ function buildMainRentalNotesSection(itemLabel: string, quantity: number): strin
 function buildLeadNotesBlock(input: {
   eventTime: string;
   deliveryAddress: string;
-  deliveryUnit?: string;
   customerNotes: string;
 }): string | null {
   const lines: string[] = [];
   const et = input.eventTime.trim();
   const addr = input.deliveryAddress.trim();
-  const unit = (input.deliveryUnit ?? "").trim();
   const cn = input.customerNotes.trim();
   if (et) lines.push(`Event start preference: ${et}`);
   if (addr) lines.push(`Delivery address: ${addr}`);
-  if (unit) lines.push(`Apt/Suite/Unit: ${unit}`);
   if (cn) lines.push(`Customer notes: ${cn}`);
   return lines.length ? lines.join("\n") : null;
 }
@@ -499,7 +496,6 @@ export function BuildBookingStart({
   const [formDeliveryPlaceId, setFormDeliveryPlaceId] = useState<string | null>(
     null,
   );
-  const [formDeliveryUnit, setFormDeliveryUnit] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -605,7 +601,6 @@ export function BuildBookingStart({
   const formId = useId();
   const idDate = `${formId}-date`;
   const idDeliveryAddress = `${formId}-delivery-address`;
-  const idDeliveryUnit = `${formId}-delivery-unit`;
   const idEventTime = `${formId}-event-time`;
   const idName = `${formId}-name`;
   const idPhone = `${formId}-phone`;
@@ -764,7 +759,6 @@ export function BuildBookingStart({
             buildLeadNotesBlock({
               eventTime,
               deliveryAddress: formDeliveryAddress,
-              deliveryUnit: formDeliveryUnit,
               customerNotes: formNotes,
             }),
           ),
@@ -1912,32 +1906,6 @@ export function BuildBookingStart({
                   price.
                 </p>
               ) : null}
-              <div className="mt-3">
-                <label
-                  htmlFor={idDeliveryUnit}
-                  className={cn(labelClass(isCrb), "mb-1")}
-                >
-                  Apt / Suite / Unit{" "}
-                  <span
-                    className={cn(
-                      "font-normal",
-                      isCrb ? "text-slate-400" : "text-stone-500",
-                    )}
-                  >
-                    (optional)
-                  </span>
-                </label>
-                <input
-                  id={idDeliveryUnit}
-                  name="delivery_unit"
-                  type="text"
-                  autoComplete="address-line2"
-                  className={inputClass(isCrb)}
-                  placeholder="Apt 5B, Suite 200, etc."
-                  value={formDeliveryUnit}
-                  onChange={(e) => setFormDeliveryUnit(e.target.value)}
-                />
-              </div>
               <div className="mt-3 space-y-2">
                   <button
                     type="button"
@@ -2167,11 +2135,6 @@ export function BuildBookingStart({
                 <dt className={cn("font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Delivery address</dt>
                 <dd className="whitespace-pre-wrap">
                   {formDeliveryAddress.trim() || "—"}
-                  {formDeliveryUnit.trim() ? (
-                    <span className="block">
-                      Apt/Suite/Unit: {formDeliveryUnit.trim()}
-                    </span>
-                  ) : null}
                   {formDeliveryPlaceId ? (
                     <span
                       className={cn(
@@ -2380,10 +2343,6 @@ export function BuildBookingStart({
             <div>
               <p className={cn("mb-2 text-sm font-bold", isCrb ? "text-cyan-100/90" : "text-stone-700")}>Setup location notes</p>
               <div className={cn("space-y-3 text-sm leading-relaxed", isCrb ? "text-slate-200" : "text-stone-800")}>
-                <p>
-                  <span className="font-semibold">Apartment deliveries:</span>{" "}
-                  For apartment deliveries, equipment is delivered curbside or street-side only. Customers are responsible for moving the equipment into the apartment area and returning it in the same condition at pickup time.
-                </p>
                 <p>
                   <span className="font-semibold">Park policy:</span>{" "}
                   Rental equipment is not permitted for use in public parks.
