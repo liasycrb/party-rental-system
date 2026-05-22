@@ -6,7 +6,9 @@
       "Bash(git push *)",
       "Bash(npm run *)",
       "PowerShell(Get-Command *)",
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "Bash(findstr -i \"active_rental\")",
+      "Bash(dir supabase *)"
     ]
   }
 }

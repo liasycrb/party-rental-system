@@ -56,6 +56,11 @@ type BuildBookingStartProps = {
   inventoryOptions: BuildInventoryOption[];
   guidedCategories: RentalCategoryUIModel[];
   upsellOptions: BuildUpsellOption[];
+  /**
+   * Per-brand item subtotal required to continue to checkout. Read at the page
+   * level from booking_settings (falls back to 80 on RPC error / missing row).
+   */
+  minimumOrderAmount: number;
 };
 
 function inputClass(isCrb: boolean) {
@@ -199,7 +204,10 @@ function CategoryTile({
 
 type UpsellQtyById = Record<string, number>;
 
-const UPSELL_QTY_MAX = 99;
+// Fallback cap when an upsell row isn't present in the main inventory list
+// (so we can't read its quantity_available). Generous on purpose: do not
+// artificially cap chairs/tables at 99 when real inventory may be much higher.
+const UPSELL_QTY_FALLBACK_MAX = 999;
 
 const BUILD_UPSELL_SECTION_HELPER =
   "Add-ons are subject to availability. Final pricing will be confirmed after your request is reviewed.";
@@ -317,7 +325,6 @@ const INTERNAL_PICKUP_WINDOW_DEFAULT = "To be confirmed";
 
 const BUILD_DEFAULT_BASE_ITEM_PRICE = 150;
 const FIXED_DEPOSIT_AMOUNT = 50;
-const MINIMUM_ORDER_AMOUNT = 80;
 
 function formatUsd(amount: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -456,6 +463,7 @@ export function BuildBookingStart({
   inventoryOptions,
   guidedCategories,
   upsellOptions,
+  minimumOrderAmount,
 }: BuildBookingStartProps) {
   const brandContact = BRANDS[brandSlug];
   const inventoryEmpty = inventoryOptions.length === 0;
@@ -502,6 +510,29 @@ export function BuildBookingStart({
   const [formNotes, setFormNotes] = useState("");
   const [upsellQtyById, setUpsellQtyById] = useState<UpsellQtyById>(() => ({}));
   const [selectedItemQuantity, setSelectedItemQuantity] = useState(1);
+  // Tracks whether the user has focused each quantity input at least once.
+  // On the first focus, we select() the existing default ("1") so iOS Safari
+  // doesn't append digits when users try to replace it. After they've focused
+  // once we leave the caret alone so they can position it freely.
+  const mainQtyFocusedRef = useRef(false);
+  const upsellQtyFocusedRef = useRef<Set<string>>(new Set());
+  const selectedItemId = selectedItem?.id ?? null;
+  useEffect(() => {
+    mainQtyFocusedRef.current = false;
+  }, [selectedItemId]);
+
+  // Upsell rows are also present in the main catalog when active (see
+  // get-products.ts: `is_upsell` items remain in the main listing), so we can
+  // look up each upsell's real inventory ceiling here without an extra fetch.
+  const inventoryQtyById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const opt of inventoryOptions) {
+      if (opt.id && Number.isFinite(opt.quantity_active)) {
+        m.set(opt.id, opt.quantity_active);
+      }
+    }
+    return m;
+  }, [inventoryOptions]);
 
   const [availabilityOk, setAvailabilityOk] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
@@ -1443,11 +1474,24 @@ export function BuildBookingStart({
                   <input
                     id={idMainQty}
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={selectedItem.quantity_active}
                     aria-label="Main rental quantity"
                     className={cn(inputClass(isCrb), "max-w-[8rem]")}
                     value={selectedItemQuantity}
+                    onFocus={(e) => {
+                      if (mainQtyFocusedRef.current) return;
+                      mainQtyFocusedRef.current = true;
+                      const input = e.currentTarget;
+                      // iOS Safari fires focus before the soft keyboard
+                      // positions the caret; defer select() so it sticks.
+                      setTimeout(() => {
+                        try {
+                          input.select();
+                        } catch {}
+                      }, 0);
+                    }}
                     onChange={(e) => {
                       const raw = e.target.value;
                       const n = parseInt(raw, 10);
@@ -1688,6 +1732,11 @@ export function BuildBookingStart({
                   const selected = q > 0;
                   const unitEst = upsellUnitEstimate(o);
                   const qtyFieldId = `${formId}-upsell-qty-${o.id}`;
+                  const inventoryQty = inventoryQtyById.get(o.id);
+                  const upsellMax =
+                    typeof inventoryQty === "number" && inventoryQty >= 1
+                      ? inventoryQty
+                      : UPSELL_QTY_FALLBACK_MAX;
                   return (
                     <div
                       key={o.id}
@@ -1728,10 +1777,21 @@ export function BuildBookingStart({
                             <input
                               id={qtyFieldId}
                               type="number"
+                              inputMode="numeric"
                               min={1}
-                              max={UPSELL_QTY_MAX}
+                              max={upsellMax}
                               className={cn(inputClass(isCrb), "max-w-[8rem]")}
                               value={q}
+                              onFocus={(e) => {
+                                if (upsellQtyFocusedRef.current.has(o.id)) return;
+                                upsellQtyFocusedRef.current.add(o.id);
+                                const input = e.currentTarget;
+                                setTimeout(() => {
+                                  try {
+                                    input.select();
+                                  } catch {}
+                                }, 0);
+                              }}
                               onChange={(e) => {
                                 const raw = e.target.value;
                                 const n = parseInt(raw, 10);
@@ -1741,11 +1801,21 @@ export function BuildBookingStart({
                                     raw === ""
                                       ? 1
                                       : Number.isFinite(n) && n >= 1
-                                        ? Math.min(UPSELL_QTY_MAX, n)
+                                        ? Math.min(upsellMax, n)
                                         : (prev[o.id] ?? 1),
                                 }));
                               }}
                             />
+                            {typeof inventoryQty === "number" && inventoryQty >= 1 ? (
+                              <p
+                                className={cn(
+                                  "mt-1 text-xs",
+                                  isCrb ? "text-slate-400" : "text-stone-500",
+                                )}
+                              >
+                                Max {inventoryQty} available for this item.
+                              </p>
+                            ) : null}
                           </div>
                         ) : null}
                         <button
@@ -1761,12 +1831,16 @@ export function BuildBookingStart({
                                 : "bg-rose-600 text-white hover:bg-rose-700",
                           )}
                           style={{ borderRadius: "var(--brand-radius-md)" }}
-                          onClick={() =>
+                          onClick={() => {
+                            const isCurrentlySelected = (upsellQtyById[o.id] ?? 0) > 0;
+                            if (isCurrentlySelected) {
+                              upsellQtyFocusedRef.current.delete(o.id);
+                            }
                             setUpsellQtyById((prev) => ({
                               ...prev,
                               [o.id]: (prev[o.id] ?? 0) > 0 ? 0 : 1,
-                            }))
-                          }
+                            }));
+                          }}
                         >
                           {selected ? "Remove" : "Add"}
                         </button>
@@ -2251,7 +2325,7 @@ export function BuildBookingStart({
                 Delivery fee re-confirmed at submission from the address above.
               </p>
             </div>
-            {reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT ? (
+            {reservationPricing.subtotal < minimumOrderAmount ? (
               <div
                 className={cn(
                   "space-y-3 rounded-xl px-4 py-3 text-sm",
@@ -2261,7 +2335,7 @@ export function BuildBookingStart({
                 )}
               >
                 <p className="font-semibold">
-                  Minimum order is {formatUsd(MINIMUM_ORDER_AMOUNT)}. For
+                  Minimum order is {formatUsd(minimumOrderAmount)}. For
                   smaller orders or special requests, please contact us
                   directly.
                 </p>
@@ -2298,7 +2372,7 @@ export function BuildBookingStart({
               </button>
               <button
                 type="button"
-                disabled={reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT}
+                disabled={reservationPricing.subtotal < minimumOrderAmount}
                 className={cn(
                   "h-12 rounded-xl px-8 text-base font-black transition active:scale-[0.99]",
                   "disabled:pointer-events-none disabled:opacity-60",
@@ -2579,7 +2653,7 @@ export function BuildBookingStart({
                 disabled={
                   isSubmitting ||
                   !paymentFile ||
-                  reservationPricing.subtotal < MINIMUM_ORDER_AMOUNT
+                  reservationPricing.subtotal < minimumOrderAmount
                 }
                 className={cn(
                   "h-12 rounded-xl px-6 text-base font-black transition active:scale-[0.99] sm:px-8",
