@@ -14,6 +14,11 @@ import { CatalogImage } from "@/components/media/catalog-image";
 import { Container } from "@/components/marketing/container";
 import { cn } from "@/lib/utils/cn";
 
+// Reads the live `rental_products` row (image_src + specs) via a cached RPC
+// fetch. Force dynamic so a dashboard image/spec edit shows on the next request
+// rather than serving a stale cached hero. Matches /build + /products.
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ brand?: string | string[] }>;

@@ -8,7 +8,10 @@
       "PowerShell(Get-Command *)",
       "PowerShell(npm run *)",
       "Bash(findstr -i \"active_rental\")",
-      "Bash(dir supabase *)"
+      "Bash(dir supabase *)",
+      "Bash(supabase --version)",
+      "Bash(psql --version)",
+      "Bash(node scripts/_audit-rpc.mjs)"
     ]
   }
 }

@@ -521,6 +521,20 @@ export function BuildBookingStart({
     mainQtyFocusedRef.current = false;
   }, [selectedItemId]);
 
+  // Dev-only confirmation that the live prop value reached the client.
+  // Remove together with the visible "Online reservation minimum" line
+  // once dashboard-driven minimums are verified in production.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(
+        "[BuildBookingStart] minimumOrderAmount",
+        minimumOrderAmount,
+        "brand",
+        brandSlug,
+      );
+    }
+  }, [minimumOrderAmount, brandSlug]);
+
   // Upsell rows are also present in the main catalog when active (see
   // get-products.ts: `is_upsell` items remain in the main listing), so we can
   // look up each upsell's real inventory ceiling here without an extra fetch.
@@ -2325,6 +2339,20 @@ export function BuildBookingStart({
                 Delivery fee re-confirmed at submission from the address above.
               </p>
             </div>
+            {/* Temporary admin-verification line — proves which value the gate
+                is using. Remove once dashboard-driven minimums are confirmed
+                in production. */}
+            <p
+              className={cn(
+                "rounded-xl px-4 py-2 text-xs font-semibold tracking-wide",
+                isCrb
+                  ? "bg-slate-900/60 text-cyan-200/90 ring-1 ring-cyan-500/20"
+                  : "bg-stone-100 text-stone-700 ring-1 ring-stone-200/80",
+              )}
+              data-testid="build-min-debug"
+            >
+              Online reservation minimum: {formatUsd(minimumOrderAmount)}
+            </p>
             {reservationPricing.subtotal < minimumOrderAmount ? (
               <div
                 className={cn(

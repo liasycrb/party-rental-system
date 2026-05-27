@@ -14,6 +14,12 @@ import { categoryBuildHref } from "@/lib/catalog/category-carousel";
 import { getRentalCategories } from "@/lib/catalog/get-rental-categories";
 import { catalogProductToProductCard } from "@/lib/catalog/map-catalog-product";
 
+// The catalog reads live `rental_products` (image_src, pricing, specs) via a
+// cached RPC fetch. Force dynamic so dashboard edits — including a freshly
+// saved/uploaded product image — appear on the next request instead of serving
+// a stale cached card. Matches /build's rendering mode.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const brand = BRANDS[await getBrandSlug(undefined)];
   return {

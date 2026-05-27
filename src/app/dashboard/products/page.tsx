@@ -33,6 +33,22 @@ const RENTAL_PRODUCT_DASHBOARD_COLUMNS =
     "sort_order",
   ].join(",");
 
+/**
+ * Public product imagery/specs are read through cached RPC fetches on the
+ * catalog + category routes (only /build is force-dynamic). After any write to
+ * `rental_products` we must revalidate every surface that renders a product
+ * card or hero, or dashboard edits (e.g. a new Supabase image URL) keep showing
+ * the previously cached image. Mirrors the set used by the image upload action.
+ */
+function revalidateProductSurfaces() {
+  revalidatePath("/dashboard/products");
+  revalidatePath("/", "layout");
+  revalidatePath("/build");
+  revalidatePath("/products");
+  revalidatePath("/products/[slug]", "page");
+  revalidatePath("/categories", "layout");
+}
+
 const SURFACE_TOGGLE_KEYS = ["Grass", "Concrete", "Indoor", "Outdoor"] as const;
 const USE_TYPE_OPTIONS = ["dry", "wet", "both"] as const;
 
@@ -141,7 +157,7 @@ async function addProduct(formData: FormData) {
   });
 
   if (error) throw new Error(`[addProduct] ${error.message}`);
-  revalidatePath("/dashboard/products");
+  revalidateProductSurfaces();
 }
 
 async function updateProduct(formData: FormData) {
@@ -195,7 +211,7 @@ async function updateProduct(formData: FormData) {
     .eq("id", id);
 
   if (error) throw new Error(`[updateProduct] ${error.message}`);
-  revalidatePath("/dashboard/products");
+  revalidateProductSurfaces();
 }
 
 async function toggleProductActive(formData: FormData) {
@@ -210,11 +226,7 @@ async function toggleProductActive(formData: FormData) {
   const { error } = await admin.from("rental_products").update({ is_active: nextActive }).eq("id", id);
 
   if (error) throw new Error(`[toggleProductActive] ${error.message}`);
-  revalidatePath("/dashboard/products");
-  revalidatePath("/", "layout");
-  revalidatePath("/build");
-  revalidatePath("/products");
-  revalidatePath("/categories", "layout");
+  revalidateProductSurfaces();
 }
 
 const PRODUCT_IMAGE_BUCKET = "product-images";
@@ -269,11 +281,7 @@ async function replaceProductImage(formData: FormData) {
     .eq("id", id);
   if (updateError) throw new Error(`[replaceProductImage] update: ${updateError.message}`);
 
-  revalidatePath("/dashboard/products");
-  revalidatePath("/", "layout");
-  revalidatePath("/build");
-  revalidatePath("/products");
-  revalidatePath("/categories", "layout");
+  revalidateProductSurfaces();
 }
 
 function formatCategory(slug: string | null): string {

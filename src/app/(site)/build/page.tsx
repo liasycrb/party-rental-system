@@ -11,6 +11,16 @@ import { getBuildInventoryOptions } from "@/lib/inventory/get-build-inventory-op
 import { getBuildUpsellOptions } from "@/lib/inventory/get-build-upsell-options";
 import { getBookingSettings } from "@/lib/booking/get-booking-settings";
 
+// /build reads live per-brand data (inventory, blackouts via category load,
+// upsells, booking_settings). Force dynamic rendering so every fetch in this
+// route uses { cache: "no-store" } and dashboard edits to booking_settings,
+// delivery pricing, blackouts, or inventory show up on the next request
+// without waiting for a cache to expire.
+// (Per node_modules/next/dist/docs/01-app/02-guides/caching-without-cache-components.md
+//  line 98: "force-dynamic" is equivalent to setting cache:"no-store",
+//  next:{revalidate:0} on every fetch in the route.)
+export const dynamic = "force-dynamic";
+
 type BuildPageProps = {
   searchParams: Promise<{
     brand?: string | string[];
@@ -80,6 +90,13 @@ export default async function BuildPage({ searchParams }: BuildPageProps) {
       getBuildUpsellOptions(brandSlug),
       getBookingSettings(brandSlug),
     ]);
+
+  // Dev-only confirmation that the server resolved the live brand + RPC row.
+  // Remove together with the visible "Online reservation minimum" line in
+  // BuildBookingStart once dashboard-driven minimums are verified.
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[build/page] brandSlug", brandSlug, "bookingSettings", bookingSettings);
+  }
 
   const matched = resolveRentalCategoryForLookup(categorySlug, canonicalCategories);
   const categoryLine = matched ? `You're booking: ${matched.label}` : null;

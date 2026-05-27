@@ -41,6 +41,10 @@ async function saveBookingSettings(
   }
 
   revalidatePath("/dashboard/booking-settings");
+  // Belt-and-suspenders: /build sets dynamic = "force-dynamic" so it shouldn't
+  // hold a cached RPC response, but this guarantees the gate copy and button
+  // state reflect the new minimum on the very next /build request.
+  revalidatePath("/build");
   return { ok: true };
 }
 

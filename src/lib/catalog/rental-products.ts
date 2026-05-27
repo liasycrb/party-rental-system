@@ -46,11 +46,24 @@ export function normalizeProductImageSrc(
       ? product.slug.trim()
       : "";
 
+  const fromSrc = normalizeRawImageSrc(product.image_src);
+
+  // Dashboard-managed uploads land in `image_src` as an absolute URL (e.g. a
+  // Supabase Storage public URL). That is the source of truth, so an absolute
+  // `image_src` ALWAYS wins over `image_path` — which can still hold a stale
+  // local fallback path written before the upload (the cause of saved images
+  // not appearing on public cards).
+  if (fromSrc && /^https?:\/\//i.test(fromSrc)) return fromSrc;
+
+  // Legacy precedence is preserved for non-absolute values: for older catalog
+  // rows `image_path` is the canonical local path and some rows carry a
+  // stale/wrong *local* `image_src`, so `image_path` still wins over a local
+  // `image_src` to avoid regressing those existing local images.
   const fromPath = normalizeRawImageSrc(product.image_path);
   if (fromPath) return fromPath;
 
-  const fromLegacy = normalizeRawImageSrc(product.image_src);
-  if (fromLegacy) return fromLegacy;
+  // Local `image_src` only when there is no `image_path`.
+  if (fromSrc) return fromSrc;
 
   if (!slug) return null;
   return canonicalRentalProductMainImage(product.category_slug, slug);

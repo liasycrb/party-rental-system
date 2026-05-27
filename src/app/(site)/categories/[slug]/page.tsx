@@ -8,6 +8,11 @@ import { resolveCategoryPageViewModel } from "@/lib/catalog/category-page-data";
  * Brand resolves from hostname (e.g. `crbjumpers.com` → `crb`); `?brand=` is the dev/preview fallback.
  */
 
+// Category cards hydrate from live `rental_products` (image_src + pricing) via a
+// cached RPC fetch. Force dynamic so dashboard image edits appear on the next
+// request instead of a stale cached card. Matches /build + /products.
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ brand?: string | string[] }>;
