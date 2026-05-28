@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/marketing/container";
 import { CatalogImage } from "@/components/media/catalog-image";
+import { CategoryRelatedLandings } from "@/components/seo/category-related-landings";
 import {
   type CategoryPageViewModel,
   type CategoryPageProduct,
@@ -334,6 +335,9 @@ export function CategoryPageTemplate({
           <p>{CATEGORY_PAGE_SERVICE_AREA}</p>
         </Container>
       </div>
+
+      {/* SEO internal-linking: feeds the city landings from category pages. */}
+      <CategoryRelatedLandings categorySlug={item.slug} brand={brand} />
 
       <section className="pb-14 pt-2 sm:pb-20" aria-label="Book this category">
         <Container className="max-w-2xl text-center">

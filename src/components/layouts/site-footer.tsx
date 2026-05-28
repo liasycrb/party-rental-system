@@ -5,6 +5,7 @@ import { withBrand } from "@/lib/brand/with-brand-href";
 import { cn } from "@/lib/utils/cn";
 import { formatPhoneDisplay, formatPhoneTel } from "@/lib/utils/format-phone";
 import { FooterBrandTrigger } from "@/components/layouts/footer-brand-trigger";
+import { AreasWeServeFooter } from "@/components/seo/areas-we-serve";
 
 import { BRAND_CONTACT } from "@/lib/config/brand-contact";
 
@@ -203,6 +204,13 @@ export function SiteFooter({
             ) : null}
           </div>
         </div>
+
+        {/*
+         * SEO internal-linking mesh: ships on every page of both brand
+         * domains. Each link uses the SEO route helpers so canonical form
+         * stays consistent with sitemap + landing canonicals.
+         */}
+        <AreasWeServeFooter brand={brand} />
 
         <div className="mt-12 border-t border-white/14 pt-7 text-xs text-white/68">
           <p className="text-center leading-relaxed sm:text-left">{attribution}</p>

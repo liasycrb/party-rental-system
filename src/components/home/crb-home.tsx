@@ -17,6 +17,7 @@ import { MarketingHero } from "@/components/home/marketing-hero";
 import { Container } from "@/components/marketing/container";
 import { CategoryShowcase } from "@/components/marketing/category-showcase";
 import { SectionTitle } from "@/components/marketing/section-title";
+import { SeoHubBlocks } from "@/components/seo/seo-hub-blocks";
 
 function ArrowRight({ className }: { className?: string }) {
   return (
@@ -419,6 +420,8 @@ export function CrbHome({
           </div>
         </Container>
       </section>
+
+      <SeoHubBlocks brand={brand} />
     </>
   );
 }

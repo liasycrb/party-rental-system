@@ -18,6 +18,7 @@ import { MobileProductStrip } from "@/components/home/mobile-product-strip";
 import { Container } from "@/components/marketing/container";
 import { CategoryShowcase } from "@/components/marketing/category-showcase";
 import { SectionTitle } from "@/components/marketing/section-title";
+import { SeoHubBlocks } from "@/components/seo/seo-hub-blocks";
 
 export function LiasHome({
   brand,
@@ -289,6 +290,8 @@ export function LiasHome({
           </div>
         </Container>
       </section>
+
+      <SeoHubBlocks brand={brand} />
     </>
   );
 }
