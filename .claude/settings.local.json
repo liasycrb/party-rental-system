@@ -37,7 +37,12 @@
       "Bash(curl -s -H \"Host: www.liaspartyrentals.com\" http://localhost:3000/products)",
       "Bash(curl -s -H \"Host: www.liaspartyrentals.com\" http://localhost:3000/)",
       "Bash(rm -f scripts/_page.html)",
-      "PowerShell(Get-NetTCPConnection *)"
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(xargs grep -l \"loader\\\\|Image\")",
+      "Bash(xargs ls -ltr)",
+      "Bash(xargs grep -l \"get_active_rental_products_for_brand\")",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

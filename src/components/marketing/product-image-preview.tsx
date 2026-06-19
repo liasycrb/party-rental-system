@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
@@ -24,6 +25,14 @@ const CATALOG_IMG_CLASS =
   "h-full w-full cursor-zoom-in object-cover motion-reduce:transition-none transition-transform duration-300 ease-out group-hover/cardimg:scale-[1.02] motion-reduce:group-hover/cardimg:scale-100";
 
 export const PRODUCT_CARD_HERO_IMG_CLASS = CARD_IMG_CLASS;
+
+/**
+ * Responsive `sizes` for product-card heroes (marketing + /build inventory).
+ * Cards sit in a 1→2→3 column grid; this lets next/image request a resized
+ * WebP near the rendered width instead of the full Supabase original.
+ */
+export const PRODUCT_CARD_HERO_IMG_SIZES =
+  "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw";
 
 /** Shared fullscreen image preview (marketing + build inventory cards). Portal keeps it outside Tailwind parent `group` and stops thumbnail hover-zoom bleeding. */
 export function ProductImageLightboxModal({
@@ -144,10 +153,12 @@ function ProductCardHeroImage({
       <div className={cn("group/cardimg", imgFrame)}>
         {canShow ? (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* Served via next/image (/_next/image): resized + WebP, lazy by default. */}
+            <Image
               src={imageSrc}
               alt={imageAlt}
+              fill
+              sizes={PRODUCT_CARD_HERO_IMG_SIZES}
               className={imgClass}
               style={
                 objectPosition

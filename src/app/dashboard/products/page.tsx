@@ -266,7 +266,9 @@ async function replaceProductImage(formData: FormData) {
     .from(PRODUCT_IMAGE_BUCKET)
     .upload(objectPath, file, {
       contentType: file.type,
-      cacheControl: "3600",
+      // Object path is timestamped (`main-${Date.now()}`) and never overwritten
+      // (upsert: false), so each URL is immutable — cache it for a year.
+      cacheControl: "31536000",
       upsert: false,
     });
   if (uploadError) throw new Error(`[replaceProductImage] upload: ${uploadError.message}`);

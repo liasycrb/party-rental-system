@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import {
   ProductImageLightboxModal,
   PRODUCT_CARD_HERO_FRAME_CLASS,
   PRODUCT_CARD_HERO_IMG_CLASS,
+  PRODUCT_CARD_HERO_IMG_SIZES,
 } from "@/components/marketing/product-image-preview";
 import { cn } from "@/lib/utils/cn";
 
@@ -51,10 +53,12 @@ export function BuildInventoryCardImage({
             <span className="text-[11px] font-medium">Photo coming soon</span>
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- remote inventory URLs / dynamic Supabase imagery
-          <img
+          // Served via next/image (/_next/image): resized + WebP, lazy by default.
+          <Image
             src={trimmed}
             alt={imageAlt}
+            fill
+            sizes={PRODUCT_CARD_HERO_IMG_SIZES}
             className={PRODUCT_CARD_HERO_IMG_CLASS}
             onClick={(e) => {
               e.stopPropagation();
