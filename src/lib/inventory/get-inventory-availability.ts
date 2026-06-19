@@ -86,10 +86,14 @@ export async function getInventoryAvailability(params: {
   const windowStart = addDaysUTC(eventDate, -1);
   const windowEnd = addDaysUTC(eventDate, 1);
 
+  // Inventory is a single shared physical pool: every rental_products row is
+  // offered under BOTH brands (brand_slugs = ['lias','crb']) with one
+  // quantity_available. Availability must therefore count bookings for this
+  // product_slug across BOTH brands — filtering by brand_slug here let a Lias
+  // booking and a CRB booking double-book the same physical unit.
   const { data: bookingRows, error: bookingsError } = await supabase
     .from("bookings")
     .select("quantity, status")
-    .eq("brand_slug", brandSlug)
     .eq("product_slug", productSlug)
     .gte("event_date", windowStart)
     .lte("event_date", windowEnd);

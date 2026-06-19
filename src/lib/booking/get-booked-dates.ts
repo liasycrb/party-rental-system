@@ -46,10 +46,13 @@ export async function getBookedDates(
       ? product.quantity_available
       : 0;
 
+  // Shared physical inventory: count bookings for this product_slug across BOTH
+  // brands so a reservation on either site blocks the date on both. Blackouts
+  // above stay brand-scoped (each brand sets its own closed days); only the
+  // quantity rollup must be brand-agnostic.
   const { data, error } = await supabase
     .from("bookings")
     .select("event_date, quantity")
-    .eq("brand_slug", brandSlug)
     .eq("product_slug", productSlug)
     .in("status", ["pending_confirmation", "confirmed"]);
 

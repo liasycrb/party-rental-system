@@ -42,7 +42,10 @@
       "Bash(xargs ls -ltr)",
       "Bash(xargs grep -l \"get_active_rental_products_for_brand\")",
       "Bash(npx tsc *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(git --no-pager diff --stat -- src/lib/inventory/get-inventory-availability.ts src/lib/booking/get-booked-dates.ts)",
+      "Bash(git *)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }
